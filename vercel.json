@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd packages/frontend && npm install && npm run build",
+  "outputDirectory": "packages/frontend/.next",
+  "framework": "nextjs",
+  "envPrefix": "NEXT_PUBLIC_",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "http://72.62.132.138:9080"
+  },
+  "regions": ["iad1"]
+}
