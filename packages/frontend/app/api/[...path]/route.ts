@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const VPS_API = 'http://72.62.132.138:9080';
+const VPS_API = 'http://localhost:9080';
 
 export async function GET(
   request: NextRequest,
