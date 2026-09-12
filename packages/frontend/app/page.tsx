@@ -48,7 +48,7 @@ export default function Home() {
     <div>
       <section style={{ marginBottom: '40px' }}>
         <h2>آخر الأخبار</h2>
-        <p style={{ color: '#666', marginBottom: '30px' }}>
+        <p style={{ color: '#666', marginBottom: '30px', fontSize: '16px' }}>
           تابع أهم الأخبار والتحديثات من الأردن والعالم
         </p>
 
