@@ -13,9 +13,6 @@
 | **CDN** | Cloudflare | 2026-09-12 | ✅ |
 | **Staging domain** | mutabe3.vercel.app | 2026-09-12 | ✅ |
 | **Production domain** | TBD (migrate to .jo or .com after MVP) | ⬜ | — |
-| **Staging URL** | https://mutabe3.vercel.app | TBD | — |
-| **Production URL** | TBD | ⬜ | — |
-| **DNS provider** | TBD | ⬜ | — |
 
 ## Tech Stack
 
@@ -40,97 +37,48 @@
 | **GitHub repo** | github.com/ramsharef1/forge (monorepo) | 2026-09-12 |
 | **GitHub path** | `projects/mutabe3/` | 2026-09-12 |
 | **Main branch** | `main` | 2026-09-12 |
-| **Current commit** | `4211e35` (Initial project setup) | 2026-09-12 |
-| **Staging branch** | TBD | ⬜ |
-| **Production branch** | TBD | ⬜ |
-
-## Credentials & Secrets
-
-| Service | Credential | Status | Location | Date |
-|---------|-----------|--------|----------|------|
-| **Vercel** | API token | ⬜ TBD | `.claude/secrets/` or forge secrets | — |
-| **Sentry** | DSN | ⬜ TBD | `.env` files | — |
-| **Strapi** | API key | ⬜ TBD | `.env` files | — |
-| **GitHub** | SSH key | ✅ Ready | `~/.ssh/id_rsa` (existing) | 2026-09-12 |
-| **PostgreSQL** | Connection string | ⬜ TBD | `.env` files | — |
-
-## Project Files & Paths
-
-| File/Folder | Purpose | Status | Date |
-|------------|---------|--------|------|
-| `FACTS.md` | This file (canonical state) | ✅ Created | 2026-09-12 |
-| `PLAN.md` | Decisions, priorities, resume point | ⬜ TBD | — |
-| `WORKLOG.md` | Session log (newest first) | ⬜ TBD | — |
-| `DECISIONS.md` | Numbered decision log | ⬜ TBD | — |
-| `DISPATCH.md` | Tasks from FORGE | ⬜ TBD | — |
-| `COMMANDS.md` | Tech procedures (tier forge only) | ⬜ TBD | — |
-| `docs/IMPLEMENTATION_PLAN.md` | 11-week roadmap, 6 sessions | ✅ Created | 2026-09-12 |
-| `docs/PROMPTS_LIBRARY.md` | 21 prompts for journalists/editors | ✅ Created | 2026-09-12 |
-| `packages/frontend/` | Next.js app | ⬜ TBD (scaffolding) | — |
-| `packages/backend/` | Node.js API | ⬜ TBD (scaffolding) | — |
-| `packages/admin/` | Editorial dashboard | ⬜ TBD (scaffolding) | — |
-| `.claude/SESSIONS_OVERVIEW.md` | 6 sessions tracked | ✅ Created | 2026-09-12 |
-| `.claude/sessions/01-infrastructure/` | Session 1 docs | ✅ Created | 2026-09-12 |
-
-## Databases & Services
-
-| Service | Status | Connection | Port | Credentials |
-|---------|--------|-----------|------|-------------|
-| **PostgreSQL (Vercel)** | ⬜ TBD | `postgresql://...` | 5432 | TBD |
-| **PostgreSQL (local dev)** | ⬜ Pending Docker setup | `localhost:5432` | 5432 | `docker-compose.yml` |
-| **Redis (local dev)** | ⬜ Pending Docker setup | `localhost:6379` | 6379 | Docker |
-| **Strapi (local dev)** | ⬜ Pending Docker setup | `localhost:1337` | 1337 | Docker |
-| **Strapi (production)** | ⬜ TBD | TBD | TBD | TBD |
-
-## Environment Configuration
-
-| Variable | Purpose | Status | Location |
-|----------|---------|--------|----------|
-| `DATABASE_URL` | PostgreSQL connection | ⬜ TBD | `.env.local`, Vercel |
-| `REDIS_URL` | Redis cache | ⬜ TBD | `.env.local` (dev only) |
-| `JWT_SECRET` | API authentication | ⬜ TBD | `.env`, vault |
-| `SENTRY_DSN` | Error tracking | ⬜ TBD | `.env`, Vercel |
-| `STRAPI_URL` | CMS API endpoint | ⬜ TBD | `.env` |
-| `NEXT_PUBLIC_API_URL` | Frontend API base | ⬜ TBD | `.env.local` |
+| **Current commit** | `a1cabba` (forge: finalize naming) | 2026-09-12 |
 
 ## Team & Ownership
 
-| Role | Person | Email | Status | Date |
-|------|--------|-------|--------|------|
-| **Project Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ Assigned | 2026-09-12 |
-| **Session 1 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ Assigned | 2026-09-12 |
-| **Session 2 Lead** | TBD | — | ⬜ Pending | — |
-| **Session 3 Lead** | TBD | — | ⬜ Pending | — |
-| **Session 4 Lead** | TBD | — | ⬜ Pending | — |
-| **Session 5 Lead** | TBD | — | ⬜ Pending | — |
-| **Session 6 Lead** | TBD | — | ⬜ Pending | — |
+| Role | Person | Email | Status | Sessions | Date |
+|------|--------|-------|--------|----------|------|
+| **Project Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | All 6 | 2026-09-12 |
+| **Session 1 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Infrastructure & DevOps | 2026-09-12 |
+| **Session 2 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | CMS Implementation | 2026-09-12 |
+| **Session 3 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Frontend Foundation | 2026-09-12 |
+| **Session 4 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Homepage & Articles | 2026-09-12 |
+| **Session 5 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Admin Dashboard | 2026-09-12 |
+| **Session 6 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Search & Launch | 2026-09-12 |
 
-## Project Status
+## Project Status & Milestones
 
 | Milestone | Status | Date |
 |-----------|--------|------|
-| Architecture phase | ✅ Complete | 2026-09-12 |
-| 6 sessions planned | ✅ Complete | 2026-09-12 |
-| Prompts library | ✅ Complete | 2026-09-12 |
-| Forge structure setup | 🔨 In progress | 2026-09-12 |
-| Session 1 kickoff | ⏳ Ready to start this week | 2026-09-12 |
-| MVP launch | ⏳ ~11 weeks from Session 1 start | TBD |
-| Production launch | ⏳ ~14-16 weeks from Session 1 start | TBD |
+| **Architecture phase** | ✅ Complete | 2026-09-12 |
+| **6 sessions planned** | ✅ Complete | 2026-09-12 |
+| **Prompts library** | ✅ Complete | 2026-09-12 |
+| **Forge structure** | ✅ Complete | 2026-09-12 |
+| **All decisions locked** | ✅ Complete | 2026-09-12 |
+| **Session 1 ready** | ✅ Ready to start | 2026-09-12 |
+| **Environment setup** | ⏳ Pending (Vercel, Sentry, GitHub) | — |
+| **MVP launch** | ⏳ ~11-14 weeks from Session 1 start | TBD |
 
-## Important Links & References
+## Key Decisions Locked
 
-| Link | Purpose |
-|------|---------|
-| `docs/IMPLEMENTATION_PLAN.md` | Full 11-week roadmap with all 6 sessions |
-| `.claude/SESSIONS_OVERVIEW.md` | Session tracking and dependencies |
-| `docs/PROMPTS_LIBRARY.md` | 21 AI prompts for newsroom use |
-| `PLAN.md` § decisions | Locked decisions for this project |
-| `/forge/FORGE.md` | Project governance model |
-| `/forge/LAWS.md` | Rules that apply to all forge projects |
-| `/forge/controllers/tech/STACK-NEXT.md` | Next.js standards |
-| `/forge/controllers/tech/DEPLOY-VERCEL.md` | Vercel deployment procedures |
+| # | Decision | Status |
+|---|----------|--------|
+| D-1 | Tech stack (Next.js, Strapi, Vercel, PostgreSQL) | ✅ |
+| D-2 | 6 sessions with dependencies | ✅ |
+| D-3 | Forge governance model | ✅ |
+| D-7 | Budget: Start lean, scale as needed | ✅ |
+| D-8 | Team: Rami leads all 6 sessions solo | ✅ |
+| D-9 | Timeline: 11-14 weeks, priority-driven | ✅ |
+| D-10 | MVP Scope: All 6 sessions required | ✅ |
+| D-11 | Start Session 1: This week | ✅ |
 
 ---
 
-**Last updated:** 2026-09-12 by Claude  
-**Next to fill in:** `PLAN.md` (decisions, state, priorities), `DISPATCH.md` (open tasks)
+**Last updated:** 2026-09-12  
+**Status:** Ready to start Session 1 ✅  
+**Next:** Environment setup (Vercel token, Sentry DSN, GitHub Actions secrets)
