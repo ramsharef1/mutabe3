@@ -1,0 +1,23 @@
+{
+  "name": "mutabe3",
+  "version": "0.0.1",
+  "description": "Jordanian news agency platform",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/frontend",
+    "build": "npm run build --workspace=packages/frontend",
+    "start": "npm start --workspace=packages/frontend",
+    "lint": "npm run lint --workspace=packages/frontend && npm run lint --workspace=packages/backend",
+    "test": "npm test --workspace=packages/frontend && npm test --workspace=packages/backend",
+    "db:migrate": "npm run migrate --workspace=packages/backend",
+    "db:seed": "npm run seed --workspace=packages/backend",
+    "setup": "npm install && npm run db:migrate && npm run db:seed"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=10.0.0"
+  }
+}

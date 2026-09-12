@@ -8,11 +8,16 @@
 
 | Fact | Value | Date | Verified |
 |------|-------|------|----------|
-| **Hosting platform** | Vercel | 2026-09-12 | ✅ |
-| **Database host** | Vercel Postgres | 2026-09-12 | ✅ |
-| **CDN** | Cloudflare | 2026-09-12 | ✅ |
-| **Staging domain** | mutabe3.vercel.app | 2026-09-12 | ✅ |
-| **Production domain** | TBD (migrate to .jo or .com after MVP) | ⬜ | — |
+| **Hosting platform** | Self-hosted VPS (forge shared) | 2026-09-12 | ✅ |
+| **VPS Host** | 72.62.132.138 (srv1772644.hstgr.cloud, Hostinger) | 2026-09-12 | ✅ |
+| **VPS OS** | AlmaLinux + AdminBolt | 2026-09-12 | ✅ |
+| **App Port** | 3100 (Docker, nginx reverse proxy) | 2026-09-12 | ✅ |
+| **SSH** | `ssh -i ~/.ssh/id_ed25519 root@72.62.132.138` | 2026-09-12 | ✅ |
+| **Database** | PostgreSQL :5432 on VPS | 2026-09-12 | ✅ |
+| **Redis** | Redis :6379 on VPS | TBD | — |
+| **Domain** | TBD (.jo or .com) | ⬜ | — |
+| **Staging URL** | mutabe3-stage.jo (pending DNS) | ⬜ | — |
+| **Production URL** | mutabe3.jo (pending DNS) | ⬜ | — |
 
 ## Tech Stack
 

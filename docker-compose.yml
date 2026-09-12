@@ -6,11 +6,12 @@ services:
     build:
       context: ./packages/frontend
       dockerfile: Dockerfile.dev
+    container_name: mutabe3-frontend
     ports:
-      - "3000:3000"
+      - "3100:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
-      - NEXT_PUBLIC_STRAPI_URL=http://localhost:1337
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3100/api}
+      - NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL:-http://localhost:1337}
     volumes:
       - ./packages/frontend:/app
       - /app/node_modules
