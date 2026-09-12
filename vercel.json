@@ -1,6 +1,0 @@
-{
-  "buildCommand": "npm run build --workspace=packages/frontend",
-  "outputDirectory": "packages/frontend/.next",
-  "framework": "nextjs",
-  "regions": ["iad1"]
-}
