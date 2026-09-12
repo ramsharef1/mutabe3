@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  EDITOR
+  JOURNALIST
+  VIEWER
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Models
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String   // bcrypted
+  role      UserRole
+  articles  Article[]
+  comments  Comment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+model Article {
+  id                String   @id @default(cuid())
+  title             String
+  slug              String   @unique
+  content           String   // Rich text JSON
+  summary           String?
+  featuredImageUrl  String?
+  
+  // Relations
+  authorId          String
+  author            User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  categoryId        String
+  category          Category @relation(fields: [categoryId], references: [id])
+  
+  comments          Comment[]
+  
+  // Status & Timestamps
+  status            ArticleStatus @default(DRAFT)
+  publishedAt       DateTime?
+  scheduledPublishAt DateTime?
+  
+  // SEO & Analytics
+  seoKeywords       String[] // Array of keywords
+  viewsCount        Int      @default(0)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  displayOrder Int     @default(0)
+  
+  articles    Article[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  status    CommentStatus @default(PENDING)
+  
+  // Relations
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  
+  userId    String?  // Nullable for anonymous comments
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([articleId])
+  @@index([status])
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  status    String   @default("active") // active, unsubscribed
+  
+  // Preferences
+  categories String[] // Array of category IDs user is subscribed to
+  
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+}
