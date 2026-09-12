@@ -1,0 +1,42 @@
+{
+  "projectName": "mutabe3",
+  "projectDescription": "Jordanian news agency website - full-stack platform",
+  "projectType": "web",
+  "language": "multiple",
+  "sessionGroups": {
+    "active": [
+      "master",
+      "architecture"
+    ],
+    "upcoming": [
+      "backend",
+      "frontend",
+      "admin-panel",
+      "cms",
+      "devops",
+      "content"
+    ]
+  },
+  "permissions": {
+    "allowlist": [
+      "npm",
+      "git",
+      "docker"
+    ]
+  },
+  "hooks": {
+    "on_commit": "echo 'Commit on behalf of Claude Code'",
+    "on_session_start": "echo 'Welcome to Mutabe3 session'"
+  },
+  "environment": {
+    "NODE_ENV": "development"
+  },
+  "collaborators": [
+    {
+      "name": "Rami Alsharef",
+      "email": "ramsharef@gmail.com",
+      "role": "project-lead"
+    }
+  ],
+  "archived": false
+}
