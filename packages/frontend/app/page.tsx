@@ -29,11 +29,16 @@ export default function Home() {
       <section style={{ marginTop: '30px', fontSize: '14px', color: '#666' }}>
         <h4>معلومات النظام:</h4>
         <p>
-          Frontend: Next.js 14 <br />
-          Backend: Node.js + Express <br />
+          Frontend: Vercel (Next.js 14) <br />
+          Backend: VPS (Node.js + Express) <br />
           Database: PostgreSQL <br />
           Cache: Redis <br />
-          CMS: Strapi (قريباً)
+          CMS: Strapi (قريباً) <br />
+          <br />
+          <strong>API Test:</strong> <br />
+          <code style={{display: 'block', padding: '10px', background: '#f5f5f5'}}>
+            <a href="/api/health" target="_blank">GET /api/health</a>
+          </code>
         </p>
       </section>
     </div>
