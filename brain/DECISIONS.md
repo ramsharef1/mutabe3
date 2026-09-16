@@ -1,5 +1,17 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-09-16
+
+**D-033: Configure App for Production Domain (https://mutabe3.news)**
+- **Decided by:** Master Control (MC-AUTH-2026-09-03)
+- **What:** Update app configuration to use https://mutabe3.news
+  - Frontend .env.production: API URL → https://mutabe3.news:9080
+  - Backend CORS: Restricted to mutabe3.news and www.mutabe3.news
+  - Built locally, synced to VPS, services restarted
+- **Status:** ✅ COMPLETE · 2026-09-16 22:01 UTC
+
+---
+
 ## 2026-09-15
 
 **D-032: Remove Login Gate from Website**
