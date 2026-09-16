@@ -11,6 +11,7 @@ interface Article {
   category?: { name: string; slug: string };
   publishedAt?: string;
   viewsCount?: number;
+  featuredImageUrl?: string;
 }
 
 const PlaceholderImage = ({ seed }: { seed: string }) => {
@@ -22,6 +23,25 @@ const PlaceholderImage = ({ seed }: { seed: string }) => {
         background: `linear-gradient(135deg, hsl(${hue}, 70%, 60%), hsl(${(hue + 60) % 360}, 70%, 50%))`,
         width: '100%',
         height: '100%',
+      }}
+    />
+  );
+};
+
+const ArticleImage = ({ url, seed }: { url?: string; seed: string }) => {
+  if (!url) return <PlaceholderImage seed={seed} />;
+  return (
+    <img
+      src={url}
+      alt="Article thumbnail"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+      }}
+      onError={(e) => {
+        e.currentTarget.style.display = 'none';
+        e.currentTarget.parentElement!.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg,hsl(240,70%,60%),hsl(300,70%,50%))"></div>';
       }}
     />
   );
@@ -108,7 +128,7 @@ export default function Home() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 15px 15px' }}>
         <div style={{ display: 'flex', gap: '15px', background: 'white', border: '3px solid #8B0000', borderRadius: '2px', overflow: 'hidden', marginBottom: '20px' }}>
           <div style={{ width: '35%', height: '300px', overflow: 'hidden' }}>
-            <PlaceholderImage seed={articles[0].id} />
+            <ArticleImage url={articles[0].featuredImageUrl} seed={articles[0].id} />
           </div>
           <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '11px', color: '#999', marginBottom: '8px' }}>
@@ -205,7 +225,7 @@ export default function Home() {
                   onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
                 >
                   <div style={{ width: '100%', height: '150px', overflow: 'hidden' }}>
-                    <PlaceholderImage seed={article.id} />
+                    <ArticleImage url={article.featuredImageUrl} seed={article.id} />
                   </div>
                   <div style={{ padding: '12px' }}>
                     <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', lineHeight: '1.4', fontWeight: 'bold', color: '#333' }}>
@@ -245,7 +265,7 @@ export default function Home() {
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#ddd')}
                 >
                   <div style={{ width: '100%', height: '120px', overflow: 'hidden' }}>
-                    <PlaceholderImage seed={article.id} />
+                    <ArticleImage url={article.featuredImageUrl} seed={article.id} />
                   </div>
                   <div style={{ padding: '10px' }}>
                     <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', lineHeight: '1.3', fontWeight: 'bold', color: '#333' }}>
@@ -279,7 +299,7 @@ export default function Home() {
                   }}
                 >
                   <div style={{ width: '100%', height: '100px', overflow: 'hidden' }}>
-                    <PlaceholderImage seed={article.id} />
+                    <ArticleImage url={article.featuredImageUrl} seed={article.id} />
                   </div>
                   <div style={{ padding: '8px' }}>
                     <h5 style={{ margin: '0', fontSize: '11px', lineHeight: '1.3', fontWeight: 'bold', color: '#333' }}>

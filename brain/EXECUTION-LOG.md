@@ -12,3 +12,13 @@
 - 2026-09-16T22:39Z · edit · packages/backend/seed.ts
 - 2026-09-16T22:40Z · edit · packages/backend/seed.ts
 - 2026-09-16T22:42Z · edit · packages/backend/seed.ts
+- 2026-09-16T22:46Z · edit · /Users/ramialsharef/.claude/projects/-Users-ramialsharef-Projects-forge-projects-mutabe3/memory/project_database_seeding.md
+- 2026-09-16T22:46Z · edit · /Users/ramialsharef/.claude/projects/-Users-ramialsharef-Projects-forge-projects-mutabe3/memory/MEMORY.md
+- 2026-09-16T22:50Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:51Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:57Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:57Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:57Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:58Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:58Z · edit · packages/frontend/app/page.tsx
+- 2026-09-16T22:58Z · edit · packages/frontend/app/page.tsx
