@@ -8,16 +8,18 @@
 
 | Fact | Value | Date | Verified |
 |------|-------|------|----------|
-| **Hosting platform** | Self-hosted VPS (forge shared) | 2026-09-12 | ✅ |
-| **VPS Host** | 72.62.132.138 (srv1772644.hstgr.cloud, Hostinger) | 2026-09-12 | ✅ |
-| **VPS OS** | AlmaLinux + AdminBolt | 2026-09-12 | ✅ |
-| **App Port** | 3100 (Docker, nginx reverse proxy) | 2026-09-12 | ✅ |
-| **SSH** | `ssh -i ~/.ssh/id_ed25519 root@72.62.132.138` | 2026-09-12 | ✅ |
-| **Database** | PostgreSQL :5432 on VPS | 2026-09-12 | ✅ |
-| **Redis** | Redis :6379 on VPS | TBD | — |
-| **Domain** | TBD (.jo or .com) | ⬜ | — |
-| **Staging URL** | mutabe3-stage.jo (pending DNS) | ⬜ | — |
-| **Production URL** | mutabe3.jo (pending DNS) | ⬜ | — |
+| **Hosting platform** | Self-hosted VPS (forge shared) | 2026-09-16 | ✅ |
+| **VPS Host** | 72.62.132.138 (srv1772644.hstgr.cloud, Hostinger) | 2026-09-16 | ✅ |
+| **VPS OS** | AlmaLinux + AdminBolt | 2026-09-16 | ✅ |
+| **Frontend Port** | 9100 (Next.js production build) | 2026-09-16 | ✅ |
+| **Backend Port** | 9080 (Express API) | 2026-09-16 | ✅ |
+| **Reverse Proxy** | nginx (port 443 HTTPS, 80 HTTP) | 2026-09-16 | ✅ |
+| **SSH** | `ssh root@72.62.132.138` | 2026-09-16 | ✅ |
+| **Database** | PostgreSQL :5432 on VPS | 2026-09-16 | ✅ |
+| **Redis** | Not used (optional) | ⬜ | — |
+| **Production Domain** | https://mutabe3.news | 2026-09-16 | ✅ |
+| **Alias Domain** | mutabe3.hstgr.cloud | 2026-09-16 | ✅ |
+| **SSL Certificate** | Let's Encrypt (valid until 2026-12-15) | 2026-09-16 | ✅ |
 
 ## Tech Stack
 
@@ -48,26 +50,21 @@
 
 | Role | Person | Email | Status | Sessions | Date |
 |------|--------|-------|--------|----------|------|
-| **Project Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | All 6 | 2026-09-12 |
-| **Session 1 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Infrastructure & DevOps | 2026-09-12 |
-| **Session 2 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | CMS Implementation | 2026-09-12 |
-| **Session 3 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Frontend Foundation | 2026-09-12 |
-| **Session 4 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Homepage & Articles | 2026-09-12 |
-| **Session 5 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Admin Dashboard | 2026-09-12 |
-| **Session 6 Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | Search & Launch | 2026-09-12 |
+| **Project Lead** | Rami Alsharef | ramsharef@gmail.com | ✅ | All | 2026-09-16 |
+| **Environment** | Claude Code (Session 3+) | — | ✅ | All 3+ | 2026-09-16 |
 
 ## Project Status & Milestones
 
 | Milestone | Status | Date |
 |-----------|--------|------|
-| **Architecture phase** | ✅ Complete | 2026-09-12 |
-| **6 sessions planned** | ✅ Complete | 2026-09-12 |
-| **Prompts library** | ✅ Complete | 2026-09-12 |
-| **Forge structure** | ✅ Complete | 2026-09-12 |
-| **All decisions locked** | ✅ Complete | 2026-09-12 |
-| **Session 1 ready** | ✅ Ready to start | 2026-09-12 |
-| **Environment setup** | ⏳ Pending (Vercel, Sentry, GitHub) | — |
-| **MVP launch** | ⏳ ~11-14 weeks from Session 1 start | TBD |
+| **Infrastructure setup** | ✅ Complete | 2026-09-12 |
+| **VPS deployment** | ✅ Complete | 2026-09-16 |
+| **Domain & SSL** | ✅ Complete | 2026-09-16 |
+| **Production live** | ✅ Live at mutabe3.news | 2026-09-16 |
+| **Database & API** | ✅ Running | 2026-09-16 |
+| **Vercel removed** | ✅ Complete | 2026-09-16 |
+| **Phase 2: Design Redesign** | ⏳ Planning | 2026-09-16 |
+| **Phase 2: New news agency layout** | ⏳ Awaiting design direction | 2026-09-16 |
 
 ## Key Decisions Locked
 
