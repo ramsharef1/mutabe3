@@ -7,318 +7,488 @@ interface Article {
   title: string;
   summary?: string;
   content: string;
-  author?: { name: string };
   category?: { name: string; slug: string };
   publishedAt?: string;
   viewsCount?: number;
   featuredImageUrl?: string;
 }
 
-const PlaceholderImage = ({ seed }: { seed: string }) => {
-  const hues = [0, 30, 60, 120, 180, 240, 300];
-  const hue = hues[seed.charCodeAt(0) % hues.length];
-  return (
-    <div
-      style={{
-        background: `linear-gradient(135deg, hsl(${hue}, 70%, 60%), hsl(${(hue + 60) % 360}, 70%, 50%))`,
-        width: '100%',
-        height: '100%',
-      }}
-    />
-  );
+const WRITERS = [
+  'د. هاني الخصاونة',
+  'م. ليلى العبادي',
+  'أ. فارس الزعبي',
+  'د. سناء المجالي',
+  'خالد الرواشدة',
+  'د. ريم النعيمات',
+  'ياسر الحياري',
+  'د. عمر الطراونة',
+  'رنا الشوابكة',
+  'د. محمود العجارمة',
+  'سهى الحمود',
+  'أ. باسم الخريشا',
+];
+
+const OBITS = [
+  'الحاج محمد عبدالله الخلايلة في ذمة الله',
+  'الشيخ عوض سالم المجالي في ذمة الله',
+  'الحاجة فاطمة أحمد الزعبي في ذمة الله',
+  'المهندس سامر خليل الطراونة في ذمة الله',
+  'الدكتور يوسف محمود العبادي في ذمة الله',
+];
+
+const NAV = [
+  'اخبار الاردن',
+  'شرق وغرب',
+  'اقتصاد',
+  'تعليم و جامعات',
+  'العالم',
+  'فلسطين',
+  'البرلمان',
+  'بانوراما',
+  'كتاب متابع',
+  'ليالي متابع',
+  'صحة وبيئة',
+  'كاريكاتير',
+  'فيديو',
+];
+
+const css = `
+*{box-sizing:border-box}
+.am{direction:rtl;text-align:right;font-family:Arial,Tahoma,sans-serif;font-size:13px;color:#101033;background:#fff;margin:0}
+.am a{color:inherit;text-decoration:none}
+.am a:hover{color:#990000}
+.wrap{width:1002px;margin:0 auto}
+.topmenu{background:#990000;height:35px;color:#fff;font-size:12px}
+.topmenu .wrap{display:flex;justify-content:space-between;align-items:center;height:35px}
+.topmenu .links{display:flex}
+.topmenu .links span{padding:0 11px;border-right:1px solid #b53a3a;line-height:16px;cursor:pointer}
+.topmenu .links span:first-child{border-right:0;padding-right:0}
+.weather{display:flex;gap:10px;align-items:center;font-weight:bold}
+.weather .city{font-size:11px;line-height:1.1;text-align:center;padding:0 8px;border-right:1px solid #b53a3a}
+.weather .deg{font-size:19px}
+.weather .en{font-size:11px;letter-spacing:.5px;padding-right:10px;border-right:1px solid #b53a3a}
+.nav{border-top:1px solid #a80101;border-bottom:1px solid #a80101;background:#fff}
+.nav ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center}
+.nav li{padding:0 10px;border-left:1px solid #999;font-weight:bold;font-size:15px;line-height:32px;white-space:nowrap;cursor:pointer}
+.nav li:last-child{border-left:0}
+.brand{display:flex;justify-content:space-between;align-items:center;height:112px;padding:8px 0}
+.logo{text-align:center;padding-left:6px}
+.logo b{display:block;font-size:56px;font-weight:bold;color:#c9a227;font-family:'Traditional Arabic','Arial',serif;line-height:1;text-shadow:1px 1px 0 #7d5f05}
+.logo small{display:block;font-size:11px;color:#990000;letter-spacing:4px;margin-top:2px}
+.ad{background:#ececec;border:1px solid #d9d9d9;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px}
+.ad728{width:728px;height:90px}
+.writers{border-top:1px solid #a80101;border-bottom:1px solid #a80101;display:grid;grid-template-columns:repeat(4,1fr);padding:4px 0}
+.writer{display:flex;gap:8px;padding:6px 8px;border-left:1px solid #e5e5e5;min-height:66px}
+.writer:nth-child(4n){border-left:0}
+.writer .ph{width:70px;height:55px;flex:none;overflow:hidden;background:#ddd}
+.writer .ph img{width:100%;height:100%;object-fit:cover}
+.writer .name{color:#f00;font-weight:bold;font-size:13px;display:block}
+.writer .t{font-size:12px;font-weight:bold;color:#222;line-height:1.35}
+.ticker{background:#ededed;height:26px;display:flex;align-items:center;font-size:13px;font-weight:bold;color:#990000;overflow:hidden;border-bottom:1px solid #ccc;margin-top:6px}
+.ticker .lbl{background:#990000;color:#fff;padding:0 12px;height:26px;line-height:26px;margin-left:12px;flex:none}
+.ads3{display:flex;gap:6px;margin:8px 0}
+.ads3 .ad{flex:1;height:60px}
+.main{display:flex;gap:12px;margin:6px 0 12px;border-top:2px solid #a80101;padding-top:10px}
+.hero{width:352px;flex:none}
+.hero .img{width:350px;height:350px;background:#ddd;overflow:hidden}
+.hero .img img{width:100%;height:100%;object-fit:cover}
+.hero h2{font-size:24px;font-weight:bold;margin:12px 8px 0 0;line-height:1.3;color:#000}
+.mid{width:340px;flex:none}
+.item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #ddd}
+.item:first-child{padding-top:0}
+.item .th{width:90px;height:66px;flex:none;background:#ddd;overflow:hidden}
+.item .th img{width:100%;height:100%;object-fit:cover}
+.item .t{font-size:13px;font-weight:bold;color:#000;line-height:1.35}
+.side{flex:1;min-width:0}
+.box{border:1px solid #ccc;margin-bottom:10px;background:#fff}
+.box .hd{background:linear-gradient(#fafafa,#dcdcdc);border-bottom:1px solid #bbb;height:27px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-weight:bold;font-size:14px;color:#111}
+.box .hd i{display:inline-block;width:14px;height:14px;border:1px solid #990000;color:#990000;font-size:9px;line-height:12px;text-align:center;border-radius:2px;font-style:normal}
+.box ul{list-style:none;margin:0;padding:4px 8px}
+.arr li,.box li{padding:6px 14px 6px 0;position:relative;font-size:12.5px;font-weight:bold;color:#222;line-height:1.4;border-bottom:1px dotted #ddd}
+.arr li:last-child,.box li:last-child{border-bottom:0}
+.arr li:before,.box li:before{content:'';position:absolute;right:0;top:10px;border:5px solid transparent;border-right:6px solid #c00}
+.arr{list-style:none;margin:0;padding:0}
+.sec{margin:14px 0 0;min-width:0}
+.sec .hd{display:flex;align-items:center;gap:6px;border-bottom:1px solid #bbb;padding-bottom:4px;margin-bottom:8px}
+.sec .hd b{font-size:15px;color:#111}
+.sec .hd i{width:9px;height:9px;background:#990000;display:inline-block}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cards5{grid-template-columns:repeat(5,1fr)}
+.card .im{width:100%;aspect-ratio:218/160;background:#ddd;overflow:hidden}
+.card .im img{width:100%;height:100%;object-fit:cover}
+.card .t{font-size:13px;font-weight:bold;color:#000;margin-top:5px;line-height:1.35}
+.smalls{display:grid;grid-template-columns:repeat(4,1fr);gap:0 10px;margin-top:8px}
+.smalls3{grid-template-columns:repeat(3,1fr)}
+.smalls1{grid-template-columns:1fr}
+.sm{display:flex;gap:6px;padding:6px 0;border-top:1px solid #e3e3e3}
+.sm .th{width:58px;height:58px;flex:none;background:#ddd;overflow:hidden}
+.sm .th img{width:100%;height:100%;object-fit:cover}
+.sm .t{font-size:12px;font-weight:bold;color:#222;line-height:1.35}
+.sm .name{color:#f00;display:block;font-size:12px}
+.rnd .sm .th{border-radius:50%}
+.more{display:flex;justify-content:flex-end;margin-top:6px}
+.more span{font-size:11px;color:#666;background:#eee;border:1px solid #ddd;padding:1px 8px;cursor:pointer}
+.more span:before{content:'▲';color:#990000;margin-left:4px;font-size:9px}
+.two{display:flex;gap:16px}
+.two>.sec{flex:1}
+.three{display:flex;gap:16px}
+.three>.sec{flex:1}
+.four{display:flex;gap:16px}
+.four>.sec{flex:1}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.carousel{display:flex;align-items:center;gap:8px}
+.carousel .arrbtn{width:22px;height:22px;border-radius:50%;background:#444;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex:none;cursor:pointer}
+.carousel .row{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;flex:1}
+.bigtext{display:flex;gap:10px}
+.bigtext .im{width:200px;height:150px;flex:none;background:#ddd;overflow:hidden}
+.bigtext .im img{width:100%;height:100%;object-fit:cover}
+.bigtext .t{font-size:14px;font-weight:bold;color:#000;line-height:1.35}
+.bigtext p{font-size:12px;color:#444;line-height:1.55;margin:6px 0 0}
+.poll{border:1px solid #ddd;background:#f7f7f7;padding:12px;font-size:12px;min-height:170px;color:#444}
+.poll b{display:block;margin-bottom:8px;color:#111}
+.poll label{display:block;padding:4px 0}
+.poll button{background:#990000;color:#fff;border:0;padding:5px 14px;font-weight:bold;margin-top:8px;cursor:pointer}
+.pano{display:flex;gap:10px}
+.pano .big{flex:1}
+.pano .big .im{width:100%;aspect-ratio:4/3;background:#ddd;overflow:hidden}
+.pano .big .im img{width:100%;height:100%;object-fit:cover}
+.pano .big .t{font-size:13px;font-weight:bold;color:#990000;margin-top:6px}
+.pano .big p{font-size:11.5px;color:#444;margin:4px 0 0;line-height:1.5}
+.pano .grid{width:150px;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-content:start}
+.pano .grid .th{aspect-ratio:1;background:#ddd;overflow:hidden}
+.pano .grid .th img{width:100%;height:100%;object-fit:cover}
+.video{display:flex;gap:10px}
+.video .big{flex:1;aspect-ratio:16/9;background:#111;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.video .big img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.video .play{position:relative;width:68px;height:48px;background:#f00;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px}
+.video .cap{position:absolute;bottom:0;right:0;left:0;background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:bold;padding:8px 10px}
+.video .col{width:150px;display:flex;flex-direction:column;gap:8px}
+.video .col .th{height:84px;background:#222;overflow:hidden}
+.video .col .th img{width:100%;height:100%;object-fit:cover;filter:brightness(.6)}
+.footer{border-top:2px solid #a80101;margin-top:16px;padding:10px 0 22px;background:#f6f6f6}
+.ficons{display:flex;justify-content:space-between;padding:6px 0 10px;border-bottom:1px solid #ddd}
+.ficon{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:bold;color:#333}
+.ficon i{width:28px;height:28px;border-radius:50%;background:#990000;display:inline-block}
+.fsub{display:flex;justify-content:space-between;font-size:11px;color:#555;padding:8px 0;border-bottom:1px solid #ddd}
+.fsub span{cursor:pointer}
+.copy{text-align:center;font-size:11px;color:#333;padding:12px 0 8px;font-weight:bold}
+.social{display:flex;justify-content:center;gap:12px;padding:6px 0}
+.social i{width:24px;height:24px;background:#333;display:inline-block;border-radius:3px}
+.host{text-align:center;font-size:11px;color:#666;margin-top:6px}
+`;
+
+const Img = ({ src, alt = '' }: { src?: string; alt?: string }) => {
+  const [err, setErr] = useState(false);
+  if (!src || err) return <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#c9c9c9,#8f8f8f)' }} />;
+  return <img src={src} alt={alt} loading="lazy" onError={() => setErr(true)} />;
 };
 
-const ArticleImage = ({ url, seed }: { url?: string; seed: string }) => {
-  const [imageError, setImageError] = useState(false);
-
-  if (!url || imageError) return <PlaceholderImage seed={seed} />;
-
-  return (
-    <img
-      src={url}
-      alt="Article thumbnail"
-      style={{
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-      }}
-      onError={() => setImageError(true)}
-    />
-  );
-};
+const face = (i: number) => `https://i.pravatar.cc/140?img=${(i % 60) + 5}`;
 
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        const res = await fetch('/api/articles');
-        if (!res.ok) throw new Error('Failed to fetch articles');
-        const data = await res.json();
-        setArticles(data.data || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchArticles();
+    fetch('/api/articles')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setArticles(d.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading || articles.length === 0) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>جاري تحميل الأخبار...</div>;
+    return <div style={{ padding: 40, textAlign: 'center', fontFamily: 'Arial' }}>جاري تحميل الأخبار...</div>;
   }
 
-  return (
-    <div style={{ direction: 'rtl', textAlign: 'right', fontFamily: "'Arial', sans-serif", background: '#f0ebe4', margin: 0, padding: 0 }}>
-      {/* Top Header */}
-      <div style={{ background: '#8B0000', color: 'white', padding: '8px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', borderBottom: '1px solid #666' }}>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <span>اشترك معنا</span>
-          <span>|</span>
-          <span>اتصل بنا</span>
-          <span>|</span>
-          <span>سياسة الخصوصية</span>
+  const at = (i: number) => articles[i % articles.length];
+  const seq = (from: number, n: number) => Array.from({ length: n }, (_, k) => at(from + k));
+
+  const SecHd = ({ t }: { t: string }) => (
+    <div className="hd"><i /><b>{t}</b></div>
+  );
+  const More = () => <div className="more"><span>المزيد</span></div>;
+
+  const Cards = ({ from, n = 4, five = false }: { from: number; n?: number; five?: boolean }) => (
+    <div className={`cards ${five ? 'cards5' : ''}`}>
+      {seq(from, n).map((a, k) => (
+        <a key={`${a.id}-${k}`} className="card" href="#">
+          <div className="im"><Img src={a.featuredImageUrl} /></div>
+          <div className="t">{a.title}</div>
+        </a>
+      ))}
+    </div>
+  );
+
+  const Smalls = ({ from, n = 8, cols = 4, writer = false }: { from: number; n?: number; cols?: number; writer?: boolean }) => (
+    <div className={`smalls ${cols === 3 ? 'smalls3' : ''} ${cols === 1 ? 'smalls1' : ''}`}>
+      {seq(from, n).map((a, k) => (
+        <a key={`${a.id}-${k}`} className="sm" href="#">
+          <div className="th"><Img src={writer ? face(from + k) : a.featuredImageUrl} /></div>
+          <div className="t">
+            {writer && <span className="name">{WRITERS[(from + k) % WRITERS.length]}</span>}
+            {a.title}
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+
+  const Grid3 = ({ from }: { from: number }) => (
+    <div className="grid3">
+      {seq(from, 6).map((a, k) => (
+        <a key={`${a.id}-${k}`} className="card" href="#">
+          <div className="im"><Img src={a.featuredImageUrl} /></div>
+          <div className="t">{a.title}</div>
+        </a>
+      ))}
+    </div>
+  );
+
+  const Bullets = ({ from, n = 5, items }: { from?: number; n?: number; items?: string[] }) => (
+    <ul className="arr">
+      {(items ?? seq(from ?? 0, n).map((a) => a.title)).map((t, k) => <li key={k}><a href="#">{t}</a></li>)}
+    </ul>
+  );
+
+  const BigText = ({ from }: { from: number }) => {
+    const a = at(from);
+    return (
+      <>
+        <div className="bigtext">
+          <div className="im"><Img src={a.featuredImageUrl} /></div>
+          <div>
+            <a className="t" href="#">{a.title}</a>
+            <p>{a.summary || a.content}</p>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <span>ENGLISH</span>
-          <span>|</span>
-          <span>عربي</span>
+        <div style={{ marginTop: 6 }}><Bullets from={from + 1} n={3} /></div>
+      </>
+    );
+  };
+
+  return (
+    <div className="am">
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+
+      {/* Top red utility bar */}
+      <div className="topmenu">
+        <div className="wrap">
+          <div className="links">
+            <span>الرئيسية</span><span>ارسل لنا</span><span>اتصل بنا</span><span>البحث</span><span>حول الموقع</span><span>أخبار اليوم</span>
+          </div>
+          <div className="weather">
+            <span className="city">عمّان<br />الآن</span>
+            <span className="deg">24°</span>
+            <span>☀</span>
+            <span className="city">المزيد ▾</span>
+            <span className="en">ENGLISH</span>
+          </div>
         </div>
       </div>
 
-      {/* Navigation Bar */}
-      <div style={{ background: '#f5f5f5', borderBottom: '2px solid #8B0000', padding: '0' }}>
-        <div style={{ display: 'flex', direction: 'rtl', maxWidth: '1200px', margin: '0 auto' }}>
-          {['سياسية', 'اقتصاد', 'رياضة', 'تكنولوجيا', 'ثقافة', 'عالم', 'تعليم', 'بيئة'].map((cat, i) => (
-            <div
-              key={cat}
-              style={{
-                padding: '12px 20px',
-                borderLeft: i < 7 ? '1px solid #ddd' : 'none',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                color: '#333',
-                cursor: 'pointer',
-                background: 'white',
-                flex: 1,
-                textAlign: 'center',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#efefef')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
-            >
-              {cat}
-            </div>
+      <div className="wrap">
+        {/* Category nav */}
+        <div className="nav">
+          <ul>{NAV.map((n) => <li key={n}>{n}</li>)}</ul>
+        </div>
+
+        {/* Logo + leaderboard */}
+        <div className="brand">
+          <div className="logo"><b>متابع</b><small>وكالة متابع الإخبارية</small></div>
+          <div className="ad ad728">إعلان 728×90</div>
+        </div>
+
+        {/* Columnists strip */}
+        <div className="writers">
+          {seq(0, 8).map((a, k) => (
+            <a key={`w-${k}`} className="writer" href="#">
+              <div className="ph"><Img src={face(k)} /></div>
+              <div className="t"><span className="name">{WRITERS[k]}</span>{a.title}</div>
+            </a>
           ))}
         </div>
-      </div>
 
-      {/* Logo & Title */}
-      <div style={{ background: 'white', padding: '25px', textAlign: 'center', borderBottom: '3px solid #8B0000', marginBottom: '15px' }}>
-        <div style={{ fontSize: '13px', color: '#999', marginBottom: '8px' }}>وكالة أنباء أردنية</div>
-        <h1 style={{ fontSize: '52px', margin: '0 0 5px 0', color: '#8B0000', fontWeight: 'bold', letterSpacing: '2px' }}>
-          mutabe3
-        </h1>
-        <p style={{ margin: '0', color: '#666', fontSize: '14px', fontWeight: '500' }}>منصة أخبار أردنية شاملة</p>
-      </div>
+        {/* Ticker */}
+        <div className="ticker"><span className="lbl">عاجل</span><span>{at(0).title} — {at(1).title}</span></div>
 
-      {/* Featured Article (Large) */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 15px 15px' }}>
-        <div style={{ display: 'flex', gap: '15px', background: 'white', border: '3px solid #8B0000', borderRadius: '2px', overflow: 'hidden', marginBottom: '20px' }}>
-          <div style={{ width: '35%', height: '300px', overflow: 'hidden' }}>
-            <ArticleImage url={articles[0].featuredImageUrl} seed={articles[0].id} />
+        {/* 3 ads */}
+        <div className="ads3"><div className="ad">إعلان</div><div className="ad">إعلان</div><div className="ad">إعلان</div></div>
+
+        {/* Hero + mid list + side boxes */}
+        <div className="main">
+          <div className="hero">
+            <div className="img"><Img src={at(0).featuredImageUrl} /></div>
+            <h2><a href="#">{at(0).title}</a></h2>
           </div>
-          <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: '11px', color: '#999', marginBottom: '8px' }}>
-              {articles[0].category && (
-                <span style={{ background: '#8B0000', color: 'white', padding: '3px 8px', borderRadius: '2px', marginLeft: '8px' }}>
-                  {articles[0].category.name}
-                </span>
-              )}
-            </div>
-            <h2 style={{ margin: '0 0 12px 0', fontSize: '24px', lineHeight: '1.4', color: '#8B0000', fontWeight: 'bold' }}>
-              {articles[0].title}
-            </h2>
-            <p style={{ margin: '0 0 12px 0', fontSize: '13px', lineHeight: '1.6', color: '#555' }}>
-              {articles[0].summary || articles[0].content.substring(0, 150)}...
-            </p>
-            <div style={{ fontSize: '11px', color: '#999' }}>
-              {articles[0].publishedAt && new Date(articles[0].publishedAt).toLocaleDateString('ar-JO')}
-              {articles[0].viewsCount && ` • ${articles[0].viewsCount} مشاهدة`}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Container */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 15px', display: 'flex', gap: '15px', marginBottom: '30px' }}>
-        {/* Left Sidebar */}
-        <div style={{ width: '25%' }}>
-          {/* Breaking News */}
-          <div style={{ background: 'white', marginBottom: '15px', borderRadius: '2px', overflow: 'hidden' }}>
-            <div style={{ background: '#8B0000', color: 'white', padding: '10px 15px', fontWeight: 'bold', fontSize: '13px' }}>
-              ⚡ آخر الأخبار
-            </div>
-            {articles.slice(1, 7).map((article) => (
-              <div
-                key={article.id}
-                style={{
-                  padding: '12px 15px',
-                  borderBottom: '1px solid #f0f0f0',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  lineHeight: '1.5',
-                  color: '#333',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f9f9f9';
-                  e.currentTarget.style.color = '#8B0000';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#333';
-                }}
-              >
-                • {article.title}
-              </div>
+          <div className="mid">
+            {seq(1, 7).map((a, k) => (
+              <a key={`m-${k}`} className="item" href="#">
+                <div className="th"><Img src={a.featuredImageUrl} /></div>
+                <div className="t">{a.title}</div>
+              </a>
             ))}
           </div>
-
-          {/* Ads Space */}
-          <div style={{ background: '#e8e8e8', height: '250px', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '12px', marginBottom: '15px' }}>
-            [إعلان]
-          </div>
-
-          {/* Jobs Section */}
-          <div style={{ background: 'white', borderRadius: '2px', overflow: 'hidden' }}>
-            <div style={{ background: '#8B0000', color: 'white', padding: '10px 15px', fontWeight: 'bold', fontSize: '13px' }}>
-              📋 وظائف
+          <div className="side">
+            <div className="box">
+              <div className="hd"><span>آخر الأنباء</span><i>‹</i></div>
+              <ul>{seq(8, 7).map((a, k) => <li key={`l-${k}`}><a href="#">{a.title}</a></li>)}</ul>
             </div>
-            <div style={{ padding: '15px', fontSize: '12px', color: '#666', lineHeight: '1.6' }}>
-              فرص وظيفية متاحة في مختلف القطاعات والتخصصات
+            <div className="box">
+              <div className="hd"><span>وفيات</span><i>‹</i></div>
+              <ul>{OBITS.map((t, k) => <li key={`o-${k}`}><a href="#">{t}</a></li>)}</ul>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div style={{ flex: 1 }}>
-          {/* 2-Column Grid - Section 1 */}
-          <div style={{ marginBottom: '25px' }}>
-            <div style={{ background: '#8B0000', color: 'white', padding: '10px 15px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', borderRadius: '2px' }}>
-              أهم الأخبار
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {articles.slice(1, 5).map((article) => (
-                <div
-                  key={article.id}
-                  style={{
-                    background: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '2px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    transition: 'box-shadow 0.2s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
-                >
-                  <div style={{ width: '100%', height: '150px', overflow: 'hidden' }}>
-                    <ArticleImage url={article.featuredImageUrl} seed={article.id} />
-                  </div>
-                  <div style={{ padding: '12px' }}>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', lineHeight: '1.4', fontWeight: 'bold', color: '#333' }}>
-                      {article.title}
-                    </h3>
-                    {article.category && (
-                      <span style={{ display: 'inline-block', background: '#8B0000', color: 'white', padding: '3px 8px', borderRadius: '2px', fontSize: '10px', marginBottom: '6px', marginRight: '5px' }}>
-                        {article.category.name}
-                      </span>
-                    )}
-                    <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>
-                      {article.publishedAt && new Date(article.publishedAt).toLocaleDateString('ar-JO')}
-                    </div>
-                  </div>
-                </div>
+        <div className="ad" style={{ height: 90 }}>إعلان 1002×90</div>
+
+        {/* اقتصاد */}
+        <div className="sec"><SecHd t="اقتصاد" /><Cards from={2} /><Smalls from={6} /><More /></div>
+
+        {/* شرق وغرب */}
+        <div className="sec"><SecHd t="شرق وغرب" /><Cards from={10} /><Smalls from={14} /><More /></div>
+
+        {/* البرلمان | حراك */}
+        <div className="two">
+          <div className="sec"><SecHd t="البرلمان" /><Grid3 from={3} /><More /></div>
+          <div className="sec"><SecHd t="حراك" /><Grid3 from={9} /><More /></div>
+        </div>
+
+        <div className="ads3"><div className="ad">إعلان</div><div className="ad">إعلان</div><div className="ad">إعلان</div></div>
+
+        {/* Four opinion columns */}
+        <div className="four">
+          {['آراء', 'وجهة نظر', 'صحفة', 'نقاش'].map((t, k) => (
+            <div className="sec" key={t}><SecHd t={t} /><Smalls from={k + 1} n={1} cols={1} writer /></div>
+          ))}
+        </div>
+
+        {/* ليالي متابع carousel */}
+        <div className="sec">
+          <SecHd t="ليالي متابع" />
+          <div className="carousel">
+            <span className="arrbtn">‹</span>
+            <div className="row">
+              {seq(5, 7).map((a, k) => (
+                <a key={`c-${k}`} className="card" href="#">
+                  <div className="im"><Img src={a.featuredImageUrl} /></div>
+                  <div className="t" style={{ fontSize: 11.5 }}>{a.title}</div>
+                </a>
               ))}
+            </div>
+            <span className="arrbtn">›</span>
+          </div>
+          <More />
+        </div>
+
+        <div className="ad" style={{ height: 90, marginTop: 12 }}>إعلان 1002×90</div>
+
+        {/* ديوان | مقالات مختارة | كتاب متابع */}
+        <div className="three">
+          <div className="sec"><SecHd t="ديوان" /><Bullets from={12} n={6} /><More /></div>
+          <div className="sec rnd"><SecHd t="مقالات مختارة" /><Smalls from={4} n={5} cols={1} writer /><More /></div>
+          <div className="sec rnd"><SecHd t="كتاب متابع" /><Smalls from={8} n={5} cols={1} writer /><More /></div>
+        </div>
+
+        {/* تعليم وجامعات */}
+        <div className="sec"><SecHd t="تعليم وجامعات" /><Cards from={1} n={5} five /><More /></div>
+
+        {/* رياضة | ثقافة */}
+        <div className="two">
+          <div className="sec"><SecHd t="رياضة" /><BigText from={2} /><More /></div>
+          <div className="sec"><SecHd t="الثقافة" /><BigText from={13} /><More /></div>
+        </div>
+
+        {/* فلسطين | العالم */}
+        <div className="two">
+          <div className="sec"><SecHd t="فلسطين" /><Bullets from={5} /><More /></div>
+          <div className="sec"><SecHd t="العالم" /><Bullets from={11} /><More /></div>
+        </div>
+
+        {/* وظائف | قطاعات */}
+        <div className="two">
+          <div className="sec"><SecHd t="وظائف" /><Grid3 from={7} /><More /></div>
+          <div className="sec"><SecHd t="قطاعات" /><Grid3 from={14} /><More /></div>
+        </div>
+
+        {/* حوادث | أخبار الأردن */}
+        <div className="two">
+          <div className="sec"><SecHd t="حوادث" /><Bullets from={3} n={4} /><More /></div>
+          <div className="sec"><SecHd t="أخبار الأردن" /><Bullets from={9} n={4} /><More /></div>
+        </div>
+
+        {/* وفيات | رسالة إلى المحرر */}
+        <div className="two">
+          <div className="sec"><SecHd t="وفيات" /><Bullets items={OBITS} /><More /></div>
+          <div className="sec"><SecHd t="رسالة الى المحرر" /><Bullets from={16} n={5} /><More /></div>
+        </div>
+
+        {/* تكنولوجيا | صحة وبيئة | منوعات */}
+        <div className="three">
+          <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" /><Smalls from={2} n={6} cols={1} /><More /></div>
+          <div className="sec rnd"><SecHd t="صحة وبيئة" /><Smalls from={8} n={6} cols={1} /><More /></div>
+          <div className="sec rnd"><SecHd t="منوعات" /><Smalls from={14} n={6} cols={1} /><More /></div>
+        </div>
+
+        <div className="ads3"><div className="ad">إعلان</div><div className="ad">إعلان</div><div className="ad">إعلان</div></div>
+
+        {/* بانوراما | تصويت */}
+        <div className="two">
+          <div className="sec" style={{ flex: 2 }}>
+            <SecHd t="بانوراما" />
+            <div className="pano">
+              <div className="grid">{seq(6, 6).map((a, k) => <div key={`p-${k}`} className="th"><Img src={a.featuredImageUrl} /></div>)}</div>
+              <div className="big">
+                <div className="im"><Img src={at(4).featuredImageUrl} /></div>
+                <a className="t" href="#">{at(4).title}</a>
+                <p>{at(4).summary || at(4).content}</p>
+              </div>
+            </div>
+            <More />
+          </div>
+          <div className="sec">
+            <SecHd t="تصويت" />
+            <div className="poll">
+              <b>هل تؤيد قرار رفع سعر الفائدة؟</b>
+              <label><input type="radio" name="p" /> نعم</label>
+              <label><input type="radio" name="p" /> لا</label>
+              <label><input type="radio" name="p" /> لا أعرف</label>
+              <button>صوّت</button>
             </div>
           </div>
+        </div>
 
-          {/* 3-Column Grid - Section 2 */}
-          <div style={{ marginBottom: '25px' }}>
-            <div style={{ background: '#8B0000', color: 'white', padding: '10px 15px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', borderRadius: '2px' }}>
-              أخبار متنوعة
+        {/* فيديو متابع */}
+        <div className="sec">
+          <SecHd t="فيديو متابع" />
+          <div className="video">
+            <div className="col">{seq(1, 3).map((a, k) => <div key={`v1-${k}`} className="th"><Img src={a.featuredImageUrl} /></div>)}</div>
+            <div className="big">
+              <Img src={at(3).featuredImageUrl} />
+              <div className="play">▶</div>
+              <div className="cap">{at(3).title}</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
-              {articles.slice(5, 11).map((article) => (
-                <div
-                  key={article.id}
-                  style={{
-                    background: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '2px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#8B0000')}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#ddd')}
-                >
-                  <div style={{ width: '100%', height: '120px', overflow: 'hidden' }}>
-                    <ArticleImage url={article.featuredImageUrl} seed={article.id} />
-                  </div>
-                  <div style={{ padding: '10px' }}>
-                    <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', lineHeight: '1.3', fontWeight: 'bold', color: '#333' }}>
-                      {article.title}
-                    </h4>
-                    <div style={{ fontSize: '10px', color: '#999' }}>
-                      {article.publishedAt && new Date(article.publishedAt).toLocaleDateString('ar-JO')}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 4-Column Grid - Section 3 */}
-          <div style={{ marginBottom: '25px' }}>
-            <div style={{ background: '#8B0000', color: 'white', padding: '10px 15px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', borderRadius: '2px' }}>
-              في الصحف
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-              {articles.slice(11, 19).map((article) => (
-                <div
-                  key={article.id}
-                  style={{
-                    background: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '2px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                  }}
-                >
-                  <div style={{ width: '100%', height: '100px', overflow: 'hidden' }}>
-                    <ArticleImage url={article.featuredImageUrl} seed={article.id} />
-                  </div>
-                  <div style={{ padding: '8px' }}>
-                    <h5 style={{ margin: '0', fontSize: '11px', lineHeight: '1.3', fontWeight: 'bold', color: '#333' }}>
-                      {article.title.substring(0, 30)}...
-                    </h5>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="col">{seq(5, 3).map((a, k) => <div key={`v2-${k}`} className="th"><Img src={a.featuredImageUrl} /></div>)}</div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ background: '#8B0000', color: 'white', padding: '25px', textAlign: 'center', fontSize: '12px', marginTop: '30px', borderTop: '3px solid #600' }}>
-        <p style={{ margin: '0 0 10px 0' }}>© 2026 وكالة mutabe3 الاخبارية. جميع الحقوق محفوظة</p>
-        <p style={{ margin: '0', fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
-          البريد الإلكتروني: info@mutabe3.news | الهاتف: +962-6-1234567
-        </p>
+      <div className="footer">
+        <div className="wrap">
+          <div className="ficons">
+            {['متابع الرياضي', 'متابع الصحي', 'متابع الصورة', 'متابع العلمي', 'نسخة الموبايل', 'Mutabe3 English'].map((t) => (
+              <span className="ficon" key={t}><i />{t}</span>
+            ))}
+          </div>
+          <div className="fsub">
+            <span>خدمة اخبار الجوال</span><span>ارسل خبراً</span><span>أخبار الوفيات</span><span>خدمة RSS</span><span>حول متابع</span><span>اتصل بنا</span><span>سياسة الخصوصية</span>
+          </div>
+          <div className="copy">جميع الحقوق محفوظة © وكالة متابع الإخبارية {new Date().getFullYear()} — المقالات والتعليقات المنشورة تعبر عن رأي أصحابها فقط</div>
+          <div className="social"><i /><i /><i /><i /></div>
+          <div className="host">برمجة واستضافة mutabe3.news</div>
+        </div>
       </div>
     </div>
   );
