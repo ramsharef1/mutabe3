@@ -1,5 +1,20 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-09-17
+
+**D-034: Homepage, Article and Category Templates Replicate ammonnews.net**
+- **Decided by:** Rami ("i want the exact same design, headers, colors, components")
+- **What:** Frontend rebuilt as a measured structural replica of ammonnews.net with متابع branding
+  - Measurements taken from the live site DOM: 1002px container, #990000 utility bar, #a80101 rules, bold 15px nav, 350×350 hero, 70×55 columnist thumbs, 218×160 cards, 58×58 small thumbs, red-arrow bullet lists, gray gradient box headers, Amiri 20px/35px article body, 84×74 category-list thumbs
+  - Shared header/footer/sidebar in `packages/frontend/app/components/site.tsx`, all CSS in `app/globals.css`
+  - New routes: `/article/[id]` and `/category/[slug]`; every homepage item links into them
+  - Content is dummy for now: 19 seeded articles cycled through all sections, Picsum/Pravatar placeholder photos
+  - Backend: `/api/articles*` no longer return `author.password`
+- **Why:** Client is evaluating mutabe3 against Ammon specifically; design fidelity first, real content and features next
+- **Status:** ✅ LIVE at https://mutabe3.news · 2026-09-17
+
+---
+
 ## 2026-09-16
 
 **D-033: Configure App for Production Domain (https://mutabe3.news)**

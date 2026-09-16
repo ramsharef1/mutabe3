@@ -63,8 +63,9 @@
 | **Production live** | ✅ Live at mutabe3.news | 2026-09-16 |
 | **Database & API** | ✅ Running | 2026-09-16 |
 | **Vercel removed** | ✅ Complete | 2026-09-16 |
-| **Phase 2: Design Redesign** | ⏳ Planning | 2026-09-16 |
-| **Phase 2: New news agency layout** | ⏳ Awaiting design direction | 2026-09-16 |
+| **Phase 2: Ammon-replica homepage** | ✅ Live (D-034) | 2026-09-17 |
+| **Phase 2: Article + category templates** | ✅ Live at /article/[id], /category/[slug] (D-034) | 2026-09-17 |
+| **Phase 3: Real content, search, CMS** | ⏳ Next | — |
 
 ## Key Decisions Locked
 

@@ -49,7 +49,7 @@ app.get('/api/articles', async (req: Request, res: Response) => {
   try {
     const articles = await prisma.article.findMany({
       where: { status: 'PUBLISHED' },
-      include: { author: true, category: true },
+      include: { author: { select: { id: true, name: true } }, category: true },
       orderBy: { publishedAt: 'desc' },
       take: 20,
     });
@@ -72,7 +72,7 @@ app.get('/api/articles/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const article = await prisma.article.findUnique({
       where: { id },
-      include: { author: true, category: true, comments: true },
+      include: { author: { select: { id: true, name: true } }, category: true, comments: true },
     });
 
     if (!article) {

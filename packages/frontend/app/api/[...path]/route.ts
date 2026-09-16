@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const VPS_API = 'http://localhost:9080';
+const VPS_API = process.env.VPS_API || 'http://127.0.0.1:9080';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +11,7 @@ export async function GET(
   const queryStr = url.search;
 
   try {
-    const response = await fetch(`${VPS_API}/${pathStr}${queryStr}`, {
+    const response = await fetch(`${VPS_API}/api/${pathStr}${queryStr}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ export async function GET(
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(
-      { error: 'API proxy error' },
+      { error: 'API proxy error', detail: process.env.NODE_ENV === 'production' ? undefined : String((error as any)?.cause ?? error) },
       { status: 500 }
     );
   }
@@ -36,7 +36,7 @@ export async function POST(
   const body = await request.json().catch(() => null);
 
   try {
-    const response = await fetch(`${VPS_API}/${pathStr}`, {
+    const response = await fetch(`${VPS_API}/api/${pathStr}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
