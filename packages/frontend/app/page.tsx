@@ -29,7 +29,10 @@ const PlaceholderImage = ({ seed }: { seed: string }) => {
 };
 
 const ArticleImage = ({ url, seed }: { url?: string; seed: string }) => {
-  if (!url) return <PlaceholderImage seed={seed} />;
+  const [imageError, setImageError] = useState(false);
+
+  if (!url || imageError) return <PlaceholderImage seed={seed} />;
+
   return (
     <img
       src={url}
@@ -39,10 +42,7 @@ const ArticleImage = ({ url, seed }: { url?: string; seed: string }) => {
         height: '100%',
         objectFit: 'cover',
       }}
-      onError={(e) => {
-        e.currentTarget.style.display = 'none';
-        e.currentTarget.parentElement!.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg,hsl(240,70%,60%),hsl(300,70%,50%))"></div>';
-      }}
+      onError={() => setImageError(true)}
     />
   );
 };
