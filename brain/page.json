@@ -1,8 +1,14 @@
 {
-  "updated": "2026-09-16T15:52:26Z",
+  "updated": "2026-09-16T22:17:48Z",
   "bible_excerpt": "",
   "decisions": [
-    "# mutabe3 Operational Decisions (2026)",
+    "- **What:** Update app configuration to use https://mutabe3.news",
+    "  - Frontend .env.production: API URL → https://mutabe3.news:9080",
+    "  - Backend CORS: Restricted to mutabe3.news and www.mutabe3.news",
+    "  - Built locally, synced to VPS, services restarted",
+    "- **Status:** ✅ COMPLETE · 2026-09-16 22:01 UTC",
+    "",
+    "---",
     "",
     "## 2026-09-15",
     "",
@@ -20,7 +26,11 @@
   "open_questions": [],
   "execution_log": [
     "- 2026-09-15T21:01Z · edit · brain/DECISIONS.md",
-    "- 2026-09-15T21:22Z · edit · vercel.json"
+    "- 2026-09-15T21:22Z · edit · vercel.json",
+    "- 2026-09-16T21:58Z · edit · packages/frontend/.env.production",
+    "- 2026-09-16T21:58Z · edit · packages/backend/src/index.ts",
+    "- 2026-09-16T22:02Z · edit · /Users/ramialsharef/Projects/forge/brain/DECISIONS.md",
+    "- 2026-09-16T22:02Z · edit · brain/DECISIONS.md"
   ],
   "prompt_registry": "",
   "findings_status": {
