@@ -86,3 +86,6 @@ strapi.log
 .env.local
 .env.*.local
 .env.production
+
+# TypeScript incremental build info
+*.tsbuildinfo
