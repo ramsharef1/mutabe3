@@ -98,6 +98,42 @@ export function useArticles() {
 
 export const Loading = () => <div className="am loading">جاري تحميل الأخبار...</div>;
 
+const LogoMark = () => (
+  <svg viewBox="0 0 270 90" aria-label="متابع" role="img">
+    <defs>
+      <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#ead27a" />
+        <stop offset="0.55" stopColor="#c9a227" />
+        <stop offset="1" stopColor="#8f6f10" />
+      </linearGradient>
+    </defs>
+    <path d="M14 74 C 26 30, 62 14, 96 30 C 78 22, 46 34, 34 70 Z" fill="#b30000" />
+    <path d="M30 78 C 44 44, 76 30, 108 44" fill="none" stroke="#b30000" strokeWidth="5" strokeLinecap="round" />
+    <circle cx="110" cy="44" r="5" fill="#b30000" />
+    <text x="262" y="68" textAnchor="end" fontFamily="Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif" fontSize="68" fontWeight="700" fill="url(#lg)" stroke="#6b520a" strokeWidth="0.9">متابع</text>
+  </svg>
+);
+
+const ADS = [
+  { bg: 'linear-gradient(90deg,#4a1d75,#8e44ad)', t: 'شبكة الجيل الخامس', s: 'اشترك الآن واحصل على 100GB إضافية', en: '5G' },
+  { bg: 'linear-gradient(90deg,#b71c1c,#e53935)', t: 'تأجير سيارات', s: 'ابتداءً من 15 دينار / يوم', cta: 'احجز الآن' },
+  { bg: 'linear-gradient(90deg,#1b5e20,#43a047)', t: 'بنك المستقبل', s: 'حسابات التوفير بأعلى فائدة', cta: 'افتح حسابك' },
+  { bg: 'linear-gradient(90deg,#e65100,#ffb300)', t: 'عروض الموسم', s: 'خصومات تصل إلى 50% على كل شيء', cta: 'تسوّق' },
+  { bg: 'linear-gradient(90deg,#0d47a1,#1e88e5)', t: 'الجامعة الأهلية', s: 'التسجيل مفتوح للفصل الأول 2026/2027', cta: 'سجّل الآن' },
+];
+
+export function AdBanner({ variant, className = '', style }: { variant: number; className?: string; style?: React.CSSProperties }) {
+  const a = ADS[variant % ADS.length];
+  return (
+    <div className={`adb ${className}`} style={{ background: a.bg, ...style }}>
+      {a.en && <span className="en">{a.en}</span>}
+      <span>{a.t}</span>
+      <small>{a.s}</small>
+      {a.cta && <span className="cta">{a.cta}</span>}
+    </div>
+  );
+}
+
 export function SiteHeader() {
   return (
     <>
@@ -120,8 +156,8 @@ export function SiteHeader() {
           <ul>{NAV.map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
         </div>
         <div className="brand">
-          <a className="logo" href="/"><b>متابع</b><small>وكالة متابع الإخبارية</small></a>
-          <div className="ad ad728">إعلان 728×90</div>
+          <a className="logo" href="/"><LogoMark /><small>وكالة متابع الإخبارية</small></a>
+          <AdBanner variant={0} className="ad728" />
         </div>
       </div>
     </>

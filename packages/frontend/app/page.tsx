@@ -1,6 +1,6 @@
 'use client';
 
-import { Article, WRITERS, face, Img, useArticles, Loading, SiteHeader, SiteFooter, SecHd, More } from './components/site';
+import { Article, WRITERS, face, Img, useArticles, Loading, SiteHeader, SiteFooter, SecHd, More, AdBanner } from './components/site';
 
 const OBITS = [
   'الحاج محمد عبدالله الخلايلة في ذمة الله',
@@ -93,9 +93,14 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="ticker"><span className="lbl">عاجل</span><span>{at(0).title} — {at(1).title}</span></div>
+        <div className="ticker">
+          <span className="lbl" />
+          <a href={link(at(0))}>{at(0).title}</a>
+          <span style={{ color: '#bbb' }}>|</span>
+          <a href={link(at(1))}>{at(1).title}</a>
+        </div>
 
-        <div className="ads3"><div className="ad">إعلان</div><div className="ad">إعلان</div><div className="ad">إعلان</div></div>
+        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
 
         {/* Hero + mid list + side boxes */}
         <div className="main">
@@ -123,7 +128,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="ad" style={{ height: 90 }}>إعلان 1002×90</div>
+        <AdBanner variant={4} style={{ height: 90 }} />
 
         <div className="sec"><SecHd t="اقتصاد" slug="economy" /><Cards from={2} /><Smalls from={6} /><More slug="economy" /></div>
         <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards from={10} /><Smalls from={14} /><More slug="east-west" /></div>
@@ -133,7 +138,7 @@ export default function Home() {
           <div className="sec"><SecHd t="حراك" slug="harak" /><Grid3 from={9} /><More slug="harak" /></div>
         </div>
 
-        <div className="ads3"><div className="ad">إعلان</div><div className="ad">إعلان</div><div className="ad">إعلان</div></div>
+        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
 
         <div className="four">
           {[['آراء', 'opinion'], ['وجهة نظر', 'viewpoint'], ['صحفة', 'press'], ['نقاش', 'debate']].map(([t, s], k) => (
@@ -158,7 +163,7 @@ export default function Home() {
           <More slug="nights" />
         </div>
 
-        <div className="ad" style={{ height: 90, marginTop: 12 }}>إعلان 1002×90</div>
+        <AdBanner variant={3} style={{ height: 90, marginTop: 12 }} />
 
         <div className="three">
           <div className="sec"><SecHd t="ديوان" slug="diwan" /><Bullets from={12} n={6} /><More slug="diwan" /></div>
@@ -199,7 +204,7 @@ export default function Home() {
           <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls from={14} n={6} cols={1} /><More slug="misc" /></div>
         </div>
 
-        <div className="ads3"><div className="ad">إعلان</div><div className="ad">إعلان</div><div className="ad">إعلان</div></div>
+        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
 
         <div className="two">
           <div className="sec" style={{ flex: 2 }}>
