@@ -4,3 +4,11 @@
 - 2026-09-16T21:58Z · edit · packages/backend/src/index.ts
 - 2026-09-16T22:02Z · edit · /Users/ramialsharef/Projects/forge/brain/DECISIONS.md
 - 2026-09-16T22:02Z · edit · brain/DECISIONS.md
+- 2026-09-16T22:30Z · edit · FACTS.md
+- 2026-09-16T22:30Z · edit · FACTS.md
+- 2026-09-16T22:30Z · edit · FACTS.md
+- 2026-09-16T22:34Z · edit · packages/frontend/app/page-ammon-style.tsx
+- 2026-09-16T22:36Z · edit · packages/frontend/app/page-exact-ammon.tsx
+- 2026-09-16T22:39Z · edit · packages/backend/seed.ts
+- 2026-09-16T22:40Z · edit · packages/backend/seed.ts
+- 2026-09-16T22:42Z · edit · packages/backend/seed.ts

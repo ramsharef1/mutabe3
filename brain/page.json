@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-16T22:17:48Z",
+  "updated": "2026-09-16T22:38:49Z",
   "bible_excerpt": "",
   "decisions": [
     "- **What:** Update app configuration to use https://mutabe3.news",
@@ -30,7 +30,12 @@
     "- 2026-09-16T21:58Z · edit · packages/frontend/.env.production",
     "- 2026-09-16T21:58Z · edit · packages/backend/src/index.ts",
     "- 2026-09-16T22:02Z · edit · /Users/ramialsharef/Projects/forge/brain/DECISIONS.md",
-    "- 2026-09-16T22:02Z · edit · brain/DECISIONS.md"
+    "- 2026-09-16T22:02Z · edit · brain/DECISIONS.md",
+    "- 2026-09-16T22:30Z · edit · FACTS.md",
+    "- 2026-09-16T22:30Z · edit · FACTS.md",
+    "- 2026-09-16T22:30Z · edit · FACTS.md",
+    "- 2026-09-16T22:34Z · edit · packages/frontend/app/page-ammon-style.tsx",
+    "- 2026-09-16T22:36Z · edit · packages/frontend/app/page-exact-ammon.tsx"
   ],
   "prompt_registry": "",
   "findings_status": {
