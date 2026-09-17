@@ -139,7 +139,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           </div>
         </div>
 
-        <div className="mob"><SecHd t="مختارات المحرر" /><PicksBox articles={articles} rail /></div>
+        <div className="mob"><PicksBox articles={articles} rail /></div>
 
         <AdBanner variant={4} className="adrow ad90" />
 
