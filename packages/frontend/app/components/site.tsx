@@ -98,19 +98,6 @@ export function useArticles() {
 
 export const Loading = () => <div className="am loading">جاري تحميل الأخبار...</div>;
 
-// Vector re-creation of the المتابع wordmark: black geometric Kufi with the microphone medallion.
-const LogoMark = () => (
-  <svg viewBox="0 0 330 100" aria-label="المتابع" role="img">
-    <text x="322" y="80" direction="rtl" textAnchor="start" fontFamily="'Noto Kufi Arabic', 'Noto Naskh Arabic', Arial, sans-serif" fontSize="74" fontWeight="900" fill="#111">المتابع</text>
-    <g transform="translate(200 50)">
-      <circle r="31" fill="#fff" stroke="#111" strokeWidth="2.5" />
-      <rect x="-9" y="-25" width="18" height="27" rx="9" fill="#111" />
-      <rect x="-15" y="-5" width="30" height="13" fill="#2e6db4" />
-      <path d="M-5 9 L5 9 L0 27 Z" fill="#111" />
-    </g>
-  </svg>
-);
-
 const ADS = [
   { bg: 'linear-gradient(90deg,#4a1d75,#8e44ad)', t: 'شبكة الجيل الخامس', s: 'اشترك الآن واحصل على 100GB إضافية', en: '5G' },
   { bg: 'linear-gradient(90deg,#b71c1c,#e53935)', t: 'تأجير سيارات', s: 'ابتداءً من 15 دينار / يوم', cta: 'احجز الآن' },
@@ -153,7 +140,7 @@ export function SiteHeader() {
           <ul>{NAV.map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
         </div>
         <div className="brand">
-          <a className="logo" href="/"><LogoMark /><small>الاخباري</small></a>
+          <a className="logo" href="/"><img src="/logo.svg" alt="المتابع" width="338" height="134" /><small>الاخباري</small></a>
           <AdBanner variant={0} className="ad728" />
         </div>
       </div>

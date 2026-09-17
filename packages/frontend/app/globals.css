@@ -30,8 +30,8 @@ body{margin:0;background:#fff}
 /* ---- logo row ---- */
 .brand{display:flex;justify-content:space-between;align-items:center;height:112px;padding:8px 0}
 .logo{display:block;text-align:center;padding-left:6px}
-.logo svg{display:block;height:72px;width:auto}
-.logo small{display:block;font-size:11px;color:#990000;letter-spacing:3px;margin-top:-4px;font-family:'Noto Naskh Arabic','Traditional Arabic',serif;font-weight:bold}
+.logo img{display:block;height:74px;width:auto}
+.logo small{display:block;font-size:11px;color:#990000;letter-spacing:3px;margin-top:2px;font-family:'Noto Naskh Arabic','Traditional Arabic',serif;font-weight:bold}
 .ad{background:#ececec;border:1px solid #d9d9d9;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px}
 .ad728{width:728px;height:90px}
 .ads3{display:flex;gap:6px;margin:8px 0}
@@ -213,7 +213,7 @@ body{margin:0;background:#fff}
   .nav ul::-webkit-scrollbar{display:none}
   .nav li{line-height:38px;font-size:14px;padding:0 12px}
   .brand{height:auto;flex-direction:column;gap:10px;padding:10px 0}
-  .logo svg{height:60px}
+  .logo img{height:60px}
   .ad728{width:100%;height:64px}
   .adb{font-size:14px;gap:8px;padding:0 8px}
   .adb small{display:none}

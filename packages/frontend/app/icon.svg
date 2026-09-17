@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 102.01 102.01" width="512" height="512" role="img" aria-label="المتابع">
+  
+  <g transform="translate(-119.60 57.14)">
+  <g transform="translate(170.60 -6.14)">
+    <circle r="40.80" fill="none" stroke="#111" stroke-width="6.936510000000001"/>
+    <rect x="-12.24" y="-35.09" width="24.48" height="37.54" rx="12.24" fill="#111"/>
+    <rect x="-22.44" y="-4.08" width="44.88" height="17.95" fill="#2e6db4"/>
+    <path d="M-7.34 13.87 L7.34 13.87 L0 36.72 Z" fill="#111"/>
+  </g>
+  </g>
+</svg>
