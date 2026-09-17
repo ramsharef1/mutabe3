@@ -133,18 +133,20 @@ export default function Home() {
         <div className="sec"><SecHd t="اقتصاد" slug="economy" /><Cards from={2} /><Smalls from={6} /><More slug="economy" /></div>
         <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards from={10} /><Smalls from={14} /><More slug="east-west" /></div>
 
+        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
+
         <div className="two">
           <div className="sec"><SecHd t="البرلمان" slug="parliament" /><Grid3 from={3} /><More slug="parliament" /></div>
           <div className="sec"><SecHd t="حراك" slug="harak" /><Grid3 from={9} /><More slug="harak" /></div>
         </div>
-
-        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
 
         <div className="four">
           {[['آراء', 'opinion'], ['وجهة نظر', 'viewpoint'], ['صحفة', 'press'], ['نقاش', 'debate']].map(([t, s], k) => (
             <div className="sec" key={s}><SecHd t={t} slug={s} /><Smalls from={k + 1} n={1} cols={1} writer /></div>
           ))}
         </div>
+
+        <AdBanner variant={4} style={{ height: 90, marginTop: 12 }} />
 
         <div className="sec">
           <SecHd t="ليالي المتابع" slug="nights" />
@@ -163,13 +165,13 @@ export default function Home() {
           <More slug="nights" />
         </div>
 
-        <AdBanner variant={3} style={{ height: 90, marginTop: 12 }} />
-
         <div className="three">
           <div className="sec"><SecHd t="ديوان" slug="diwan" /><Bullets from={12} n={6} /><More slug="diwan" /></div>
           <div className="sec rnd"><SecHd t="مقالات مختارة" slug="selected" /><Smalls from={4} n={5} cols={1} writer /><More slug="selected" /></div>
           <div className="sec rnd"><SecHd t="كتاب المتابع" slug="writers" /><Smalls from={8} n={5} cols={1} writer /><More slug="writers" /></div>
         </div>
+
+        <div className="ads3"><AdBanner variant={3} /><AdBanner variant={4} /><AdBanner variant={0} /></div>
 
         <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards from={1} n={5} five /><More slug="education" /></div>
 
@@ -177,6 +179,8 @@ export default function Home() {
           <div className="sec"><SecHd t="رياضة" slug="sports" /><BigText from={2} /><More slug="sports" /></div>
           <div className="sec"><SecHd t="الثقافة" slug="culture" /><BigText from={13} /><More slug="culture" /></div>
         </div>
+
+        <AdBanner variant={0} style={{ height: 90, marginTop: 12 }} />
 
         <div className="two">
           <div className="sec"><SecHd t="فلسطين" slug="palestine" /><Bullets from={5} /><More slug="palestine" /></div>
@@ -188,6 +192,8 @@ export default function Home() {
           <div className="sec"><SecHd t="قطاعات" slug="sectors" /><Grid3 from={14} /><More slug="sectors" /></div>
         </div>
 
+        <div className="ads3"><AdBanner variant={2} /><AdBanner variant={0} /><AdBanner variant={1} /></div>
+
         <div className="two">
           <div className="sec"><SecHd t="حوادث" slug="accidents" /><Bullets from={3} n={4} /><More slug="accidents" /></div>
           <div className="sec"><SecHd t="أخبار الأردن" slug="politics" /><Bullets from={9} n={4} /><More slug="politics" /></div>
@@ -198,13 +204,13 @@ export default function Home() {
           <div className="sec"><SecHd t="رسالة الى المحرر" slug="letters" /><Bullets from={16} n={5} /><More slug="letters" /></div>
         </div>
 
+        <AdBanner variant={2} style={{ height: 90, marginTop: 12 }} />
+
         <div className="three">
           <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls from={2} n={6} cols={1} /><More slug="technology" /></div>
           <div className="sec rnd"><SecHd t="صحة وبيئة" slug="health" /><Smalls from={8} n={6} cols={1} /><More slug="health" /></div>
           <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls from={14} n={6} cols={1} /><More slug="misc" /></div>
         </div>
-
-        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
 
         <div className="two">
           <div className="sec" style={{ flex: 2 }}>
@@ -230,6 +236,8 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <div className="ads3"><AdBanner variant={4} /><AdBanner variant={1} /><AdBanner variant={2} /></div>
 
         <div className="sec">
           <SecHd t="فيديو المتابع" slug="video" />
