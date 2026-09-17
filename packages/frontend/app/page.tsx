@@ -3,7 +3,7 @@ import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip } from './comp
 import { Article, WRITERS, face, ago } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
-import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Poll, Carousel, Debate, WritersRail } from './components/blocks/fold';
+import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, ObitsBox, MostRead, Sixty, Poll, Carousel, Debate, WritersRail } from './components/blocks/fold';
 import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline, AudioPill } from './components/blocks/jordan';
 import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText } from './components/feeds';
 
@@ -134,12 +134,10 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           </div>
           <div className="side">
             <LatestBox items={latest} />
-            <div className="desk"><PicksBox articles={articles} /></div>
             <div className="desk"><ObitsBox /></div>
           </div>
         </div>
 
-        <div className="mob"><SecHd t="مختارات المحرر" /><PicksBox articles={articles} rail /></div>
 
         <AdBanner variant={4} className="adrow ad90" />
 
