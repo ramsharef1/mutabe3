@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   },
 };
 
-// Ammon serves its fixed 1002px desktop page to phones (shrink-to-fit); match that until a mobile edition exists.
-// initial-scale must be absent (not 1) or phones won't scale the page down to fit.
+// Desktop keeps the fixed 1002px Ammon grid; under 768px globals.css switches to a single-column mobile layout.
+// To revert to Ammon's shrink-to-fit behaviour instead, use { width: 1024, initialScale: null as unknown as number }.
 export const viewport: Viewport = {
-  width: 1024,
-  initialScale: null as unknown as number,
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
