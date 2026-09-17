@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 100" width="660" height="200" aria-label="المتابع" role="img">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@900&amp;display=swap');</style>
+  <text x="322" y="80" direction="rtl" text-anchor="start" font-family="'Noto Kufi Arabic', 'Noto Naskh Arabic', Arial, sans-serif" font-size="74" font-weight="900" fill="#111">المتابع</text>
+  <g transform="translate(200 50)">
+    <circle r="31" fill="#fff" stroke="#111" stroke-width="2.5"/>
+    <rect x="-9" y="-25" width="18" height="27" rx="9" fill="#111"/>
+    <rect x="-15" y="-5" width="30" height="13" fill="#2e6db4"/>
+    <path d="M-5 9 L5 9 L0 27 Z" fill="#111"/>
+  </g>
+</svg>
