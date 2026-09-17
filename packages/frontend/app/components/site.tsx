@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { isLive } from './content';
 
 export interface Article {
   id: string;
@@ -123,7 +124,26 @@ export function Img({ src, alt = '' }: { src?: string; alt?: string }) {
 }
 
 export const Chip = ({ a }: { a: Article }) =>
-  a.category ? <span className="chip" style={{ background: catColor(a.category.slug) }}>{a.category.name}</span> : null;
+  isLive(a.id)
+    ? <span className="chip islive"><i />مباشر</span>
+    : a.category ? <span className="chip" style={{ background: catColor(a.category.slug) }}>{a.category.name}</span> : null;
+
+/* ---------- theme (light = Ammon default; dark persisted in localStorage) ---------- */
+export function ThemeToggle({ className = '' }: { className?: string }) {
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(document.documentElement.dataset.theme === 'dark'); }, []);
+  const flip = () => {
+    const d = !dark;
+    setDark(d);
+    document.documentElement.dataset.theme = d ? 'dark' : 'light';
+    try { localStorage.setItem('theme', d ? 'dark' : 'light'); } catch {}
+  };
+  return (
+    <button type="button" className={`theme ${className}`} onClick={flip} title={dark ? 'الوضع النهاري' : 'الوضع الليلي'} aria-label="تبديل المظهر">
+      {dark ? Ico.sun : Ico.moon}<span>{dark ? 'نهاري' : 'ليلي'}</span>
+    </button>
+  );
+}
 
 export function useArticles() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -193,6 +213,8 @@ export const Ico = {
   chev: <P d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z" />,
   menu: <P d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z" />,
   play: <P d="M8 5v14l11-7z" />,
+  moon: <P d="M12 3a9 9 0 1 0 9 9c0-.5 0-.9-.1-1.3A5.5 5.5 0 0 1 13.3 3.1C12.9 3 12.5 3 12 3z" />,
+  sun: <P d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5h0l1 3h-2l1-3zm0 20 1-3h-2l1 3zM2 12l3-1v2l-3-1zm20 0-3 1v-2l3 1zM4.9 4.9l2.8 1.4-1.4 1.4-1.4-2.8zm14.2 14.2-2.8-1.4 1.4-1.4 1.4 2.8zM4.9 19.1l1.4-2.8 1.4 1.4-2.8 1.4zM19.1 4.9l-1.4 2.8-1.4-1.4 2.8-1.4z" />,
 };
 
 /* ---------- header ---------- */
@@ -213,6 +235,7 @@ function StickyBar() {
           <input placeholder="بحث..." aria-label="بحث" />
           <button type="submit" aria-label="بحث">{Ico.search}</button>
         </form>
+        <ThemeToggle className="ico" />
       </div>
     </div>
   );
@@ -233,6 +256,7 @@ export function SiteHeader() {
             <span>☀</span>
             <span className="city">المزيد ▾</span>
             <span className="en">ENGLISH</span>
+            <ThemeToggle />
           </div>
         </div>
       </div>

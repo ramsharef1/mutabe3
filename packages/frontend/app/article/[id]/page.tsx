@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner } from '../../components/site';
+import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
+import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
+import { LiveBlog, LiveBadge } from '../../components/live';
 
 const FILLER = [
   'وأكد المتحدث الرسمي أن الخطوات التنفيذية ستبدأ خلال الأسابيع المقبلة، مشيراً إلى أن الجهات المعنية أنهت الدراسات الفنية والمالية اللازمة، وأن العمل يجري بالتنسيق مع مختلف الشركاء لضمان تحقيق الأهداف المرسومة ضمن الجدول الزمني المحدد.',
@@ -10,7 +13,6 @@ const FILLER = [
   'ومن المتوقع أن تعلن الجهات المختصة عن مزيد من التفاصيل خلال مؤتمر صحفي يعقد الأسبوع المقبل، يتناول آليات التنفيذ ومصادر التمويل والجدول الزمني للمراحل اللاحقة، إضافة إلى الإجابة عن استفسارات وسائل الإعلام المحلية والعربية.',
 ];
 const QUOTE = 'نعمل على أن تكون النتائج ملموسة للمواطن خلال الأشهر الستة المقبلة، وليس مجرد أرقام في تقرير.';
-const TAGS = ['الأردن', 'عمّان', 'الحكومة', 'الاقتصاد الوطني', 'المتابع'];
 const SAMPLE_COMMENTS = [
   { n: 'أبو محمد', t: 'منذ ساعتين', c: 'خطوة جيدة، نتمنى أن تنفذ على أرض الواقع وليس على الورق فقط.' },
   { n: 'سارة', t: 'منذ 40 دقيقة', c: 'المهم متابعة التنفيذ. شكراً للمتابع على التغطية.' },
@@ -34,6 +36,7 @@ export default function ArticlePage() {
   const { id } = useParams<{ id: string }>();
   const { articles, loading } = useArticles();
   const [size, setSize] = useState(0); // -1 / 0 / 1 / 2 → font-size steps
+  const lb = useLightbox();
   if (loading) return <Loading />;
 
   const idx = articles.findIndex((x) => x.id === id || x.slug === id);
@@ -50,8 +53,10 @@ export default function ArticlePage() {
 
   const catSlug = a.category?.slug || 'politics';
   const catName = a.category?.name || 'أخبار';
-  let related = articles.filter((x) => x.id !== a.id && x.category?.slug === a.category?.slug);
-  if (related.length < 4) related = articles.filter((x) => x.id !== a.id);
+  const related = relatedByTag(a, articles);
+  const tags = tagsFor(a);
+  const live = LIVE[a.id];
+  const shots = [{ src: a.featuredImageUrl?.replace('/500/350', '/1200/800') || '', thumb: a.featuredImageUrl || '', cap: a.title }, ...gallery(a, 4)];
   const relCards = related.slice(0, 3);
   const relList = related.slice(3, 8);
   const alsoRead = related.slice(0, 2);
@@ -72,7 +77,7 @@ export default function ArticlePage() {
             <Crumbs items={[{ label: catName, href: `/category/${catSlug}` }, { label: a.title }]} />
 
             <div className="arthead">
-              <Chip a={a} />
+              {live ? <LiveBadge /> : <Chip a={a} />}
               <h1>{a.title}</h1>
               {a.summary && <p className="artsum">{a.summary}</p>}
               <div className="artmeta">
@@ -89,15 +94,18 @@ export default function ArticlePage() {
             </div>
 
             <figure className="artlead">
-              <div className="im"><Img src={a.featuredImageUrl} /></div>
+              <button type="button" className="im" onClick={() => lb.open(0)} title="عرض الصورة"><Img src={a.featuredImageUrl} /><span className="zoom">{Ico.search}</span></button>
               <figcaption>{a.title} <em>— تصوير: المتابع</em></figcaption>
             </figure>
+
+            {live && <LiveBlog entries={live} />}
 
             <div className={`artbody fs${size}`}>
               {paras.map((p, i) => (
                 <div key={i}>
                   <p>{p}</p>
                   {i === 0 && <blockquote className="pull">{QUOTE}</blockquote>}
+                  {i === 2 && <GalleryGrid shots={shots} onOpen={lb.open} />}
                   {i === 1 && alsoRead.length > 0 && (
                     <aside className="also">
                       <b>اقرأ أيضاً</b>
@@ -110,7 +118,7 @@ export default function ArticlePage() {
 
             <div className="tags">
               <span>كلمات مفتاحية:</span>
-              {TAGS.map((t) => <a key={t} href={`/category/${catSlug}`}>{t}</a>)}
+              {tags.map((t) => <a key={t} href={`/tag/${encodeURIComponent(t)}`}>{t}</a>)}
             </div>
 
             <div className="artsrc">
@@ -136,6 +144,7 @@ export default function ArticlePage() {
 
             <div className="sec">
               <SecHd t="أخبار ذات صلة" slug={catSlug} />
+              <p className="relnote">مقترحة بحسب الكلمات المفتاحية المشتركة</p>
               <div className="cards cards3">
                 {relCards.map((r) => (
                   <a key={r.id} className="card" href={`/article/${r.id}`}>
@@ -169,6 +178,7 @@ export default function ArticlePage() {
         </div>
       </div>
       <SiteFooter />
+      {lb.idx !== null && <Lightbox shots={shots} index={lb.idx} onClose={lb.close} onIndex={lb.set} />}
     </div>
   );
 }
