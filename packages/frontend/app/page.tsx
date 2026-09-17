@@ -144,7 +144,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <AdBanner variant={4} className="adrow ad90" />
 
         {/* J6 royal strip */}
-        <div className="sec roy"><SecHd t="الملك · ولي العهد · الديوان" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
+        <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
 
         {/* B2 أخبار الأردن first, with tabs + governorate chips (C6) */}
         <div className="sec">
