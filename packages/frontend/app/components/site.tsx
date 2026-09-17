@@ -156,7 +156,7 @@ export function SiteHeader() {
           <ul>{NAV.map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
         </div>
         <div className="brand">
-          <a className="logo" href="/"><LogoMark /><small>موقع المتابع الاخباري</small></a>
+          <a className="logo" href="/"><LogoMark /><small>الاخباري</small></a>
           <AdBanner variant={0} className="ad728" />
         </div>
       </div>
