@@ -110,7 +110,7 @@ const LogoMark = () => (
     <path d="M14 74 C 26 30, 62 14, 96 30 C 78 22, 46 34, 34 70 Z" fill="#b30000" />
     <path d="M30 78 C 44 44, 76 30, 108 44" fill="none" stroke="#b30000" strokeWidth="5" strokeLinecap="round" />
     <circle cx="110" cy="44" r="5" fill="#b30000" />
-    <text x="262" y="68" textAnchor="end" fontFamily="Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif" fontSize="68" fontWeight="700" fill="url(#lg)" stroke="#6b520a" strokeWidth="0.9">متابع</text>
+    <text x="262" y="68" direction="rtl" textAnchor="start" fontFamily="Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif" fontSize="68" fontWeight="700" fill="url(#lg)" stroke="#6b520a" strokeWidth="0.9">متابع</text>
   </svg>
 );
 
