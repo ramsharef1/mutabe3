@@ -98,19 +98,16 @@ export function useArticles() {
 
 export const Loading = () => <div className="am loading">جاري تحميل الأخبار...</div>;
 
+// Vector re-creation of the المتابع wordmark: black geometric Kufi with the microphone medallion.
 const LogoMark = () => (
-  <svg viewBox="0 0 330 90" aria-label="المتابع" role="img">
-    <defs>
-      <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="#ead27a" />
-        <stop offset="0.55" stopColor="#c9a227" />
-        <stop offset="1" stopColor="#8f6f10" />
-      </linearGradient>
-    </defs>
-    <path d="M14 74 C 26 30, 62 14, 96 30 C 78 22, 46 34, 34 70 Z" fill="#b30000" />
-    <path d="M30 78 C 44 44, 76 30, 108 44" fill="none" stroke="#b30000" strokeWidth="5" strokeLinecap="round" />
-    <circle cx="110" cy="44" r="5" fill="#b30000" />
-    <text x="322" y="68" direction="rtl" textAnchor="start" fontFamily="Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif" fontSize="62" fontWeight="700" fill="url(#lg)" stroke="#6b520a" strokeWidth="0.9">المتابع</text>
+  <svg viewBox="0 0 330 100" aria-label="المتابع" role="img">
+    <text x="322" y="80" direction="rtl" textAnchor="start" fontFamily="'Noto Kufi Arabic', 'Noto Naskh Arabic', Arial, sans-serif" fontSize="74" fontWeight="900" fill="#111">المتابع</text>
+    <g transform="translate(200 50)">
+      <circle r="31" fill="#fff" stroke="#111" strokeWidth="2.5" />
+      <rect x="-9" y="-25" width="18" height="27" rx="9" fill="#111" />
+      <rect x="-15" y="-5" width="30" height="13" fill="#2e6db4" />
+      <path d="M-5 9 L5 9 L0 27 Z" fill="#111" />
+    </g>
   </svg>
 );
 
