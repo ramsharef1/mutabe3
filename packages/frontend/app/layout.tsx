@@ -11,9 +11,9 @@ export const metadata: Metadata = {
   },
 };
 
+// Ammon serves its fixed 1002px desktop page to phones (shrink-to-fit); match that until a mobile edition exists.
 export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
+  width: 1024,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
