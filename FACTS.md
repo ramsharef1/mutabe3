@@ -17,6 +17,7 @@
 | **SSH** | `ssh root@72.62.132.138` | 2026-09-16 | ✅ |
 | **Database** | PostgreSQL :5432 on VPS | 2026-09-16 | ✅ |
 | **Redis** | Not used (optional) | ⬜ | — |
+| **Site name (Arabic)** | موقع المتابع الاخباري | 2026-09-17 | ✅ |
 | **Production Domain** | https://mutabe3.news | 2026-09-16 | ✅ |
 | **Alias Domain** | mutabe3.hstgr.cloud | 2026-09-16 | ✅ |
 | **SSL Certificate** | Let's Encrypt (valid until 2026-12-15) | 2026-09-16 | ✅ |

@@ -147,7 +147,7 @@ export default function Home() {
         </div>
 
         <div className="sec">
-          <SecHd t="ليالي متابع" slug="nights" />
+          <SecHd t="ليالي المتابع" slug="nights" />
           <div className="carousel">
             <span className="arrbtn">‹</span>
             <div className="row">
@@ -168,7 +168,7 @@ export default function Home() {
         <div className="three">
           <div className="sec"><SecHd t="ديوان" slug="diwan" /><Bullets from={12} n={6} /><More slug="diwan" /></div>
           <div className="sec rnd"><SecHd t="مقالات مختارة" slug="selected" /><Smalls from={4} n={5} cols={1} writer /><More slug="selected" /></div>
-          <div className="sec rnd"><SecHd t="كتاب متابع" slug="writers" /><Smalls from={8} n={5} cols={1} writer /><More slug="writers" /></div>
+          <div className="sec rnd"><SecHd t="كتاب المتابع" slug="writers" /><Smalls from={8} n={5} cols={1} writer /><More slug="writers" /></div>
         </div>
 
         <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards from={1} n={5} five /><More slug="education" /></div>
@@ -232,7 +232,7 @@ export default function Home() {
         </div>
 
         <div className="sec">
-          <SecHd t="فيديو متابع" slug="video" />
+          <SecHd t="فيديو المتابع" slug="video" />
           <div className="video">
             <div className="col">{seq(1, 3).map((a, k) => <a key={`v1-${k}`} className="th" href={link(a)}><Img src={a.featuredImageUrl} /></a>)}</div>
             <a className="big" href={link(at(3))}>

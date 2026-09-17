@@ -54,7 +54,7 @@ export default function ArticlePage() {
               {paras.map((p, i) => <p key={i}>{p}</p>)}
             </div>
 
-            <div className="artsrc">متابع - {a.category?.name} | {a.viewsCount ?? 0} مشاهدة</div>
+            <div className="artsrc">المتابع - {a.category?.name} | {a.viewsCount ?? 0} مشاهدة</div>
 
             <div className="sec">
               <SecHd t="أخبار ذات صلة" slug={catSlug} />

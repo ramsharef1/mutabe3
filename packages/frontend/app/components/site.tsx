@@ -38,8 +38,8 @@ export const NAV: { label: string; slug: string }[] = [
   { label: 'فلسطين', slug: 'palestine' },
   { label: 'البرلمان', slug: 'parliament' },
   { label: 'بانوراما', slug: 'panorama' },
-  { label: 'كتاب متابع', slug: 'writers' },
-  { label: 'ليالي متابع', slug: 'nights' },
+  { label: 'كتاب المتابع', slug: 'writers' },
+  { label: 'ليالي المتابع', slug: 'nights' },
   { label: 'صحة وبيئة', slug: 'health' },
   { label: 'كاريكاتير', slug: 'caricature' },
   { label: 'فيديو', slug: 'video' },
@@ -99,7 +99,7 @@ export function useArticles() {
 export const Loading = () => <div className="am loading">جاري تحميل الأخبار...</div>;
 
 const LogoMark = () => (
-  <svg viewBox="0 0 270 90" aria-label="متابع" role="img">
+  <svg viewBox="0 0 330 90" aria-label="المتابع" role="img">
     <defs>
       <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor="#ead27a" />
@@ -110,7 +110,7 @@ const LogoMark = () => (
     <path d="M14 74 C 26 30, 62 14, 96 30 C 78 22, 46 34, 34 70 Z" fill="#b30000" />
     <path d="M30 78 C 44 44, 76 30, 108 44" fill="none" stroke="#b30000" strokeWidth="5" strokeLinecap="round" />
     <circle cx="110" cy="44" r="5" fill="#b30000" />
-    <text x="262" y="68" direction="rtl" textAnchor="start" fontFamily="Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif" fontSize="68" fontWeight="700" fill="url(#lg)" stroke="#6b520a" strokeWidth="0.9">متابع</text>
+    <text x="322" y="68" direction="rtl" textAnchor="start" fontFamily="Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif" fontSize="62" fontWeight="700" fill="url(#lg)" stroke="#6b520a" strokeWidth="0.9">المتابع</text>
   </svg>
 );
 
@@ -156,7 +156,7 @@ export function SiteHeader() {
           <ul>{NAV.map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
         </div>
         <div className="brand">
-          <a className="logo" href="/"><LogoMark /><small>وكالة متابع الإخبارية</small></a>
+          <a className="logo" href="/"><LogoMark /><small>موقع المتابع الاخباري</small></a>
           <AdBanner variant={0} className="ad728" />
         </div>
       </div>
@@ -169,14 +169,14 @@ export function SiteFooter() {
     <div className="footer">
       <div className="wrap">
         <div className="ficons">
-          {['متابع الرياضي', 'متابع الصحي', 'متابع الصورة', 'متابع العلمي', 'نسخة الموبايل', 'Mutabe3 English'].map((t) => (
+          {['المتابع الرياضي', 'المتابع الصحي', 'المتابع الصورة', 'المتابع العلمي', 'نسخة الموبايل', 'Almutabe3 English'].map((t) => (
             <span className="ficon" key={t}><i />{t}</span>
           ))}
         </div>
         <div className="fsub">
-          <a href="#">خدمة اخبار الجوال</a><a href="#">ارسل خبراً</a><a href="/category/obituaries">أخبار الوفيات</a><a href="#">خدمة RSS</a><a href="#">حول متابع</a><a href="#">اتصل بنا</a><a href="#">سياسة الخصوصية</a>
+          <a href="#">خدمة اخبار الجوال</a><a href="#">ارسل خبراً</a><a href="/category/obituaries">أخبار الوفيات</a><a href="#">خدمة RSS</a><a href="#">حول المتابع</a><a href="#">اتصل بنا</a><a href="#">سياسة الخصوصية</a>
         </div>
-        <div className="copy">جميع الحقوق محفوظة © وكالة متابع الإخبارية {new Date().getFullYear()} — المقالات والتعليقات المنشورة تعبر عن رأي أصحابها فقط</div>
+        <div className="copy">جميع الحقوق محفوظة © موقع المتابع الاخباري {new Date().getFullYear()} — المقالات والتعليقات المنشورة تعبر عن رأي أصحابها فقط</div>
         <div className="social"><i /><i /><i /><i /></div>
         <div className="host">برمجة واستضافة mutabe3.news</div>
       </div>

@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'وكالة متابع الإخبارية',
-  description: 'وكالة متابع الإخبارية - آخر أخبار الأردن والعالم',
+  title: 'موقع المتابع الاخباري',
+  description: 'موقع المتابع الاخباري - آخر أخبار الأردن والعالم',
   openGraph: {
-    title: 'وكالة متابع الإخبارية',
+    title: 'موقع المتابع الاخباري',
     description: 'آخر أخبار الأردن والعالم',
     type: 'website',
   },
