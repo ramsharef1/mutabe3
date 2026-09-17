@@ -14,6 +14,7 @@ export const VIDEOS: { id: string; title: string }[] = [
 ];
 
 const thumb = (id: string) => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+const poster = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 
 export function VideoSection() {
   const [active, setActive] = useState(0);
@@ -38,13 +39,21 @@ export function VideoSection() {
     <div className="video">
       {side([1, 2, 3])}
       <div className="big">
-        <iframe
-          key={`${cur.id}-${started ? 1 : 0}`}
-          src={`https://www.youtube.com/embed/${cur.id}?rel=0&modestbranding=1&hl=ar${started ? '&autoplay=1' : ''}`}
-          title={cur.title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
+        {started ? (
+          <iframe
+            key={cur.id}
+            src={`https://www.youtube.com/embed/${cur.id}?rel=0&modestbranding=1&hl=ar&autoplay=1`}
+            title={cur.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
+          /* B10: click-to-load facade — the YouTube player (~500KB) is only fetched on demand */
+          <button type="button" className="facade" onClick={() => setStarted(true)} aria-label={`تشغيل: ${cur.title}`}>
+            <img src={poster(cur.id)} alt="" loading="lazy" />
+            <span className="pl2">▶</span>
+          </button>
+        )}
         <div className="cap">{cur.title}</div>
       </div>
       {side([4, 5, 6])}

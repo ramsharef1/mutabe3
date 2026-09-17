@@ -1,268 +1,265 @@
-'use client';
-
-import { Article, WRITERS, face, Img, useArticles, Loading, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip, ago, Ico } from './components/site';
+// Server component (B9): articles + weather are fetched on the server and revalidated; interactive blocks are client islands.
+import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip } from './components/site';
+import { Article, WRITERS, face, ago } from './components/util';
 import { VideoSection } from './components/video';
+import { UtilityStrip, MetAlert } from './components/blocks/utility';
+import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Poll, Carousel, Debate, WritersRail } from './components/blocks/fold';
+import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline, AudioPill } from './components/blocks/jordan';
+import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText } from './components/feeds';
 
-const OBITS = [
-  'الحاج محمد عبدالله الخلايلة في ذمة الله',
-  'الشيخ عوض سالم المجالي في ذمة الله',
-  'الحاجة فاطمة أحمد الزعبي في ذمة الله',
-  'المهندس سامر خليل الطراونة في ذمة الله',
-  'الدكتور يوسف محمود العبادي في ذمة الله',
-];
+export const revalidate = 60;
 
-export default function Home() {
-  const { articles, loading } = useArticles();
-  if (loading || articles.length === 0) return <Loading />;
+const API = process.env.VPS_API || 'http://127.0.0.1:9080';
+async function getArticles(): Promise<Article[]> {
+  try {
+    const r = await fetch(`${API}/api/articles`, { next: { revalidate: 60 } });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return j.data || [];
+  } catch {
+    return [];
+  }
+}
 
-  const at = (i: number) => articles[i % articles.length];
-  const seq = (from: number, n: number) => Array.from({ length: n }, (_, k) => at(from + k));
-  const link = (a: Article) => `/article/${a.id}`;
+const link = (a: Article) => `/article/${a.id}`;
 
-  const Cards = ({ from, n = 4, five = false }: { from: number; n?: number; five?: boolean }) => (
-    <div className={`cards ${five ? 'cards5' : ''}`}>
-      {seq(from, n).map((a, k) => (
-        <a key={`${a.id}-${k}`} className="card" href={link(a)}>
-          <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
-          <div className="t">{a.title}</div>
-        </a>
-      ))}
+const Cards = ({ items, five = false }: { items: Article[]; five?: boolean }) => (
+  <div className={`cards ${five ? 'cards5' : ''}`}>
+    {items.map((a) => (
+      <a key={a.id} className="card" href={link(a)}>
+        <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
+        <div className="t">{a.title}</div>
+        <span className="tm">{ago(a.publishedAt)}</span>
+      </a>
+    ))}
+  </div>
+);
+const Smalls = ({ items, cols = 4 }: { items: Article[]; cols?: number }) => (
+  <div className={`smalls ${cols === 1 ? 'smalls1' : cols === 3 ? 'smalls3' : ''}`}>
+    {items.map((a) => (
+      <a key={a.id} className="sm" href={link(a)}>
+        <div className="th"><Img src={a.featuredImageUrl} /></div>
+        <div className="t">{a.title}<span className="tm">{ago(a.publishedAt)}</span></div>
+      </a>
+    ))}
+  </div>
+);
+const Grid3 = ({ items }: { items: Article[] }) => (
+  <div className="grid3">
+    {items.map((a) => (
+      <a key={a.id} className="card" href={link(a)}>
+        <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
+        <div className="t">{a.title}</div>
+      </a>
+    ))}
+  </div>
+);
+const Bullets = ({ items }: { items: Article[] }) => (
+  <ul className="arr">{items.map((a) => <li key={a.id}><a href={link(a)}>{a.title}</a></li>)}</ul>
+);
+const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
+  <>
+    <div className="bigtext">
+      <a className="im" href={link(a)}><Img src={a.featuredImageUrl} /><Chip a={a} /></a>
+      <div><a className="t" href={link(a)}>{a.title}</a><p>{a.summary || a.content}</p></div>
     </div>
-  );
+    <div style={{ marginTop: 6 }}><Bullets items={more} /></div>
+  </>
+);
+const Ads3 = ({ v }: { v: [number, number, number] }) => (
+  <div className="adrow ads3"><AdBanner variant={v[0]} /><AdBanner variant={v[1]} /><AdBanner variant={v[2]} /></div>
+);
 
-  const Smalls = ({ from, n = 8, cols = 4, writer = false }: { from: number; n?: number; cols?: number; writer?: boolean }) => (
-    <div className={`smalls ${cols === 3 ? 'smalls3' : ''} ${cols === 1 ? 'smalls1' : ''}`}>
-      {seq(from, n).map((a, k) => (
-        <a key={`${a.id}-${k}`} className="sm" href={link(a)}>
-          <div className="th"><Img src={writer ? face(from + k) : a.featuredImageUrl} /></div>
-          <div className="t">
-            {writer && <span className="name">{WRITERS[(from + k) % WRITERS.length]}</span>}
-            {a.title}
-          </div>
-        </a>
-      ))}
-    </div>
-  );
+export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
+  const [articles, wx] = await Promise.all([getArticles(), fetchWeather()]);
+  if (!articles.length) {
+    return <div className="am"><SiteHeader /><div className="wrap loading">لا تتوفر أخبار حالياً — حاول بعد قليل.</div><SiteFooter /></div>;
+  }
+  const now = new Date();
+  const prayers = prayerTimes(now);
+  const season = searchParams?.season === 'all' ? 'all' : currentSeason(now);
+  const amman = wx[0];
 
-  const Grid3 = ({ from }: { from: number }) => (
-    <div className="grid3">
-      {seq(from, 6).map((a, k) => (
-        <a key={`${a.id}-${k}`} className="card" href={link(a)}>
-          <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
-          <div className="t">{a.title}</div>
-        </a>
-      ))}
-    </div>
-  );
-
-  const Bullets = ({ from, n = 5, items }: { from?: number; n?: number; items?: string[] }) => (
-    <ul className="arr">
-      {items
-        ? items.map((t, k) => <li key={k}><a href="#">{t}</a></li>)
-        : seq(from ?? 0, n).map((a, k) => <li key={`${a.id}-${k}`}><a href={link(a)}>{a.title}</a></li>)}
-    </ul>
-  );
-
-  const BigText = ({ from }: { from: number }) => {
-    const a = at(from);
-    return (
-      <>
-        <div className="bigtext">
-          <a className="im" href={link(a)}><Img src={a.featuredImageUrl} /></a>
-          <div>
-            <a className="t" href={link(a)}>{a.title}</a>
-            <p>{a.summary || a.content}</p>
-          </div>
-        </div>
-        <div style={{ marginTop: 6 }}><Bullets from={from + 1} n={3} /></div>
-      </>
-    );
-  };
-
-  const Ads3 = ({ v }: { v: [number, number, number] }) => (
-    <div className="adrow ads3"><AdBanner variant={v[0]} /><AdBanner variant={v[1]} /><AdBanner variant={v[2]} /></div>
-  );
-
-  const tickerItems = seq(0, 6);
-  const hero = at(0);
+  // B1: every block draws from an exclusive pool so the fold never repeats a story.
+  const pool = new Pool(articles);
+  const hero = pool.take(1)[0];
+  const mid = pool.take(7);
+  const latest = pool.take(6);
+  const jordan = pool.take(4), jordanS = pool.take(4);
+  const econ = pool.take(5), econS = pool.take(4);
+  const pal = pool.take(3), world = pool.take(4);
+  const east = pool.take(4), eastS = pool.take(4);
+  const edu = pool.take(4), culture = pool.take(3);
+  const nights = pool.take(7);
+  const tech = pool.take(4), misc = pool.take(4), health = pool.take(4);
+  const pano = pool.take(7);
+  const ticker = [hero, ...mid.slice(0, 5)];
 
   return (
-    <div className="am">
-      <SiteHeader />
+    <div className="am home">
+      <SiteHeader articles={articles} temp={amman?.t} wxLabel={amman ? wxText(amman.code) : undefined} />
 
       <div className="wrap">
-        {/* Columnists strip */}
-        <div className="writers">
-          {seq(0, 8).map((a, k) => (
-            <a key={`w-${k}`} className="writer" href={link(a)}>
+        <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
+
+        {/* Columnists strip — Ammon signature on desktop; on mobile it moves below أخبار الأردن (A9) */}
+        <div className="writers desk">
+          {WRITERS.slice(0, 8).map((w, k) => (
+            <a key={w} className="writer" href="/category/writers">
               <div className="ph"><Img src={face(k)} /></div>
-              <div className="t"><span className="name">{WRITERS[k]}</span>{a.title}</div>
+              <div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار: قراءة في قرار المركزي', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات وفرص العمل', 'المناخ ليس ترفاً', 'الإعلام الرقمي ومسؤولية الكلمة', 'كرة القدم كقوة ناعمة'][k]}</div>
             </a>
           ))}
         </div>
 
-        {/* Breaking-news marquee: content is duplicated so the loop is seamless; pauses on hover */}
-        <div className="ticker">
-          <span className="lbl"><i />عاجل</span>
-          <div className="view">
-            <div className="track">
-              {[...tickerItems, ...tickerItems].map((a, k) => (
-                <a key={`t-${k}`} href={link(a)}><span className="tm">{ago(a.publishedAt)}</span>{a.title}</a>
-              ))}
-            </div>
-          </div>
-        </div>
+        <BreakingBar />
+        <MetAlert />
+        <Ticker items={ticker} />
+        <MarketStrip updated={ammanTime(now)} />
+        <Missed articles={articles} />
 
-        <Ads3 v={[1, 2, 3]} />
-
-        {/* Hero + mid list + side boxes */}
+        {/* Fold */}
         <div className="main">
           <a className="hero" href={link(hero)}>
-            <div className="img"><Img src={hero.featuredImageUrl} /></div>
-            <div className="cap">
-              <Chip a={hero} />
-              <h2>{hero.title}</h2>
-              <span className="tm">{Ico.clock}{ago(hero.publishedAt)}</span>
-            </div>
+            <div className="img"><Img src={hero.featuredImageUrl} priority /></div>
+            <div className="cap"><Chip a={hero} /><h2>{hero.title}</h2><span className="tm">{ago(hero.publishedAt)}</span></div>
           </a>
           <div className="mid">
-            {seq(1, 7).map((a, k) => (
-              <a key={`m-${k}`} className="item" href={link(a)}>
+            {mid.map((a) => (
+              <a key={a.id} className="item" href={link(a)}>
                 <div className="th"><Img src={a.featuredImageUrl} /></div>
                 <div className="t">{a.title}<span className="tm">{ago(a.publishedAt)}</span></div>
               </a>
             ))}
           </div>
           <div className="side">
-            <div className="box">
-              <div className="hd"><span>آخر الأنباء</span><i /></div>
-              <ul>{seq(8, 7).map((a, k) => <li key={`l-${k}`}><a href={link(a)}>{a.title}</a><span className="tm">{ago(a.publishedAt)}</span></li>)}</ul>
-            </div>
-            <div className="box">
-              <div className="hd"><a href="/category/obituaries">وفيات</a><i /></div>
-              <ul>{OBITS.map((t, k) => <li key={`o-${k}`}><a href="/category/obituaries">{t}</a></li>)}</ul>
-            </div>
+            <LatestBox items={latest} />
+            <div className="desk"><PicksBox articles={articles} /></div>
+            <div className="desk"><ObitsBox /></div>
           </div>
         </div>
 
+        <div className="mob"><SecHd t="مختارات المحرر" /><PicksBox articles={articles} rail /></div>
+
         <AdBanner variant={4} className="adrow ad90" />
 
-        <div className="sec"><SecHd t="اقتصاد" slug="economy" /><Cards from={2} /><Smalls from={6} /><More slug="economy" /></div>
-        <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards from={10} /><Smalls from={14} /><More slug="east-west" /></div>
+        {/* J6 royal strip */}
+        <div className="sec roy"><SecHd t="الملك · ولي العهد · الديوان" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
 
-        <Ads3 v={[1, 2, 3]} />
-
-        <div className="two">
-          <div className="sec"><SecHd t="البرلمان" slug="parliament" /><Grid3 from={3} /><More slug="parliament" /></div>
-          <div className="sec"><SecHd t="حراك" slug="harak" /><Grid3 from={9} /><More slug="harak" /></div>
+        {/* B2 أخبار الأردن first, with tabs + governorate chips (C6) */}
+        <div className="sec">
+          <SecHd t="أخبار الأردن" slug="politics" tabs={['الكل', 'حوادث', 'محافظات']} meta={`تحديث ${ago(jordan[0]?.publishedAt)} · ${articles.length} خبراً`} />
+          <div className="gov"><small>أخبار محافظتك:</small>{['عمّان', 'إربد', 'الزرقاء', 'العقبة', 'الكرك', 'معان', 'البلقاء'].map((g, i) => <a key={g} href={`/tag/${encodeURIComponent(g)}`} className={i === 0 ? 'on' : ''}>{g}</a>)}<a href="/category/politics">+5</a></div>
+          <Cards items={jordan} /><Smalls items={jordanS} /><More slug="politics" />
         </div>
 
-        <div className="four">
-          {[['آراء', 'opinion'], ['وجهة نظر', 'viewpoint'], ['صحفة', 'press'], ['نقاش', 'debate']].map(([t, s], k) => (
-            <div className="sec" key={s}><SecHd t={t} slug={s} /><Smalls from={k + 1} n={1} cols={1} writer /></div>
+        <div className="writers mob">
+          {WRITERS.slice(0, 8).map((w, k) => (
+            <a key={w} className="writer" href="/category/writers"><div className="ph"><Img src={face(k)} /></div><div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات', 'المناخ ليس ترفاً', 'الإعلام الرقمي', 'كرة القدم كقوة ناعمة'][k]}</div></a>
           ))}
         </div>
 
-        <AdBanner variant={4} className="adrow ad90" />
-
-        <div className="sec">
-          <SecHd t="ليالي المتابع" slug="nights" />
-          <div className="carousel">
-            <span className="arrbtn">‹</span>
-            <div className="row">
-              {seq(5, 7).map((a, k) => (
-                <a key={`c-${k}`} className="card" href={link(a)}>
-                  <div className="im"><Img src={a.featuredImageUrl} /></div>
-                  <div className="t" style={{ fontSize: 11.5 }}>{a.title}</div>
-                </a>
-              ))}
-            </div>
-            <span className="arrbtn">›</span>
-          </div>
-          <More slug="nights" />
-        </div>
-
+        {/* J3–J5 */}
         <div className="three">
-          <div className="sec"><SecHd t="ديوان" slug="diwan" /><Bullets from={12} n={6} /><More slug="diwan" /></div>
-          <div className="sec rnd"><SecHd t="مقالات مختارة" slug="selected" /><Smalls from={4} n={5} cols={1} writer /><More slug="selected" /></div>
-          <div className="sec rnd"><SecHd t="كتاب المتابع" slug="writers" /><Smalls from={8} n={5} cols={1} writer /><More slug="writers" /></div>
+          <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
+          <div className="sec"><SecHd t="الطرق الآن" meta="مباشر" /><Roads /></div>
+          <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta="من الجهات الرسمية" /><Services /></div>
         </div>
 
-        <Ads3 v={[3, 4, 0]} />
+        {/* B4 flagship economy + C4 tools row */}
+        <div className="sec eco">
+          <SecHd t="اقتصاد وأسواق" slug="economy" tabs={['الأخبار', 'أسواق', 'بنوك', 'طاقة', 'تحليل']} meta="القسم الرئيسي" />
+          <Cards items={econ} five /><Smalls items={econS} /><More slug="economy" />
+        </div>
+        <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
 
-        <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards from={1} n={5} five /><More slug="education" /></div>
+        <Ads3 v={[1, 2, 3]} />
+
+        {/* C5 + C3 */}
+        <div className="two">
+          <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty /></div>
+          <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
+        </div>
+
+        {/* B3 فلسطين/العالم + C8 timeline */}
+        <div className="two">
+          <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} /><div style={{ marginTop: 10 }}><Timeline /></div></div>
+          <div className="sec"><SecHd t="العالم" slug="world" /><BigText a={world[0]} more={world.slice(1)} /><More slug="world" /></div>
+        </div>
+
+        {/* J7 + J8 */}
+        <div className="two">
+          <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta="جلسة الثلاثاء · 14 قراراً" /><Decisions /><More slug="parliament" /></div>
+          <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" meta="من محاضر مجلس النواب" /><VoteTracker /></div>
+        </div>
+
+        <AdBanner variant={3} className="adrow ad90" />
+
+        {/* J13–J15 seasonal (in season or ?season=all) */}
+        <Seasonal season={season} />
+
+        <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards items={east} /><Smalls items={eastS} /><More slug="east-west" /></div>
+
+        {/* J16 + J17 */}
+        <div className="two">
+          <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" meta="حيّ · من الاتحاد الأردني" /><Sports /></div>
+          <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora /></div>
+        </div>
+
+        {/* A1+A2 merged opinion + C12 */}
+        <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" /><WritersRail articles={pool.take(4)} /><div style={{ marginTop: 12 }}><Debate /></div><More slug="writers" /></div>
 
         <div className="two">
-          <div className="sec"><SecHd t="رياضة" slug="sports" /><BigText from={2} /><More slug="sports" /></div>
-          <div className="sec"><SecHd t="الثقافة" slug="culture" /><BigText from={13} /><More slug="culture" /></div>
+          <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>
+          <div className="sec"><SecHd t="الثقافة" slug="culture" /><BigText a={culture[0]} more={culture.slice(1)} /><More slug="culture" /></div>
+        </div>
+
+        <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>
+
+        {/* C10 + health */}
+        <div className="two">
+          <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta="ديوان الخدمة المدنية · دائرة العطاءات" /><Jobs /><More slug="jobs" /></div>
+          <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
         </div>
 
         <AdBanner variant={0} className="adrow ad90" />
 
-        <div className="two">
-          <div className="sec"><SecHd t="فلسطين" slug="palestine" /><Bullets from={5} /><More slug="palestine" /></div>
-          <div className="sec"><SecHd t="العالم" slug="world" /><Bullets from={11} /><More slug="world" /></div>
+        {/* C7 + C14 */}
+        <div className="two capfact">
+          <div className="sec" style={{ flex: '0 0 330px' }}><SecHd t="قناة المتابع" /><Capture /></div>
+          <div className="sec"><SecHd t="تحقق المتابع" meta="نتحقق من الشائعات المنتشرة على فيسبوك وواتساب" /><FactCheck /></div>
         </div>
 
-        <div className="two">
-          <div className="sec"><SecHd t="وظائف" slug="jobs" /><Grid3 from={7} /><More slug="jobs" /></div>
-          <div className="sec"><SecHd t="قطاعات" slug="sectors" /><Grid3 from={14} /><More slug="sectors" /></div>
+        {/* J18–J20 */}
+        <div className="three">
+          <div className="sec"><SecHd t="عين المواطن" meta="محتوى القراء · مُراجَع" /><Ugc /></div>
+          <div className="sec"><SecHd t="تهاني ومبروك" meta="إعلانات مبوبة" /><Greetings /></div>
+          <div className="sec"><SecHd t="ذاكرة الأردن" meta="يومياً" /><Memory /></div>
         </div>
 
-        <Ads3 v={[2, 0, 1]} />
-
-        <div className="two">
-          <div className="sec"><SecHd t="حوادث" slug="accidents" /><Bullets from={3} n={4} /><More slug="accidents" /></div>
-          <div className="sec"><SecHd t="أخبار الأردن" slug="politics" /><Bullets from={9} n={4} /><More slug="politics" /></div>
+        <div className="three">
+          <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls items={tech} cols={1} /><More slug="technology" /></div>
+          <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls items={misc} cols={1} /><More slug="misc" /></div>
+          <div className="sec"><SecHd t="تصويت" /><Poll /></div>
         </div>
 
-        <div className="two">
-          <div className="sec"><SecHd t="وفيات" slug="obituaries" /><Bullets items={OBITS} /><More slug="obituaries" /></div>
-          <div className="sec"><SecHd t="رسالة الى المحرر" slug="letters" /><Bullets from={16} n={5} /><More slug="letters" /></div>
+        <div className="sec">
+          <SecHd t="بانوراما" slug="panorama" />
+          <div className="pano">
+            <div className="grid">{pano.slice(1).map((a) => <a key={a.id} className="th" href={link(a)}><Img src={a.featuredImageUrl} /></a>)}</div>
+            <div className="big"><a className="im" href={link(pano[0])} style={{ display: 'block' }}><Img src={pano[0].featuredImageUrl} /></a><a className="t" href={link(pano[0])}>{pano[0].title}</a><p>{pano[0].summary || pano[0].content}</p></div>
+          </div>
+          <More slug="panorama" />
         </div>
 
         <AdBanner variant={2} className="adrow ad90" />
 
-        <div className="three">
-          <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls from={2} n={6} cols={1} /><More slug="technology" /></div>
-          <div className="sec rnd"><SecHd t="صحة وبيئة" slug="health" /><Smalls from={8} n={6} cols={1} /><More slug="health" /></div>
-          <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls from={14} n={6} cols={1} /><More slug="misc" /></div>
-        </div>
-
-        <div className="two">
-          <div className="sec" style={{ flex: 2 }}>
-            <SecHd t="بانوراما" slug="panorama" />
-            <div className="pano">
-              <div className="grid">{seq(6, 6).map((a, k) => <a key={`p-${k}`} className="th" href={link(a)}><Img src={a.featuredImageUrl} /></a>)}</div>
-              <div className="big">
-                <a className="im" href={link(at(4))} style={{ display: 'block' }}><Img src={at(4).featuredImageUrl} /></a>
-                <a className="t" href={link(at(4))}>{at(4).title}</a>
-                <p>{at(4).summary || at(4).content}</p>
-              </div>
-            </div>
-            <More slug="panorama" />
-          </div>
-          <div className="sec">
-            <SecHd t="تصويت" />
-            <div className="poll">
-              <b>هل تؤيد قرار رفع سعر الفائدة؟</b>
-              <label><input type="radio" name="p" /> نعم</label>
-              <label><input type="radio" name="p" /> لا</label>
-              <label><input type="radio" name="p" /> لا أعرف</label>
-              <button>صوّت</button>
-            </div>
-          </div>
-        </div>
-
-        <Ads3 v={[4, 1, 2]} />
-
-        <div className="sec">
-          <SecHd t="فيديو المتابع" slug="video" />
-          <VideoSection />
-        </div>
+        <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>
       </div>
 
       <SiteFooter />
+      <a className="totop mob" href="#top" aria-label="العودة إلى الأعلى">▲</a>
+      <div className="mob"><AudioPill articles={articles} mini /></div>
     </div>
   );
 }

@@ -87,7 +87,7 @@ export default function CategoryPage() {
 
   return (
     <div className="am">
-      <SiteHeader />
+      <SiteHeader articles={articles} />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">

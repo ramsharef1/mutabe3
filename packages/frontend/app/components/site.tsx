@@ -1,126 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { isLive } from './content';
+import { AudioPill } from './blocks/jordan';
 
-export interface Article {
-  id: string;
-  slug?: string;
-  title: string;
-  summary?: string;
-  content: string;
-  category?: { name: string; slug: string };
-  publishedAt?: string;
-  viewsCount?: number;
-  featuredImageUrl?: string;
-}
+export * from './util';
+import { Article, NAV, WRITERS, face, ago, catColor } from './util';
 
-export const WRITERS = [
-  'د. هاني الخصاونة',
-  'م. ليلى العبادي',
-  'أ. فارس الزعبي',
-  'د. سناء المجالي',
-  'خالد الرواشدة',
-  'د. ريم النعيمات',
-  'ياسر الحياري',
-  'د. عمر الطراونة',
-  'رنا الشوابكة',
-  'د. محمود العجارمة',
-  'سهى الحمود',
-  'أ. باسم الخريشا',
-];
-
-export const NAV: { label: string; slug: string }[] = [
-  { label: 'اخبار الاردن', slug: 'politics' },
-  { label: 'شرق وغرب', slug: 'east-west' },
-  { label: 'اقتصاد', slug: 'economy' },
-  { label: 'تعليم و جامعات', slug: 'education' },
-  { label: 'العالم', slug: 'world' },
-  { label: 'فلسطين', slug: 'palestine' },
-  { label: 'البرلمان', slug: 'parliament' },
-  { label: 'بانوراما', slug: 'panorama' },
-  { label: 'كتاب المتابع', slug: 'writers' },
-  { label: 'ليالي المتابع', slug: 'nights' },
-  { label: 'صحة وبيئة', slug: 'health' },
-  { label: 'كاريكاتير', slug: 'caricature' },
-  { label: 'فيديو', slug: 'video' },
-];
-
-export const CAT_LABELS: Record<string, string> = {
-  ...Object.fromEntries(NAV.map((n) => [n.slug, n.label])),
-  sports: 'رياضة',
-  harak: 'حراك',
-  opinion: 'آراء',
-  viewpoint: 'وجهة نظر',
-  press: 'صحفة',
-  debate: 'نقاش',
-  diwan: 'ديوان',
-  selected: 'مقالات مختارة',
-  culture: 'الثقافة',
-  jobs: 'وظائف',
-  sectors: 'قطاعات',
-  accidents: 'حوادث',
-  obituaries: 'وفيات',
-  letters: 'رسالة الى المحرر',
-  technology: 'تكنولوجيا وسيارات',
-  misc: 'منوعات',
-};
-
-// One-line blurb shown under the category title on /category pages.
-export const CAT_DESC: Record<string, string> = {
-  politics: 'آخر الأخبار المحلية والقرارات الحكومية وشؤون المملكة',
-  economy: 'الأسواق والبنوك والاستثمار والطاقة في الأردن والمنطقة',
-  sports: 'المنتخبات والأندية والدوري الأردني والبطولات العربية والعالمية',
-  education: 'الجامعات والمدارس والتعليم العالي والبعثات',
-  world: 'أبرز التطورات الدولية من عواصم العالم',
-  palestine: 'متابعة يومية للشأن الفلسطيني',
-  parliament: 'مجلس النواب والأعيان واللجان والتشريعات',
-  health: 'الصحة العامة والبيئة والمناخ',
-};
-
-const CAT_COLORS: Record<string, string> = {
-  politics: '#990000',
-  economy: '#1b5e20',
-  sports: '#0d47a1',
-  education: '#6a1b9a',
-  world: '#37474f',
-  palestine: '#2e7d32',
-  parliament: '#4e342e',
-  health: '#00838f',
-  technology: '#283593',
-  culture: '#ad1457',
-};
-export const catColor = (slug?: string) => (slug && CAT_COLORS[slug]) || '#990000';
-
-export const face = (i: number) => `https://i.pravatar.cc/140?img=${(i % 60) + 5}`;
-
-export const fmtDate = (d?: string) => {
-  const x = d ? new Date(d) : new Date();
-  const dd = String(x.getDate()).padStart(2, '0');
-  const mm = String(x.getMonth() + 1).padStart(2, '0');
-  let h = x.getHours();
-  const ap = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `${dd}-${mm}-${x.getFullYear()} ${String(h).padStart(2, '0')}:${String(x.getMinutes()).padStart(2, '0')} ${ap}`;
-};
-
-// Relative time in Arabic ("منذ 3 ساعات"). Western digits, matching the rest of the site.
-export const ago = (d?: string) => {
-  if (!d) return '';
-  const m = Math.max(1, Math.round((Date.now() - new Date(d).getTime()) / 60000));
-  if (m < 60) return m === 1 ? 'منذ دقيقة' : m === 2 ? 'منذ دقيقتين' : m <= 10 ? `منذ ${m} دقائق` : `منذ ${m} دقيقة`;
-  const h = Math.round(m / 60);
-  if (h < 24) return h === 1 ? 'منذ ساعة' : h === 2 ? 'منذ ساعتين' : h <= 10 ? `منذ ${h} ساعات` : `منذ ${h} ساعة`;
-  const dd = Math.round(h / 24);
-  return dd === 1 ? 'منذ يوم' : dd === 2 ? 'منذ يومين' : dd <= 10 ? `منذ ${dd} أيام` : `منذ ${dd} يوماً`;
-};
-
-export const readMins = (text: string) => Math.max(1, Math.round(text.split(/\s+/).length / 180));
-
-export function Img({ src, alt = '' }: { src?: string; alt?: string }) {
+export function Img({ src, alt = '', priority = false }: { src?: string; alt?: string; priority?: boolean }) {
   const [err, setErr] = useState(false);
   if (!src || err) return <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#c9c9c9,#8f8f8f)' }} />;
-  return <img src={src} alt={alt} loading="lazy" onError={() => setErr(true)} />;
+  return <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} onError={() => setErr(true)} />;
 }
 
 export const Chip = ({ a }: { a: Article }) =>
@@ -218,6 +109,20 @@ export const Ico = {
 };
 
 /* ---------- header ---------- */
+export function Nav({ compact = false }: { compact?: boolean }) {
+  const path = usePathname() || '/';
+  const items = compact ? NAV.slice(0, 9) : NAV;
+  return (
+    <ul>
+      {items.map((n) => {
+        const on = path.startsWith(`/category/${n.slug}`);
+        return <li key={n.slug} className={on ? 'on' : ''}><a href={`/category/${n.slug}`} aria-current={on ? 'page' : undefined}>{n.label}</a></li>;
+      })}
+      {!compact && <li className="morenav"><a href="/category/misc">المزيد ▾</a></li>}
+    </ul>
+  );
+}
+
 function StickyBar() {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -230,7 +135,7 @@ function StickyBar() {
     <div className={`sticky ${on ? 'show' : ''}`} aria-hidden={!on}>
       <div className="wrap">
         <a className="slogo" href="/"><img src="/logo.svg" alt="المتابع" /></a>
-        <ul>{NAV.slice(0, 9).map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
+        <nav className="snav" aria-label="الأقسام"><Nav compact /></nav>
         <form className="sq" action="/category/politics" onSubmit={(e) => e.preventDefault()}>
           <input placeholder="بحث..." aria-label="بحث" />
           <button type="submit" aria-label="بحث">{Ico.search}</button>
@@ -241,31 +146,32 @@ function StickyBar() {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ articles = [], temp, wxLabel }: { articles?: Article[]; temp?: number; wxLabel?: string }) {
   return (
     <>
       <StickyBar />
       <div className="topmenu">
         <div className="wrap">
           <div className="links">
-            <a href="/">الرئيسية</a><a href="#">ارسل لنا</a><a href="#">اتصل بنا</a><a href="#">البحث</a><a href="#">حول الموقع</a><a href="#">أخبار اليوم</a>
+            <a href="/">الرئيسية</a><a href="/category/politics">أخبار اليوم</a><a href="https://wa.me/962790000000" target="_blank" rel="noopener">ارسل خبراً</a><a href="#footer">اتصل بنا</a><a href="#footer">حول الموقع</a>
           </div>
           <div className="weather">
-            <span className="city">عمّان<br />الآن</span>
-            <span className="deg">24°</span>
-            <span>☀</span>
-            <span className="city">المزيد ▾</span>
+            {articles.length > 0 && <AudioPill articles={articles} />}
+            <form className="tsq" action="/tag/الأردن" onSubmit={(e) => e.preventDefault()}><input placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
+            <span className="city">عمّان<br />{wxLabel || 'الآن'}</span>
+            <span className="deg">{temp ?? 24}°</span>
             <span className="en">ENGLISH</span>
             <ThemeToggle />
           </div>
         </div>
       </div>
       <div className="wrap">
-        <div className="nav">
-          <ul>{NAV.map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
-        </div>
+        <nav className="nav" aria-label="الأقسام الرئيسية">
+          <Nav />
+        </nav>
         <div className="brand">
           <a className="logo" href="/"><img src="/logo.svg" alt="المتابع" width="338" height="134" /><small>الاخباري</small></a>
+          <form className="msq" action="/tag/الأردن" onSubmit={(e) => e.preventDefault()}><input placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
           <AdBanner variant={0} className="ad728" />
         </div>
       </div>
@@ -288,7 +194,7 @@ export function Crumbs({ items }: { items: { label: string; href?: string }[] })
 /* ---------- footer ---------- */
 export function SiteFooter() {
   return (
-    <div className="footer">
+    <div className="footer" id="footer">
       <div className="wrap">
         <div className="fbrands">
           <a className="flogo" href="/"><img src="/logo-white.svg" alt="المتابع" /></a>
@@ -337,8 +243,12 @@ export function SiteFooter() {
   );
 }
 
-export const SecHd = ({ t, slug }: { t: string; slug?: string }) => (
-  <div className="hd"><b>{slug ? <a href={`/category/${slug}`}>{t}</a> : t}</b><i /></div>
+export const SecHd = ({ t, slug, meta, tabs, cls = '' }: { t: string; slug?: string; meta?: string; tabs?: string[]; cls?: string }) => (
+  <div className={`hd ${cls}`}>
+    <b>{slug ? <a href={`/category/${slug}`}>{t}</a> : t}</b><i aria-hidden />
+    {tabs && <span className="tabs2" role="tablist">{tabs.map((x, i) => <button type="button" role="tab" aria-selected={i === 0} key={x} className={i === 0 ? 'on' : ''}>{x}</button>)}</span>}
+    {meta && <span className="meta">{meta}</span>}
+  </div>
 );
 
 export const More = ({ slug }: { slug?: string }) => (

@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { Amiri } from 'next/font/google';
 import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner } from '../../components/site';
 import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
 import { LiveBlog, LiveBadge } from '../../components/live';
+
+// Article body font, loaded only on this route (B11).
+const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri', display: 'swap' });
 
 const FILLER = [
   'وأكد المتحدث الرسمي أن الخطوات التنفيذية ستبدأ خلال الأسابيع المقبلة، مشيراً إلى أن الجهات المعنية أنهت الدراسات الفنية والمالية اللازمة، وأن العمل يجري بالتنسيق مع مختلف الشركاء لضمان تحقيق الأهداف المرسومة ضمن الجدول الزمني المحدد.',
@@ -68,9 +72,9 @@ export default function ArticlePage() {
   const views = a.viewsCount ?? 0;
 
   return (
-    <div className="am">
+    <div className={`am ${amiri.variable}`}>
       <Progress />
-      <SiteHeader />
+      <SiteHeader articles={articles} />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">
