@@ -1,6 +1,7 @@
 'use client';
 
 import { Article, WRITERS, face, Img, useArticles, Loading, SiteHeader, SiteFooter, SecHd, More, AdBanner } from './components/site';
+import { VideoSection } from './components/video';
 
 const OBITS = [
   'الحاج محمد عبدالله الخلايلة في ذمة الله',
@@ -241,15 +242,7 @@ export default function Home() {
 
         <div className="sec">
           <SecHd t="فيديو المتابع" slug="video" />
-          <div className="video">
-            <div className="col">{seq(1, 3).map((a, k) => <a key={`v1-${k}`} className="th" href={link(a)}><Img src={a.featuredImageUrl} /></a>)}</div>
-            <a className="big" href={link(at(3))}>
-              <Img src={at(3).featuredImageUrl} />
-              <div className="play">▶</div>
-              <div className="cap">{at(3).title}</div>
-            </a>
-            <div className="col">{seq(5, 3).map((a, k) => <a key={`v2-${k}`} className="th" href={link(a)}><Img src={a.featuredImageUrl} /></a>)}</div>
-          </div>
+          <VideoSection />
         </div>
       </div>
 
