@@ -28,7 +28,8 @@ export function VideoSection() {
       {idx.map((i) => (
         <button key={VIDEOS[i].id} type="button" className={`th ${i === active ? 'on' : ''}`} onClick={() => pick(i)} title={VIDEOS[i].title}>
           <img src={thumb(VIDEOS[i].id)} alt="" loading="lazy" />
-          <span className="pl">▶</span>
+          {i === active ? <span className="now"><i />يعرض الآن</span> : <span className="pl">▶</span>}
+          <span className="vt">{VIDEOS[i].title}</span>
         </button>
       ))}
     </div>

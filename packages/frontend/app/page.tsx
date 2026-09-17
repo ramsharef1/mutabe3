@@ -1,6 +1,6 @@
 'use client';
 
-import { Article, WRITERS, face, Img, useArticles, Loading, SiteHeader, SiteFooter, SecHd, More, AdBanner } from './components/site';
+import { Article, WRITERS, face, Img, useArticles, Loading, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip, ago, Ico } from './components/site';
 import { VideoSection } from './components/video';
 
 const OBITS = [
@@ -23,7 +23,7 @@ export default function Home() {
     <div className={`cards ${five ? 'cards5' : ''}`}>
       {seq(from, n).map((a, k) => (
         <a key={`${a.id}-${k}`} className="card" href={link(a)}>
-          <div className="im"><Img src={a.featuredImageUrl} /></div>
+          <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
           <div className="t">{a.title}</div>
         </a>
       ))}
@@ -48,7 +48,7 @@ export default function Home() {
     <div className="grid3">
       {seq(from, 6).map((a, k) => (
         <a key={`${a.id}-${k}`} className="card" href={link(a)}>
-          <div className="im"><Img src={a.featuredImageUrl} /></div>
+          <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
           <div className="t">{a.title}</div>
         </a>
       ))}
@@ -79,6 +79,13 @@ export default function Home() {
     );
   };
 
+  const Ads3 = ({ v }: { v: [number, number, number] }) => (
+    <div className="adrow ads3"><AdBanner variant={v[0]} /><AdBanner variant={v[1]} /><AdBanner variant={v[2]} /></div>
+  );
+
+  const tickerItems = seq(0, 6);
+  const hero = at(0);
+
   return (
     <div className="am">
       <SiteHeader />
@@ -94,47 +101,56 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Breaking-news marquee: content is duplicated so the loop is seamless; pauses on hover */}
         <div className="ticker">
-          <span className="lbl" />
-          <a href={link(at(0))}>{at(0).title}</a>
-          <span style={{ color: '#bbb' }}>|</span>
-          <a href={link(at(1))}>{at(1).title}</a>
+          <span className="lbl"><i />عاجل</span>
+          <div className="view">
+            <div className="track">
+              {[...tickerItems, ...tickerItems].map((a, k) => (
+                <a key={`t-${k}`} href={link(a)}><span className="tm">{ago(a.publishedAt)}</span>{a.title}</a>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
+        <Ads3 v={[1, 2, 3]} />
 
         {/* Hero + mid list + side boxes */}
         <div className="main">
-          <div className="hero">
-            <a className="img" href={link(at(0))}><Img src={at(0).featuredImageUrl} /></a>
-            <h2><a href={link(at(0))}>{at(0).title}</a></h2>
-          </div>
+          <a className="hero" href={link(hero)}>
+            <div className="img"><Img src={hero.featuredImageUrl} /></div>
+            <div className="cap">
+              <Chip a={hero} />
+              <h2>{hero.title}</h2>
+              <span className="tm">{Ico.clock}{ago(hero.publishedAt)}</span>
+            </div>
+          </a>
           <div className="mid">
             {seq(1, 7).map((a, k) => (
               <a key={`m-${k}`} className="item" href={link(a)}>
                 <div className="th"><Img src={a.featuredImageUrl} /></div>
-                <div className="t">{a.title}</div>
+                <div className="t">{a.title}<span className="tm">{ago(a.publishedAt)}</span></div>
               </a>
             ))}
           </div>
           <div className="side">
             <div className="box">
-              <div className="hd"><span>آخر الأنباء</span><i>‹</i></div>
-              <ul>{seq(8, 7).map((a, k) => <li key={`l-${k}`}><a href={link(a)}>{a.title}</a></li>)}</ul>
+              <div className="hd"><span>آخر الأنباء</span><i /></div>
+              <ul>{seq(8, 7).map((a, k) => <li key={`l-${k}`}><a href={link(a)}>{a.title}</a><span className="tm">{ago(a.publishedAt)}</span></li>)}</ul>
             </div>
             <div className="box">
-              <div className="hd"><a href="/category/obituaries">وفيات</a><i>‹</i></div>
+              <div className="hd"><a href="/category/obituaries">وفيات</a><i /></div>
               <ul>{OBITS.map((t, k) => <li key={`o-${k}`}><a href="/category/obituaries">{t}</a></li>)}</ul>
             </div>
           </div>
         </div>
 
-        <AdBanner variant={4} style={{ height: 90 }} />
+        <AdBanner variant={4} className="adrow ad90" />
 
         <div className="sec"><SecHd t="اقتصاد" slug="economy" /><Cards from={2} /><Smalls from={6} /><More slug="economy" /></div>
         <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards from={10} /><Smalls from={14} /><More slug="east-west" /></div>
 
-        <div className="ads3"><AdBanner variant={1} /><AdBanner variant={2} /><AdBanner variant={3} /></div>
+        <Ads3 v={[1, 2, 3]} />
 
         <div className="two">
           <div className="sec"><SecHd t="البرلمان" slug="parliament" /><Grid3 from={3} /><More slug="parliament" /></div>
@@ -147,7 +163,7 @@ export default function Home() {
           ))}
         </div>
 
-        <AdBanner variant={4} style={{ height: 90, marginTop: 12 }} />
+        <AdBanner variant={4} className="adrow ad90" />
 
         <div className="sec">
           <SecHd t="ليالي المتابع" slug="nights" />
@@ -172,7 +188,7 @@ export default function Home() {
           <div className="sec rnd"><SecHd t="كتاب المتابع" slug="writers" /><Smalls from={8} n={5} cols={1} writer /><More slug="writers" /></div>
         </div>
 
-        <div className="ads3"><AdBanner variant={3} /><AdBanner variant={4} /><AdBanner variant={0} /></div>
+        <Ads3 v={[3, 4, 0]} />
 
         <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards from={1} n={5} five /><More slug="education" /></div>
 
@@ -181,7 +197,7 @@ export default function Home() {
           <div className="sec"><SecHd t="الثقافة" slug="culture" /><BigText from={13} /><More slug="culture" /></div>
         </div>
 
-        <AdBanner variant={0} style={{ height: 90, marginTop: 12 }} />
+        <AdBanner variant={0} className="adrow ad90" />
 
         <div className="two">
           <div className="sec"><SecHd t="فلسطين" slug="palestine" /><Bullets from={5} /><More slug="palestine" /></div>
@@ -193,7 +209,7 @@ export default function Home() {
           <div className="sec"><SecHd t="قطاعات" slug="sectors" /><Grid3 from={14} /><More slug="sectors" /></div>
         </div>
 
-        <div className="ads3"><AdBanner variant={2} /><AdBanner variant={0} /><AdBanner variant={1} /></div>
+        <Ads3 v={[2, 0, 1]} />
 
         <div className="two">
           <div className="sec"><SecHd t="حوادث" slug="accidents" /><Bullets from={3} n={4} /><More slug="accidents" /></div>
@@ -205,7 +221,7 @@ export default function Home() {
           <div className="sec"><SecHd t="رسالة الى المحرر" slug="letters" /><Bullets from={16} n={5} /><More slug="letters" /></div>
         </div>
 
-        <AdBanner variant={2} style={{ height: 90, marginTop: 12 }} />
+        <AdBanner variant={2} className="adrow ad90" />
 
         <div className="three">
           <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls from={2} n={6} cols={1} /><More slug="technology" /></div>
@@ -238,7 +254,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="ads3"><AdBanner variant={4} /><AdBanner variant={1} /><AdBanner variant={2} /></div>
+        <Ads3 v={[4, 1, 2]} />
 
         <div className="sec">
           <SecHd t="فيديو المتابع" slug="video" />
