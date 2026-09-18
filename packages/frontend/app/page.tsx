@@ -5,6 +5,11 @@ import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
 import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Poll, Carousel, Debate, WritersRail } from './components/blocks/fold';
 import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline, AudioPill } from './components/blocks/jordan';
+import { PremiumSpotlight } from './components/blocks/premium';
+import { TrendingNow } from './components/blocks/trending';
+import { CategoryQuickNav } from './components/blocks/categories';
+import { NewsletterCTA } from './components/blocks/newsletter';
+import { MostDiscussed } from './components/blocks/discussed';
 import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText } from './components/feeds';
 
 export const revalidate = 60;
@@ -85,6 +90,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   const hero = pool.take(1)[0];
   const mid = pool.take(7);
   const latest = pool.take(6);
+  const premium = pool.take(3);
+  const trending = pool.take(5);
+  const discussed = pool.take(6);
   const jordan = pool.take(4), jordanS = pool.take(4);
   const econ = pool.take(5), econS = pool.take(4);
   const pal = pool.take(3), world = pool.take(4);
@@ -118,6 +126,11 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <MarketStrip updated={ammanTime(now)} />
         <Missed articles={articles} />
 
+        {/* Premium Spotlight */}
+        <PremiumSpotlight items={premium} />
+
+        <CategoryQuickNav />
+
         {/* Fold */}
         <div className="main">
           <a className="hero" href={link(hero)}>
@@ -133,6 +146,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
             ))}
           </div>
           <div className="side">
+            <div className="desk"><NewsletterCTA /></div>
             <LatestBox items={latest} />
             <div className="desk"><PicksBox articles={articles} /></div>
             <div className="desk"><ObitsBox /></div>
@@ -145,6 +159,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         {/* J6 royal strip */}
         <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
+
+        {/* Trending Now */}
+        <TrendingNow items={trending} />
 
         {/* B2 أخبار الأردن first, with tabs + governorate chips (C6) */}
         <div className="sec">
@@ -253,6 +270,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         </div>
 
         <AdBanner variant={2} className="adrow ad90" />
+
+        {/* Most Discussed */}
+        <MostDiscussed items={discussed} />
 
         <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>
       </div>

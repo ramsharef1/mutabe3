@@ -43,3 +43,15 @@
 - 2026-09-18T07:26Z · edit · /Users/ramialsharef/Projects/frontend/app/auth/login/page.tsx
 - 2026-09-18T07:26Z · edit · packages/frontend/app/auth/login/page.tsx
 - 2026-09-18T07:26Z · edit · packages/frontend/app/auth/verify/page.tsx
+- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/premium.tsx
+- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/trending.tsx
+- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/categories.tsx
+- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/newsletter.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/components/blocks/discussed.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx
+- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx
+- 2026-09-18T07:36Z · edit · packages/frontend/app/globals.css
