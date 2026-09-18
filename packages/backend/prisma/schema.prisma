@@ -37,14 +37,58 @@ model User {
   email     String   @unique
   name      String
   password  String   // bcrypted
-  role      UserRole
+  role      UserRole @default(VIEWER)
+
+  // Auth
+  emailVerified Boolean @default(false)
+  emailVerificationToken String?
+  emailVerificationExpires DateTime?
+
+  // Preferences
+  preferences Json @default("{}")
+
+  // Relations
   articles  Article[]
   comments  Comment[]
+  sessions  Session[]
+  savedArticles SavedArticle[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([role])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refreshToken String @unique
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+model SavedArticle {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  savedAt   DateTime @default(now())
+
+  @@unique([userId, articleId])
+  @@index([userId])
 }
 
 model Article {
@@ -61,8 +105,9 @@ model Article {
   
   categoryId        String
   category          Category @relation(fields: [categoryId], references: [id])
-  
+
   comments          Comment[]
+  savedBy           SavedArticle[]
   
   // Status & Timestamps
   status            ArticleStatus @default(DRAFT)

@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import cookieParser from 'cookie-parser';
+import authRoutes from './routes/auth';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -7,6 +9,7 @@ const prisma = new PrismaClient();
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use((req, res, next) => {
   const allowedOrigins = ['https://mutabe3.news', 'https://www.mutabe3.news', 'http://localhost:9100', 'http://72.62.132.138:9100'];
   const origin = req.headers.origin;
@@ -101,6 +104,9 @@ app.get('/api/categories', async (req: Request, res: Response) => {
   }
 });
 
+// Auth routes
+app.use('/api/auth', authRoutes);
+
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
   res.json({
@@ -111,6 +117,14 @@ app.get('/', (req: Request, res: Response) => {
       health: '/api/health',
       articles: '/api/articles',
       categories: '/api/categories',
+      auth: {
+        signup: 'POST /api/auth/signup',
+        login: 'POST /api/auth/login',
+        verify: 'POST /api/auth/verify',
+        refresh: 'POST /api/auth/refresh',
+        logout: 'POST /api/auth/logout',
+        me: 'GET /api/auth/me',
+      },
     },
   });
 });
