@@ -1,6 +1,6 @@
 // Server component (B9): articles + weather are fetched on the server and revalidated; interactive blocks are client islands.
 import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip } from './components/site';
-import { Article, WRITERS, face, ago } from './components/util';
+import { Article, WRITERS, face, ago, readMins } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
 import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Poll, Carousel, Debate, WritersRail } from './components/blocks/fold';
@@ -34,7 +34,7 @@ const Cards = ({ items, five = false }: { items: Article[]; five?: boolean }) =>
       <a key={a.id} className="card" href={link(a)}>
         <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
         <div className="t">{a.title}</div>
-        <span className="tm">{ago(a.publishedAt)}</span>
+        <span className="tm">{ago(a.publishedAt)} · <span className="readtime">⏱ {readMins(a.content)} دقايق</span></span>
       </a>
     ))}
   </div>
@@ -44,7 +44,7 @@ const Smalls = ({ items, cols = 4 }: { items: Article[]; cols?: number }) => (
     {items.map((a) => (
       <a key={a.id} className="sm" href={link(a)}>
         <div className="th"><Img src={a.featuredImageUrl} /></div>
-        <div className="t">{a.title}<span className="tm">{ago(a.publishedAt)}</span></div>
+        <div className="t">{a.title}<span className="tm">{ago(a.publishedAt)} · <span className="readtime">⏱ {readMins(a.content)}</span></span></div>
       </a>
     ))}
   </div>

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-18T07:33:22Z",
+  "updated": "2026-09-19T11:07:45Z",
   "bible_excerpt": "",
   "decisions": [
     "- **What:** Update app configuration to use https://mutabe3.news",
@@ -25,13 +25,6 @@
   ],
   "open_questions": [],
   "execution_log": [
-    "- 2026-09-15T21:01Z · edit · brain/DECISIONS.md",
-    "- 2026-09-15T21:22Z · edit · vercel.json",
-    "- 2026-09-16T21:58Z · edit · packages/frontend/.env.production",
-    "- 2026-09-16T21:58Z · edit · packages/backend/src/index.ts",
-    "- 2026-09-16T22:02Z · edit · /Users/ramialsharef/Projects/forge/brain/DECISIONS.md",
-    "- 2026-09-16T22:02Z · edit · brain/DECISIONS.md",
-    "- 2026-09-16T22:30Z · edit · FACTS.md",
     "- 2026-09-16T22:30Z · edit · FACTS.md",
     "- 2026-09-16T22:30Z · edit · FACTS.md",
     "- 2026-09-16T22:34Z · edit · packages/frontend/app/page-ammon-style.tsx",
@@ -69,7 +62,19 @@
     "- 2026-09-18T07:26Z · edit · packages/frontend/app/auth/signup/page.tsx",
     "- 2026-09-18T07:26Z · edit · /Users/ramialsharef/Projects/frontend/app/auth/login/page.tsx",
     "- 2026-09-18T07:26Z · edit · packages/frontend/app/auth/login/page.tsx",
-    "- 2026-09-18T07:26Z · edit · packages/frontend/app/auth/verify/page.tsx"
+    "- 2026-09-18T07:26Z · edit · packages/frontend/app/auth/verify/page.tsx",
+    "- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/premium.tsx",
+    "- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/trending.tsx",
+    "- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/categories.tsx",
+    "- 2026-09-18T07:34Z · edit · packages/frontend/app/components/blocks/newsletter.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/components/blocks/discussed.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx",
+    "- 2026-09-18T07:35Z · edit · packages/frontend/app/page.tsx",
+    "- 2026-09-18T07:36Z · edit · packages/frontend/app/globals.css"
   ],
   "prompt_registry": "",
   "findings_status": {
