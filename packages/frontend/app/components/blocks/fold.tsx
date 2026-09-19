@@ -14,7 +14,7 @@ export function BreakingBar() {
     <div className="brk" role="alert">
       <span className="live"><i />عاجل</span>
       <a href={BREAKING.href}><b>{BREAKING.title}</b></a>
-      <span className="tm">{Ico.clock}{ago(BREAKING.at)}</span>
+      <span className="tm" suppressHydrationWarning>{Ico.clock}{ago(BREAKING.at)}</span>
       <a className="go" href={BREAKING.href}>تابع التغطية ›</a>
       <button type="button" className="x" onClick={() => setOpen(false)} aria-label="إخفاء">×</button>
     </div>
