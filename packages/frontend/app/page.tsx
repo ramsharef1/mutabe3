@@ -12,7 +12,6 @@ import { CardShare } from './components/blocks/share';
 import { ForYou } from './components/blocks/foryou';
 import { LiveStrip } from './components/blocks/livestrip';
 import { CommunityBand } from './components/blocks/community';
-import { CategoryQuickNav } from './components/blocks/categories';
 import { NewsletterCTA } from './components/blocks/newsletter';
 import { MostDiscussed } from './components/blocks/discussed';
 import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText } from './components/feeds';
@@ -79,9 +78,6 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
     <div style={{ marginTop: 6 }}><Bullets items={more} /></div>
   </>
 );
-const Ads3 = ({ v }: { v: [number, number, number] }) => (
-  <div className="adrow ads3"><AdBanner variant={v[0]} /><AdBanner variant={v[1]} /><AdBanner variant={v[2]} /></div>
-);
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
   const [articles, wx] = await Promise.all([getArticles(), fetchWeather()]);
@@ -129,8 +125,6 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         {/* Premium Spotlight */}
         <PremiumSpotlight items={premium} />
 
-        <CategoryQuickNav />
-
         {/* Trending Topics — curated subject discovery from real tags */}
         <TrendingTopics articles={articles} />
 
@@ -177,13 +171,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         {/* For You — client-only recommendations from local read history */}
         <ForYou articles={articles} />
 
-        {/* J6 royal strip */}
-        <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
-
-        {/* Trending Now */}
-        <TrendingNow items={trending} />
-
-        {/* B2 أخبار الأردن first, with tabs + governorate chips (C6) */}
+        {/* Flagship national news — brought up as the first section after the fold */}
         <div className="sec">
           <SecHd t="أخبار الأردن" slug="politics" tabs={['الكل', 'حوادث', 'محافظات']} meta={`تحديث ${ago(jordan[0]?.publishedAt)} · ${articles.length} خبراً`} />
           <div className="gov"><small>أخبار محافظتك:</small>{['عمّان', 'إربد', 'الزرقاء', 'العقبة', 'الكرك', 'معان', 'البلقاء'].map((g, i) => <a key={g} href={`/tag/${encodeURIComponent(g)}`} className={i === 0 ? 'on' : ''}>{g}</a>)}<a href="/category/politics">+5</a></div>
@@ -195,6 +183,12 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
             <a key={w} className="writer" href="/category/writers"><div className="ph"><Img src={face(k)} /></div><div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات', 'المناخ ليس ترفاً', 'الإعلام الرقمي', 'كرة القدم كقوة ناعمة'][k]}</div></a>
           ))}
         </div>
+
+        {/* J6 royal strip */}
+        <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
+
+        {/* Trending Now */}
+        <TrendingNow items={trending} />
 
         {/* J3–J5 */}
         <div className="three">
@@ -210,7 +204,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         </div>
         <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
 
-        <Ads3 v={[1, 2, 3]} />
+        <AdBanner variant={1} className="adrow ad90" />
 
         {/* C5 + C3 */}
         <div className="two">
