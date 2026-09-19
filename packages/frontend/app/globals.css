@@ -120,6 +120,16 @@ img{color:transparent}
 .hero:hover h2{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
 .hero .cap .tm{color:#ddd;margin-top:8px}
 .hero .cap .tm svg{opacity:.9}
+/* lead column = hero + secondary headlines that fill the fold height (no dead space under the hero) */
+.lead{width:350px;flex:none;align-self:stretch;display:flex;flex-direction:column;min-width:0}
+.lead .hero{width:100%;flex:none}
+.lead .leadmore{list-style:none;margin:0;padding:0;flex:1;display:flex;flex-direction:column;border:1px solid var(--line3);border-top:none;background:var(--bg)}
+.lead .leadmore li{flex:1;display:flex;border-top:1px solid var(--line2)}
+.lead .leadmore li:first-child{border-top:none}
+.lead .leadmore a{display:flex;flex-direction:column;justify-content:center;padding:9px 12px;width:100%;min-height:0}
+.lead .leadmore .t{font-size:13px;font-weight:bold;color:var(--fg);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .15s}
+.lead .leadmore a:hover .t{color:var(--red)}
+.lead .leadmore .tm{margin-top:3px}
 .mid{width:340px;flex:none}
 .item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2)}
 .item:first-child{padding-top:0}
@@ -441,7 +451,8 @@ img{color:transparent}
   .ticker{font-size:13px}
   .ticker .track{animation-duration:45s}
   .main{flex-direction:column;gap:14px}
-  .hero,.mid,.side{width:100%}
+  .lead,.hero,.mid,.side{width:100%}
+  .lead .leadmore li{flex:none}
   .hero .img{width:100%;height:auto;aspect-ratio:16/10}
   .hero h2{font-size:18px}
   .item .th{width:100px;height:72px}
@@ -1813,7 +1824,8 @@ button[type="submit"]:active, .btn-primary:active {
 @media (min-width:768px) and (max-width:1001px){
   .wrap{width:auto;padding:0 12px}
   .main{flex-direction:column;gap:16px}
-  .main .hero,.main .mid,.main .side{width:100%}
+  .main .lead,.main .hero,.main .mid,.main .side{width:100%}
+  .main .lead .leadmore li{flex:none}
   .main .hero .img{width:100%;height:auto;aspect-ratio:16/9}
   .three{flex-wrap:wrap}
   .three>.sec{flex:1 1 45%;min-width:0}

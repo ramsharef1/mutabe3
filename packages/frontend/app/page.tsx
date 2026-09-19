@@ -96,6 +96,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   // B1: every block draws from an exclusive pool so the fold never repeats a story.
   const pool = new Pool(articles);
   const hero = pool.take(1)[0];
+  const leadMore = pool.take(3);
   const mid = pool.take(7);
   const latest = pool.take(6);
   const premium = pool.take(3);
@@ -145,10 +146,17 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         {/* Fold */}
         <div className="main">
-          <a className="hero" href={link(hero)}>
-            <div className="img"><Img src={hero.featuredImageUrl} priority /></div>
-            <div className="cap"><Chip a={hero} /><h2>{hero.title}</h2><span className="tm">{ago(hero.publishedAt)}</span></div>
-          </a>
+          <div className="lead">
+            <a className="hero" href={link(hero)}>
+              <div className="img"><Img src={hero.featuredImageUrl} priority /></div>
+              <div className="cap"><Chip a={hero} /><h2>{hero.title}</h2><span className="tm">{ago(hero.publishedAt)}</span></div>
+            </a>
+            <ul className="leadmore">
+              {leadMore.map((a) => (
+                <li key={a.id}><a href={link(a)}><span className="t">{a.title}</span><span className="tm">{ago(a.publishedAt)}</span></a></li>
+              ))}
+            </ul>
+          </div>
           <div className="mid">
             {mid.map((a) => (
               <a key={a.id} className="item" href={link(a)}>
