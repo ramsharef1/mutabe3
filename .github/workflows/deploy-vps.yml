@@ -5,86 +5,51 @@ on:
     branches: [main]
     paths:
       - 'packages/**'
-      - 'docker-compose.yml'
-      - 'Dockerfile'
       - '.github/workflows/deploy-vps.yml'
 
+# The production app is a git checkout at
+# /var/www/mutabe3/current/projects/mutabe3 run by the systemd units
+# mutabe3-frontend (next start, :9100) and mutabe3-backend (:9080).
+# Deploy = ssh in, fast-forward to origin/main, build the frontend, restart.
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker images
-        run: |
-          docker buildx build -t mutabe3-frontend:latest packages/frontend -f packages/frontend/Dockerfile.dev
-          docker buildx build -t mutabe3-backend:latest packages/backend -f packages/backend/Dockerfile.dev
-          docker buildx build -t mutabe3-strapi:latest packages/backend -f packages/backend/Dockerfile.strapi.dev
-
-      - name: Deploy to VPS
+      - name: Deploy over SSH
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          # Create SSH key file
           mkdir -p ~/.ssh
-          echo "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          # Add VPS to known_hosts
-          ssh-keyscan -p $VPS_PORT -H $VPS_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /var/www/mutabe3/current/projects/mutabe3
 
-          # SSH to VPS and deploy
-          ssh -i ~/.ssh/id_ed25519 -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
-          set -e
+          echo "== Fetching origin/main =="
+          git fetch --quiet origin main
+          # ff-only: refuse (don't clobber) if prod ever has local commits.
+          git merge --ff-only origin/main
 
-          echo "=== Deploying mutabe3 ==="
+          echo "== Installing dependencies =="
+          npm install --no-audit --no-fund
 
-          # Navigate to project directory
-          cd /var/www/mutabe3/current
+          echo "== Building frontend =="
+          npm run build --workspace=packages/frontend
 
-          # Pull latest code
-          echo "Pulling latest code..."
-          git pull origin main
+          echo "== Restarting services =="
+          systemctl restart mutabe3-frontend
+          systemctl restart mutabe3-backend || true
 
-          # Stop running containers
-          echo "Stopping services..."
-          docker-compose down || true
-
-          # Build and start services
-          echo "Building and starting services..."
-          docker-compose up -d --build
-
-          # Wait for services to be ready
-          sleep 10
-
-          # Run database migrations
-          echo "Running database migrations..."
-          docker-compose exec -T backend npm run db:migrate || true
-
-          # Check if seed is needed
-          echo "Checking database seed..."
-          docker-compose exec -T backend npm run db:seed || true
-
-          echo "✅ Deployment complete!"
-          echo "Frontend: http://localhost:3100"
-          echo "API: http://localhost:8080"
-
-          # Show container status
-          echo ""
-          echo "Container status:"
-          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          EOF
+          echo "== Deployed $(git rev-parse --short HEAD) =="
+          REMOTE
 
       - name: Verify deployment
         env:
@@ -94,37 +59,14 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
           mkdir -p ~/.ssh
-          echo "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p $VPS_PORT -H $VPS_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          # Check if services are running
-          ssh -i ~/.ssh/id_ed25519 -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
-          cd /var/www/mutabe3/current
-
-          echo "Checking services health..."
-          docker-compose ps
-
-          # Try to connect to frontend
-          if curl -f http://localhost:3100 > /dev/null 2>&1; then
-            echo "✅ Frontend is responding"
-          else
-            echo "❌ Frontend health check failed"
-            exit 1
-          fi
-
-          # Try to connect to API
-          if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
-            echo "✅ API is responding"
-          else
-            echo "⚠️  API health check inconclusive"
-          fi
-          EOF
-
-      - name: Notify deployment
-        if: always()
-        run: |
-          echo "Deployment status: ${{ job.status }}"
-          echo "Repository: ${{ github.repository }}"
-          echo "Branch: ${{ github.ref }}"
-          echo "Commit: ${{ github.sha }}"
+          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          set -e
+          curl -fsS -o /dev/null -w "frontend (:9100) HTTP %{http_code}\n" http://localhost:9100 \
+            || { echo "❌ frontend health check failed"; exit 1; }
+          curl -fsS -o /dev/null -w "backend (:9080) HTTP %{http_code}\n" http://localhost:9080/api/articles \
+            || echo "⚠️  backend health check inconclusive"
+          REMOTE
