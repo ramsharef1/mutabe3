@@ -281,7 +281,7 @@ export function Timeline({ id = 'art-006', title = 'الاجتماع العرب�
   return (
     <div className="tl">
       <a className="h" href={`/article/${id}`}>تطور القصة: {title} ›</a>
-      <ul>{e.slice(0, 4).map((x) => <li key={x.at}><time>{fmtTime(x.at)}</time><span>{x.title || x.text}</span></li>)}</ul>
+      <ul>{e.slice(0, 4).map((x, i) => <li key={i}><time suppressHydrationWarning>{fmtTime(x.at)}</time><span>{x.title || x.text}</span></li>)}</ul>
     </div>
   );
 }
