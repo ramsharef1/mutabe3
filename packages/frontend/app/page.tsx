@@ -160,8 +160,14 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <div className="side">
             <div className="desk"><NewsletterCTA /></div>
             <LatestBox items={latest} />
-            <div className="desk"><PicksBox articles={articles} /></div>
-            <div className="desk"><ObitsBox /></div>
+          </div>
+        </div>
+
+        {/* Picks + Obituaries below the fold (desktop) so the sidebar height matches the main column */}
+        <div className="desk">
+          <div className="two" style={{ marginTop: 12 }}>
+            <div className="sec"><PicksBox articles={articles} /></div>
+            <div className="sec"><ObitsBox /></div>
           </div>
         </div>
 
