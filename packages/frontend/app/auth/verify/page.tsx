@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { verifyEmail } from '../../lib/auth';
 
-export default function VerifyPage() {
+function VerifyInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -170,5 +170,13 @@ export default function VerifyPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className="verify-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}><p>جاري التحميل...</p></div>}>
+      <VerifyInner />
+    </Suspense>
   );
 }
