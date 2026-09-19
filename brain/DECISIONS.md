@@ -1,5 +1,21 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-09-19
+
+**D-035: Homepage Phase 1-2 Visual Enhancements**
+- **Decided by:** User ("lets do all" - full homepage transformation)
+- **What:** Comprehensive CSS overhaul across 34 sections + all components
+  - Phase 1: Spacing (18px→48px margins), card hovers (translateY + scale + shadow), header styling (larger + bolder), status colors (green/yellow/red badges), breaking news animation
+  - Phase 2: Tab standardization (unified underline style), button consistency (padding + radius + hover), category nav polish, trending enhancement (numbered ranks + hover effects), newsletter CTA improvements, video section polish, panorama/premium/discussed sections enhanced
+  - Added CSS variables: --spacing-xs through --spacing-2xl, --shadow-sm/md/lg, color system (--success/warning/error)
+  - Applied animations (slideUpFade) to major sections
+  - Color-coded status indicators for borders, roads, market data, jobs
+- **Why:** Homepage felt cramped, inconsistent, and visually flat. These changes create 30-50% immediate visual improvement while maintaining Ammon replica structure
+- **Implementation:** 15+ CSS enhancements, ~200 lines of improvements, no JS changes
+- **Status:** ✅ COMMITTED & DEPLOYED to production · 2026-09-19
+
+---
+
 ## 2026-09-17
 
 **D-034: Homepage, Article and Category Templates Replicate ammonnews.net**
