@@ -1,5 +1,5 @@
 // Server component (B9): articles + weather are fetched on the server and revalidated; interactive blocks are client islands.
-import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip } from './components/site';
+import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, AdBox, Chip } from './components/site';
 import { Article, WRITERS, face, ago, readMins } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
@@ -97,7 +97,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   const pool = new Pool(articles);
   const hero = pool.take(1)[0];
   const leadMore = pool.take(3);
-  const mid = pool.take(7);
+  const mid = pool.take(11);
   const latest = pool.take(6);
   const premium = pool.take(3);
   const trending = pool.take(5);
@@ -118,16 +118,6 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
       <div className="wrap">
         <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
-
-        {/* Columnists strip — Ammon signature on desktop; on mobile it moves below أخبار الأردن (A9) */}
-        <div className="writers desk">
-          {WRITERS.slice(0, 8).map((w, k) => (
-            <a key={w} className="writer" href="/category/writers">
-              <div className="ph"><Img src={face(k)} /></div>
-              <div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار: قراءة في قرار المركزي', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات وفرص العمل', 'المناخ ليس ترفاً', 'الإعلام الرقمي ومسؤولية الكلمة', 'كرة القدم كقوة ناعمة'][k]}</div>
-            </a>
-          ))}
-        </div>
 
         <BreakingBar />
         <MetAlert />
@@ -166,6 +156,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
             ))}
           </div>
           <div className="side">
+            <div className="desk sidead"><AdBox variant={5} /></div>
             <div className="desk"><NewsletterCTA /></div>
             <LatestBox items={latest} />
           </div>
@@ -256,7 +247,16 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         </div>
 
         {/* A1+A2 merged opinion + C12 */}
-        <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" /><WritersRail articles={pool.take(4)} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>
+        <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
+          <div className="writers desk">
+            {WRITERS.slice(0, 8).map((w, k) => (
+              <a key={w} className="writer" href="/category/writers">
+                <div className="ph"><Img src={face(k)} /></div>
+                <div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار: قراءة في قرار المركزي', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات وفرص العمل', 'المناخ ليس ترفاً', 'الإعلام الرقمي ومسؤولية الكلمة', 'كرة القدم كقوة ناعمة'][k]}</div>
+              </a>
+            ))}
+          </div>
+          <WritersRail articles={pool.take(4)} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>
 
         <div className="two">
           <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>
