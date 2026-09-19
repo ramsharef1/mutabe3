@@ -10,6 +10,7 @@ import { TrendingNow } from './components/blocks/trending';
 import { TrendingTopics } from './components/blocks/topics';
 import { CardShare } from './components/blocks/share';
 import { ForYou } from './components/blocks/foryou';
+import { LiveStrip } from './components/blocks/livestrip';
 import { CategoryQuickNav } from './components/blocks/categories';
 import { NewsletterCTA } from './components/blocks/newsletter';
 import { MostDiscussed } from './components/blocks/discussed';
@@ -129,6 +130,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <BreakingBar />
         <MetAlert />
         <Ticker items={ticker} />
+        <LiveStrip />
         <MarketStrip updated={ammanTime(now)} />
         <Missed articles={articles} />
 
