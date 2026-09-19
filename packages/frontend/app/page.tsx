@@ -3,7 +3,7 @@ import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, Chip } from './comp
 import { Article, WRITERS, face, ago, readMins } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
-import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Poll, Carousel, Debate, WritersRail } from './components/blocks/fold';
+import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Carousel, Debate, WritersRail } from './components/blocks/fold';
 import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline, AudioPill } from './components/blocks/jordan';
 import { PremiumSpotlight } from './components/blocks/premium';
 import { TrendingNow } from './components/blocks/trending';
@@ -11,6 +11,7 @@ import { TrendingTopics } from './components/blocks/topics';
 import { CardShare } from './components/blocks/share';
 import { ForYou } from './components/blocks/foryou';
 import { LiveStrip } from './components/blocks/livestrip';
+import { CommunityBand } from './components/blocks/community';
 import { CategoryQuickNav } from './components/blocks/categories';
 import { NewsletterCTA } from './components/blocks/newsletter';
 import { MostDiscussed } from './components/blocks/discussed';
@@ -212,6 +213,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
         </div>
 
+        {/* Community band — surfaces polls/debate/UGC prominently */}
+        <CommunityBand />
+
         {/* B3 فلسطين/العالم + C8 timeline */}
         <div className="two">
           <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} /><div style={{ marginTop: 10 }}><Timeline /></div></div>
@@ -238,7 +242,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         </div>
 
         {/* A1+A2 merged opinion + C12 */}
-        <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" /><WritersRail articles={pool.take(4)} /><div style={{ marginTop: 12 }}><Debate /></div><More slug="writers" /></div>
+        <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" /><WritersRail articles={pool.take(4)} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>
 
         <div className="two">
           <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>
@@ -268,10 +272,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <div className="sec"><SecHd t="ذاكرة الأردن" meta="يومياً" /><Memory /></div>
         </div>
 
-        <div className="three">
+        <div className="two">
           <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls items={tech} cols={1} /><More slug="technology" /></div>
           <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls items={misc} cols={1} /><More slug="misc" /></div>
-          <div className="sec"><SecHd t="تصويت" /><Poll /></div>
         </div>
 
         <div className="sec">

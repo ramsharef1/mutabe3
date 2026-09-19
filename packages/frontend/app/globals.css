@@ -1172,6 +1172,21 @@ img{color:transparent}
 .livestrip .body:hover .ttl{color:var(--red)}
 @media(max-width:768px){.livestrip{flex-direction:column;gap:var(--spacing-sm)}.livestrip .body{flex-wrap:wrap}.livestrip .meta{display:none}.livestrip .follow{align-self:stretch}}
 
+/* ---- community band (surface polls/debate/UGC — the participatory moat) ---- */
+.community{background:linear-gradient(135deg,rgba(196,30,58,.05),rgba(212,175,55,.06));border:1px solid var(--line);border-radius:8px;padding:var(--spacing-md) var(--spacing-lg) var(--spacing-lg);animation:slideUpFade .5s ease-out}
+.community .cm-wrap{display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-lg);align-items:start}
+.community .cm-invite{display:flex;flex-direction:column;gap:var(--spacing-md);justify-content:center}
+.community .cm-cta{display:flex;align-items:center;gap:var(--spacing-md);background:#fff;border:1px solid var(--line);border-radius:6px;padding:var(--spacing-md);transition:all .2s ease;box-shadow:var(--shadow-sm)}
+.community .cm-cta:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.community .cm-ic{flex-shrink:0;font-family:var(--kufi);font-weight:700;font-size:12px;color:#fff;background:var(--red);border-radius:4px;padding:9px 10px;text-align:center;white-space:nowrap;min-width:66px}
+.community .cm-ic.eye{background:#1b5e20}
+.community .cm-tx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.community .cm-tx b{font-size:13px;color:var(--fg)}
+.community .cm-tx small{font-size:11px;color:var(--muted)}
+.community .cm-arw{flex-shrink:0;color:var(--muted);font-size:20px;line-height:1}
+.community .cm-cta:hover .cm-arw{color:var(--red)}
+@media(max-width:768px){.community .cm-wrap{grid-template-columns:1fr;gap:var(--spacing-md)}}
+
 /* ---- ad styling (softer integration) ---- */
 .adb{background:var(--bg2);border-left:3px solid var(--muted2);border-radius:2px;opacity:.95}
 
