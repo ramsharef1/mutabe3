@@ -1093,6 +1093,21 @@ img{color:transparent}
 .trend .t{font-size:13px;font-weight:600;line-height:1.4;color:var(--fg);margin-bottom:4px}
 .trend .meta{display:flex;gap:var(--spacing-sm);font-size:11px;color:var(--muted)}
 
+/* Trending Topics carousel — curated subject discovery (Al Jazeera-style) */
+.topics{display:flex;align-items:center;gap:var(--spacing-md);background:#fff;border:1px solid var(--line);border-radius:6px;padding:var(--spacing-sm) var(--spacing-md);margin:var(--spacing-lg) 0;box-shadow:var(--shadow-sm);animation:slideUpFade .5s ease-out;overflow:hidden}
+.topics .label{display:flex;align-items:center;gap:6px;flex-shrink:0;font-family:var(--kufi);font-weight:700;font-size:12px;color:var(--red);padding-left:var(--spacing-md);border-left:1px solid var(--line);white-space:nowrap}
+.topics .label .pulse{width:8px;height:8px;border-radius:50%;background:var(--red);animation:topicPulse 1.6s ease-in-out infinite}
+@keyframes topicPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(196,30,58,.5)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(196,30,58,0)}}
+.topics .strip{display:flex;gap:var(--spacing-sm);overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:1;padding:2px 0}
+.topics .strip::-webkit-scrollbar{display:none}
+.topics .topic{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;padding:6px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;font-size:13px;font-weight:600;color:var(--fg);white-space:nowrap;transition:all .2s ease}
+.topics .topic:hover{background:var(--red);border-color:var(--red);color:#fff;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.topics .topic .rank{font-family:var(--kufi);font-size:11px;font-weight:700;color:var(--red);opacity:.65}
+.topics .topic:hover .rank{color:#fff;opacity:.9}
+.topics .topic .count{font-size:11px;font-weight:700;color:var(--muted);background:#fff;border-radius:999px;padding:1px 7px;min-width:18px;text-align:center}
+.topics .topic:hover .count{color:var(--red);background:#fff}
+@media(max-width:768px){.topics{flex-direction:column;align-items:stretch;gap:var(--spacing-sm)}.topics .label{border-left:none;border-bottom:1px solid var(--line);padding:0 0 var(--spacing-sm) 0}.topics .topic{font-size:12px;padding:5px 10px}}
+
 .news-cta{background:linear-gradient(135deg,#c41e3a,#8b1428);color:#fff;border-radius:8px;padding:var(--spacing-lg);margin-bottom:var(--spacing-xl);text-align:right;box-shadow:var(--shadow-md);animation:slideUpFade .5s ease-out}
 .news-cta .content h3{margin:0 0 var(--spacing-sm);font-family:var(--kufi);font-size:15px;font-weight:700}
 .news-cta .content p{margin:0 0 var(--spacing-md);font-size:13px;opacity:.95;line-height:1.4}
@@ -1124,6 +1139,19 @@ img{color:transparent}
 .cards .card .im{transition:filter .25s}
 .sm{transition:all .25s ease}
 .sm:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+
+/* ---- card share overlay (zero-JS share links on main story grids) ---- */
+.cardwrap{position:relative;min-width:0}
+.cardshare{position:absolute;top:6px;left:6px;z-index:2;display:flex;gap:4px;transition:opacity .2s ease,transform .2s ease}
+.cardshare a{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;transition:background .18s ease,transform .18s ease}
+.cardshare a:hover{transform:scale(1.12)}
+.cardshare .wa:hover{background:#25d366}
+.cardshare .x:hover{background:#111}
+.cardshare .fb:hover{background:#1877f2}
+@media(hover:hover){.cardshare{opacity:0;transform:translateY(-4px)}.cardwrap:hover .cardshare{opacity:1;transform:none}}
+
+/* ---- "مختارة لك" personalized picks ---- */
+.foryou{background:linear-gradient(180deg,rgba(196,30,58,.045),transparent 55%);border-radius:8px;padding:var(--spacing-md) var(--spacing-md) var(--spacing-lg);animation:slideUpFade .5s ease-out}
 
 /* ---- ad styling (softer integration) ---- */
 .adb{background:var(--bg2);border-left:3px solid var(--muted2);border-radius:2px;opacity:.95}

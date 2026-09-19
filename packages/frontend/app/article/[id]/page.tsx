@@ -41,6 +41,18 @@ export default function ArticlePage() {
   const { articles, loading } = useArticles();
   const [size, setSize] = useState(0); // -1 / 0 / 1 / 2 → font-size steps
   const lb = useLightbox();
+
+  // Record this read into a rolling local history — powers homepage "مختارة لك".
+  useEffect(() => {
+    if (!id || !articles.length) return;
+    const found = articles.find((x) => x.id === id || x.slug === id);
+    if (!found) return;
+    try {
+      const prev = JSON.parse(localStorage.getItem('seen') || '[]') as string[];
+      localStorage.setItem('seen', JSON.stringify([found.id, ...prev.filter((x) => x !== found.id)].slice(0, 20)));
+    } catch {}
+  }, [id, articles]);
+
   if (loading) return <Loading />;
 
   const idx = articles.findIndex((x) => x.id === id || x.slug === id);

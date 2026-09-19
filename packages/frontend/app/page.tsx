@@ -7,6 +7,9 @@ import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox
 import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline, AudioPill } from './components/blocks/jordan';
 import { PremiumSpotlight } from './components/blocks/premium';
 import { TrendingNow } from './components/blocks/trending';
+import { TrendingTopics } from './components/blocks/topics';
+import { CardShare } from './components/blocks/share';
+import { ForYou } from './components/blocks/foryou';
 import { CategoryQuickNav } from './components/blocks/categories';
 import { NewsletterCTA } from './components/blocks/newsletter';
 import { MostDiscussed } from './components/blocks/discussed';
@@ -31,11 +34,14 @@ const link = (a: Article) => `/article/${a.id}`;
 const Cards = ({ items, five = false }: { items: Article[]; five?: boolean }) => (
   <div className={`cards ${five ? 'cards5' : ''}`}>
     {items.map((a) => (
-      <a key={a.id} className="card" href={link(a)}>
-        <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
-        <div className="t">{a.title}</div>
-        <span className="tm">{ago(a.publishedAt)} · <span className="readtime">⏱ {readMins(a.content)} دقايق</span></span>
-      </a>
+      <div key={a.id} className="cardwrap">
+        <a className="card" href={link(a)}>
+          <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
+          <div className="t">{a.title}</div>
+          <span className="tm">{ago(a.publishedAt)} · <span className="readtime">⏱ {readMins(a.content)} دقايق</span></span>
+        </a>
+        <CardShare a={a} />
+      </div>
     ))}
   </div>
 );
@@ -131,6 +137,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <CategoryQuickNav />
 
+        {/* Trending Topics — curated subject discovery from real tags */}
+        <TrendingTopics articles={articles} />
+
         {/* Fold */}
         <div className="main">
           <a className="hero" href={link(hero)}>
@@ -156,6 +165,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <div className="mob"><PicksBox articles={articles} rail /></div>
 
         <AdBanner variant={4} className="adrow ad90" />
+
+        {/* For You — client-only recommendations from local read history */}
+        <ForYou articles={articles} />
 
         {/* J6 royal strip */}
         <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
