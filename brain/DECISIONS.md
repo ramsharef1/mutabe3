@@ -2,6 +2,23 @@
 
 ## 2026-09-29
 
+**D-037: Bring the Auth Backend Online (enable admin login)**
+- **Decided by:** Rami (explicit: "Turn on auth backend")
+- **What:** The DB is already auth-ready (User table has password + role, init migration applied, 1 ADMIN + 1 EDITOR user seeded). The backend was pinned at pre-auth 6bd7674 with the auth deps missing. Bringing auth online, deps-first to avoid the earlier tsx-watch crash:
+  1. `git checkout origin/main -- packages/backend/package.json` then `npm install` (bcrypt, jsonwebtoken, nodemailer, cookie-parser) while the old backend keeps running
+  2. `git checkout origin/main -- packages/backend` (auth routes/schema) + `npx prisma generate`
+  3. `systemctl restart mutabe3-backend`, verify /api/articles stays 200 AND /api/auth/login responds
+- **Why:** Admin login requested; DB already migrated so only the backend code + deps were missing
+- **Risk:** Shared production VPS (telescope + others); an earlier un-pin without deps crashed the API. Mitigated by installing deps before the new src lands.
+- **Note:** No admin dashboard/UI exists yet — this only enables authentication; content-admin (Strapi/custom UI) is separate future work.
+- **Executed (2026-09-29):** deps installed (bcrypt/jwt/nodemailer/cookie-parser), backend un-pinned to origin/main auth code, `prisma db push` synced the DB (added User.emailVerified + token/preferences cols + Session/SavedArticle tables — DB backed up first to /root/mutabe3_pre_authsync_*.sql), added JWT_SECRET + JWT_REFRESH_SECRET to /etc/mutabe3/backend.env (backend reads THAT env file, not packages/backend/.env which has a stale DB password), set admin@mutabe3.news emailVerified=true + temp password. Login API verified 200 with tokens (role ADMIN). Articles API stayed 200 throughout.
+- **Gap:** login page redirects to `/dashboard` which does not exist → 404. No admin UI is built; login authenticates but lands nowhere useful.
+- **Status:** ✅ AUTH LIVE (login works) · ⚠️ no admin dashboard (/dashboard 404) · 2026-09-29
+
+---
+
+## 2026-09-29
+
 **D-036: Homepage Competitive Revamp + News-First Reorganization**
 - **Decided by:** Rami (approved in stages: "full revamp", "keep going", "fix all", "build it in stages", "keep rolling", "continue")
 - **What:** View-layer only (backend deferred). Delivered in tracked stages, each verified in preview + deployed frontend-only to the VPS:
