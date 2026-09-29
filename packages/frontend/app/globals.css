@@ -1200,6 +1200,9 @@ img{color:transparent}
 
 /* ---- ad styling (softer integration) ---- */
 .adb{background:var(--bg2);border-left:3px solid var(--muted2);border-radius:2px;opacity:.95}
+.adbillboard{min-height:120px}
+.adbillboard .adb,.adbillboard.adb{min-height:120px}
+@media(max-width:767px){.adbillboard{min-height:90px}.adbillboard .adb,.adbillboard.adb{min-height:90px}}
 
 /* ---- read time badges ---- */
 .readtime{font-size:11px;color:var(--muted);display:inline-flex;gap:3px;align-items:center}

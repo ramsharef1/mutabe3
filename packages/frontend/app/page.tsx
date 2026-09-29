@@ -243,6 +243,8 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls items={misc} cols={1} /><More slug="misc" /></div>
         </div>
 
+        <AdBanner variant={6} className="adrow ad90 adbillboard" />
+
         {/* ────────── ZONE 5 · SERVICES & TOOLS ────────── */}
         <div className="three">
           <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
