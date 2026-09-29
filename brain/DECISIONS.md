@@ -1,5 +1,23 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-09-29
+
+**D-036: Homepage Competitive Revamp + News-First Reorganization**
+- **Decided by:** Rami (approved in stages: "full revamp", "keep going", "fix all", "build it in stages", "keep rolling", "continue")
+- **What:** View-layer only (backend deferred). Delivered in tracked stages, each verified in preview + deployed frontend-only to the VPS:
+  - Phase 1: Trending Topics carousel (real tags → /tag), zero-JS card share (WhatsApp/X/FB), "For You" recs from local history
+  - Phase 2: follow-able Live-story strip (recency-gated, mount-gated), topic newsletter editions
+  - Phase 3: Community band surfacing polls/debate/UGC
+  - Fixes: tablet horizontal overflow (fixed 1002px `.wrap` → fluid + tablet breakpoint), pill-row spacing, fold column balance (Picks/Obits moved below fold; lead column fills with secondary headlines), /auth/verify Suspense build fix, BreakingBar + Timeline hydration warnings (relative-time suppressHydrationWarning)
+  - Reorg Stage 1: news-first fold — columnists off the top (moved to كتاب المتابع), 300×250 ad in the fold sidebar (split ad + newsletter), 11 top-story headlines
+  - Reorg Stage 2-3: dropped redundant category pills; brought أخبار الأردن up to first section after the fold; replaced the 3-banner cluster with a single native banner
+  - Reorg Stage 4: grouped the long tail into Core News (contiguous) / Services & Tools / Community & Lighter zones
+- **Why:** Competitive analysis (Al Jazeera Arabic the benchmark) + news-agency/ad-revenue lens; the page led with utility/opinion and buried the flagship, and the prime sidebar slot held a newsletter instead of an ad
+- **Deploy:** CI (deploy-vps.yml) was broken (missing VPS_* secrets + wrong assumptions); rewrote it, but deploys are done manually frontend-only (`git checkout origin/main -- packages/frontend` → build → restart) to keep the deferred backend/auth pinned at 6bd7674. See [[preview-pane-quirks]] memory.
+- **Status:** ✅ Phases 1-3 + reorg Stages 1-4 COMMITTED & DEPLOYED · https://mutabe3.news · 2026-09-29
+
+---
+
 ## 2026-09-19
 
 **D-035: Homepage Phase 1-2 Visual Enhancements**

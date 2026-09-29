@@ -184,63 +184,42 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           ))}
         </div>
 
-        {/* J6 royal strip */}
+        {/* ────────── ZONE 4 · CORE NEWS (contiguous, native ads woven in) ────────── */}
         <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
 
-        {/* Trending Now */}
         <TrendingNow items={trending} />
 
-        {/* J3–J5 */}
-        <div className="three">
-          <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
-          <div className="sec"><SecHd t="الطرق الآن" meta="مباشر" /><Roads /></div>
-          <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta="من الجهات الرسمية" /><Services /></div>
-        </div>
-
-        {/* B4 flagship economy + C4 tools row */}
         <div className="sec eco">
           <SecHd t="اقتصاد وأسواق" slug="economy" tabs={['الأخبار', 'أسواق', 'بنوك', 'طاقة', 'تحليل']} meta="القسم الرئيسي" />
           <Cards items={econ} five /><Smalls items={econS} /><More slug="economy" />
         </div>
-        <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
 
-        <AdBanner variant={1} className="adrow ad90" />
-
-        {/* C5 + C3 */}
+        {/* today's digest */}
         <div className="two">
           <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty /></div>
           <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
         </div>
 
-        {/* Community band — surfaces polls/debate/UGC prominently */}
-        <CommunityBand />
+        <AdBanner variant={1} className="adrow ad90" />
 
-        {/* B3 فلسطين/العالم + C8 timeline */}
         <div className="two">
           <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} /><div style={{ marginTop: 10 }}><Timeline /></div></div>
           <div className="sec"><SecHd t="العالم" slug="world" /><BigText a={world[0]} more={world.slice(1)} /><More slug="world" /></div>
         </div>
 
-        {/* J7 + J8 */}
         <div className="two">
           <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta="جلسة الثلاثاء · 14 قراراً" /><Decisions /><More slug="parliament" /></div>
           <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" meta="من محاضر مجلس النواب" /><VoteTracker /></div>
         </div>
 
-        <AdBanner variant={3} className="adrow ad90" />
-
-        {/* J13–J15 seasonal (in season or ?season=all) */}
-        <Seasonal season={season} />
-
-        <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards items={east} /><Smalls items={eastS} /><More slug="east-west" /></div>
-
-        {/* J16 + J17 */}
         <div className="two">
           <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" meta="حيّ · من الاتحاد الأردني" /><Sports /></div>
           <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora /></div>
         </div>
 
-        {/* A1+A2 merged opinion + C12 */}
+        <AdBanner variant={3} className="adrow ad90" />
+
+        {/* opinion */}
         <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
           <div className="writers desk">
             {WRITERS.slice(0, 8).map((w, k) => (
@@ -257,33 +236,47 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <div className="sec"><SecHd t="الثقافة" slug="culture" /><BigText a={culture[0]} more={culture.slice(1)} /><More slug="culture" /></div>
         </div>
 
-        <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>
+        <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards items={east} /><Smalls items={eastS} /><More slug="east-west" /></div>
 
-        {/* C10 + health */}
+        <div className="two">
+          <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls items={tech} cols={1} /><More slug="technology" /></div>
+          <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls items={misc} cols={1} /><More slug="misc" /></div>
+        </div>
+
+        {/* ────────── ZONE 5 · SERVICES & TOOLS ────────── */}
+        <div className="three">
+          <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
+          <div className="sec"><SecHd t="الطرق الآن" meta="مباشر" /><Roads /></div>
+          <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta="من الجهات الرسمية" /><Services /></div>
+        </div>
+
+        <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
+
         <div className="two">
           <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta="ديوان الخدمة المدنية · دائرة العطاءات" /><Jobs /><More slug="jobs" /></div>
           <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
         </div>
 
-        <AdBanner variant={0} className="adrow ad90" />
-
-        {/* C7 + C14 */}
         <div className="two capfact">
           <div className="sec" style={{ flex: '0 0 330px' }}><SecHd t="قناة المتابع" /><Capture /></div>
           <div className="sec"><SecHd t="تحقق المتابع" meta="نتحقق من الشائعات المنتشرة على فيسبوك وواتساب" /><FactCheck /></div>
         </div>
 
-        {/* J18–J20 */}
+        <AdBanner variant={0} className="adrow ad90" />
+
+        {/* ────────── ZONE 6 · COMMUNITY & LIGHTER ────────── */}
+        <CommunityBand />
+
         <div className="three">
           <div className="sec"><SecHd t="عين المواطن" meta="محتوى القراء · مُراجَع" /><Ugc /></div>
           <div className="sec"><SecHd t="تهاني ومبروك" meta="إعلانات مبوبة" /><Greetings /></div>
           <div className="sec"><SecHd t="ذاكرة الأردن" meta="يومياً" /><Memory /></div>
         </div>
 
-        <div className="two">
-          <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls items={tech} cols={1} /><More slug="technology" /></div>
-          <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls items={misc} cols={1} /><More slug="misc" /></div>
-        </div>
+        {/* J13–J15 seasonal (in season or ?season=all) */}
+        <Seasonal season={season} />
+
+        <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>
 
         <div className="sec">
           <SecHd t="بانوراما" slug="panorama" />
@@ -296,7 +289,6 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <AdBanner variant={2} className="adrow ad90" />
 
-        {/* Most Discussed */}
         <MostDiscussed items={discussed} />
 
         <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>
