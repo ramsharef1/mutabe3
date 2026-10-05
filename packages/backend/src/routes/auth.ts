@@ -252,4 +252,27 @@ router.post('/logout', async (req: Request, res: Response) => {
   }
 });
 
+// POST /auth/change-password (authenticated) — verify current, set new
+router.post('/change-password', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'كلمة المرور الحالية والجديدة مطلوبتان' });
+    }
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف' });
+    }
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const ok = await verifyPassword(currentPassword, user.password);
+    if (!ok) return res.status(401).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+    await prisma.user.update({ where: { id: userId }, data: { password: await hashPassword(newPassword) } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Change-password error:', error);
+    res.status(500).json({ error: 'تعذّر تغيير كلمة المرور' });
+  }
+});
+
 export default router;

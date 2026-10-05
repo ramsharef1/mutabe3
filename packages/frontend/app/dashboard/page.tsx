@@ -67,6 +67,7 @@ export default function Dashboard() {
         <div className="adm-brand"><b>المتابع</b><span>لوحة التحكم</span></div>
         <div className="adm-actions">
           <a className="adm-link" href="/" target="_blank" rel="noopener">عرض الموقع ↗</a>
+          <a className="adm-link" href="/dashboard/account">كلمة المرور</a>
           {me && <span className="adm-user">{me.name} · {me.role}</span>}
           <button type="button" className="adm-logout" onClick={logout}>خروج</button>
         </div>
