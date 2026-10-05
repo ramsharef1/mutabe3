@@ -10,7 +10,8 @@
   - **Dev:** the Next `/api/[...path]` proxy now passes method/auth/body through (was GET/POST-only, stripped Authorization) so the dashboard works under `next dev`.
   - **Ops:** uploads live in `UPLOAD_DIR=/var/www/mutabe3/uploads` (outside the git checkout) and are served at `/api/uploads/*` through the existing nginx `/api` rule; only `client_max_body_size` needs raising for >1MB files.
 - **Why:** Publishing real content was painful (plain textarea, URL-only images) and most-read/trending/search were fake — these are the prerequisites for replacing the 19 dummy articles.
-- **Status:** 🔧 BUILT · pending VPS deploy via hPanel Browser terminal (needs `npm install` for multer/sanitize-html + `UPLOAD_DIR` in /etc/mutabe3/backend.env) · 2026-10-05
+- **CI deploys (2026-10-06):** Rami asked to "add credentials" so deploys stop being manual. Generated a dedicated ed25519 deploy key (`~/.ssh/mutabe3_deploy` on Rami's Mac; the old `~/.ssh/hostinger_key` is corrupt/"invalid format") and set the 4 repo secrets `VPS_HOST/VPS_USER/VPS_PORT/VPS_SSH_KEY` via `gh secret set`; added `workflow_dispatch` to deploy-vps.yml. The public key still has to be appended to `/root/.ssh/authorized_keys` once from the hPanel Browser terminal (bundled into the same paste as the Stage-1 deploy). After that, every push to main deploys from GitHub's IPs, bypassing the Hostinger edge ban on this Mac.
+- **Status:** 🔧 BUILT · pending VPS deploy via hPanel Browser terminal (needs `npm install` for multer/sanitize-html + `UPLOAD_DIR` in /etc/mutabe3/backend.env + CI public key) · 2026-10-05
 
 ---
 

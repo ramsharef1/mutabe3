@@ -223,3 +223,6 @@
 - 2026-10-05T21:05Z · edit · packages/frontend/app/dashboard/components/RichEditor.tsx
 - 2026-10-05T21:07Z · edit · /Users/ramialsharef/.claude/projects/-Users-ramialsharef-Projects-forge-projects-mutabe3/memory/project_local_dev_stack.md
 - 2026-10-05T21:07Z · edit · /Users/ramialsharef/.claude/projects/-Users-ramialsharef-Projects-forge-projects-mutabe3/memory/MEMORY.md
+- 2026-10-05T21:24Z · edit · .github/workflows/deploy-vps.yml
+- 2026-10-05T21:25Z · edit · brain/DECISIONS.md
+- 2026-10-05T21:25Z · edit · brain/ROADMAP.md

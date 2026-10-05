@@ -6,6 +6,7 @@ on:
     paths:
       - 'packages/**'
       - '.github/workflows/deploy-vps.yml'
+  workflow_dispatch: {}   # manual re-deploy: gh workflow run deploy-vps.yml
 
 # The production app is a git checkout at
 # /var/www/mutabe3/current/projects/mutabe3 run by the systemd units

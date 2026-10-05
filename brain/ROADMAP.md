@@ -58,5 +58,5 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 ---
 
 ## Operational
-- ☐ **One-click deploys** — add the 4 `VPS_*` secrets so GitHub Actions deploys (operator IP 92.241.37.76 is banned at Hostinger's network edge; deploys currently via hPanel Browser terminal — see D-038)
+- ◐ **One-click deploys** — 4 `VPS_*` secrets set + dedicated deploy key generated (D-039); public key still to be installed on the VPS once via hPanel Browser terminal, then push-to-main deploys (operator IP 92.241.37.76 is banned at Hostinger's network edge — see D-038)
 - ☐ Reconcile `packages/backend/.env` (stale DB password; backend reads `/etc/mutabe3/backend.env`)
