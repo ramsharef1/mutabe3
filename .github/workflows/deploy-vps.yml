@@ -51,12 +51,20 @@ jobs:
           grep -q '^UPLOAD_DIR=' /etc/mutabe3/backend.env || echo 'UPLOAD_DIR=/var/www/mutabe3/uploads' >> /etc/mutabe3/backend.env
           mkdir -p /var/www/mutabe3/uploads
           SVC_USER=$(systemctl show -p User --value mutabe3-backend); [ -n "$SVC_USER" ] && chown -R "$SVC_USER" /var/www/mutabe3/uploads
-          # nginx defaults to 1MB request bodies; photos need more.
-          NGX=$(grep -rl 'mutabe3.news' /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null | head -1 || true)
-          if [ -n "$NGX" ] && ! grep -q client_max_body_size "$NGX"; then
-            cp "$NGX" "$NGX.bak.$(date +%s)"
-            sed -i '/server_name[^;]*mutabe3[^;]*;/a\    client_max_body_size 25m;' "$NGX"
-            nginx -t && systemctl reload nginx && echo "nginx: client_max_body_size 25m"
+          # nginx defaults to 1MB request bodies; photos need more. The mutabe3 server
+          # blocks live in /etc/nginx/conf.d/all-domains.conf, shared with other sites
+          # that already set client_max_body_size, so key off our own marker comment
+          # and only look at real *.conf files (not the .bak/.new copies beside them).
+          MARK='# mutabe3-upload-limit'
+          NGX=$(grep -l 'server_name[^;]*mutabe3\.news' /etc/nginx/conf.d/*.conf /etc/nginx/sites-enabled/* 2>/dev/null | head -1 || true)
+          if [ -n "$NGX" ] && ! grep -qF "$MARK" "$NGX"; then
+            BAK="$NGX.bak.$(date +%s)"; cp "$NGX" "$BAK"
+            sed -i "/server_name[^;]*mutabe3\.news[^;]*;/a\\    client_max_body_size 25m; $MARK" "$NGX"
+            if nginx -t; then
+              systemctl reload nginx && echo "nginx: client_max_body_size 25m added to $NGX"
+            else
+              cp "$BAK" "$NGX"; echo "⚠️  nginx -t failed after edit; restored $NGX from $BAK"
+            fi
           fi
 
           echo "== Installing dependencies =="

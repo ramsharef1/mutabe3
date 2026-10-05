@@ -2,6 +2,17 @@
 
 ## 2026-10-06
 
+**D-041: Stage 1 smoke test on production (D-039 features) + fix the CI nginx body-limit step**
+- **Decided by:** Rami ("smoke test phase one features"; pasted the VPS nginx layout so the broken step could be fixed)
+- **Public layer — PASS:** `/api/health` healthy; search exact/multi-word/nonsense (11/1/0); ة↔ه and ال-stripping variants match both ways; view counter on art-001 2450→2451 with the 30-min per-IP dedupe honoured; trending strip and الأكثر قراءة list show real, stable counts in API order; 3 header forms submit to `/search` (shows "11 نتيجة"); `/api/admin/*` 401 without a token; `/api/uploads/<missing>` 404.
+- **Found 1 — hamza search bug:** `اردن`/`الاردن` return 0 while `أردن`/`الأردن` return 11. `termVariants()` (backend index.ts) strips hamza from the query but never emits hamza forms, and Postgres `contains` is byte-literal. Fix: also generate أ/إ/آ variants for a leading alef. **Not yet applied.**
+- **Found 2 — nginx still 1MB:** bodies >1MB get 413 from nginx 1.20.1. Cause (from Rami's grep): the mutabe3.news server blocks are inside the shared `/etc/nginx/conf.d/all-domains.conf` (lines ~325 and ~383), which already has `client_max_body_size` for jugate/boltweb/webmail, so the deploy step's "skip if the file has client_max_body_size" check always skipped; its `grep -rl | head -1` could also land on a `.bak` copy. **Fixed in deploy-vps.yml:** match `server_name … mutabe3.news` in real `*.conf` files only, key idempotency off a `# mutabe3-upload-limit` marker, restore the backup if `nginx -t` fails.
+- **Found 3 — 502 on early rejects:** any POST ≳300KB that Express rejects before draining the body (expired token, unsupported file type) surfaces as a 502 instead of the Arabic error. Cosmetic; fix by draining `req` before responding. **Not yet applied.**
+- **Admin layer:** editor, upload, media library, featured image, sanitizer, CMS-HTML article rendering — pending Rami's login in the browser pane (no password typing by Claude).
+- **Status:** 🔧 nginx step fix pushed, deploy pending · admin-layer tests pending login · 2026-10-06
+
+---
+
 **D-040: Stop tracking `packages/backend/.env` (secret in a public repo)**
 - **Decided by:** Rami (explicit: `git rm --cached`, ignore `.env`, complete `.env.example`, log here, push to main)
 - **What:** `packages/backend/.env` had been committed since 8b5614d (2026-09) and held a `DATABASE_URL` with the `mutabe3_user` Postgres password — stale and no longer valid, but public on GitHub (repo is PUBLIC). Removed from the index (file stays on disk), added plain `.env` to the root `.gitignore` (`.env.example` files stay tracked), and added `packages/backend/.env.example` listing every variable the backend reads: `DATABASE_URL, PORT, NODE_ENV, FRONTEND_URL, JWT_SECRET, JWT_REFRESH_SECRET, UPLOAD_DIR, SMTP_HOST/PORT/USER/PASSWORD/FROM/SECURE` (placeholders only). Root `.env.example` now points to it.
