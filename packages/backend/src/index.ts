@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
+import adminRoutes from './routes/admin';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -106,6 +107,9 @@ app.get('/api/categories', async (req: Request, res: Response) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Admin routes (protected: editor/admin only) — article CRUD
+app.use('/api/admin', adminRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

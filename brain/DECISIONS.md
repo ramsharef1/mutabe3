@@ -1,5 +1,19 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-10-05
+
+**D-038: Custom Admin / CMS — make the site operable (publish real content)**
+- **Decided by:** Rami ("lets finish the website" → Custom admin; content added via admin by the team)
+- **What:** Build a custom admin on the existing stack (reuses current auth + Article schema + read API; not Strapi). Staged, each verified + deployed:
+  - Stage A (backend): `/api/admin/*` protected router (authMiddleware + ADMIN/EDITOR role check) with article CRUD — list all statuses, get one, create, update, delete; slug auto-gen; publish sets status=PUBLISHED + publishedAt
+  - Stage B (frontend): `/dashboard` (auth-guarded — fixes the login 404) — article list + status, new button, logout
+  - Stage C: create/edit editor form (title, summary, content, category, image, status, publish)
+  - Stage D: delete, validation, change-password
+- **Why:** Site had no write path — login dead-ended at a 404 and content was 19 dummy articles. Custom admin is the fastest path to publishing real content on the current stack.
+- **Status:** ▶ IN PROGRESS · 2026-10-05
+
+---
+
 ## 2026-09-29
 
 **D-037: Bring the Auth Backend Online (enable admin login)**
