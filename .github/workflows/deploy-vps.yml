@@ -36,8 +36,28 @@ jobs:
 
           echo "== Fetching origin/main =="
           git fetch --quiet origin main
-          # ff-only: refuse (don't clobber) if prod ever has local commits.
-          git merge --ff-only origin/main
+          # Prod was historically updated with `git checkout origin/main -- <paths>`,
+          # which leaves tracked files dirty and makes `merge --ff-only` refuse.
+          # Refuse only if prod has commits of its own; otherwise hard-sync to main
+          # (untracked files — .env, node_modules, .next, uploads — are untouched).
+          if git merge-base --is-ancestor HEAD origin/main; then
+            git reset --hard --quiet origin/main
+          else
+            echo "❌ prod checkout has local commits not on origin/main — refusing to clobber"; exit 1
+          fi
+
+          echo "== One-time server config (idempotent) =="
+          # Editor image uploads live outside the checkout (D-039).
+          grep -q '^UPLOAD_DIR=' /etc/mutabe3/backend.env || echo 'UPLOAD_DIR=/var/www/mutabe3/uploads' >> /etc/mutabe3/backend.env
+          mkdir -p /var/www/mutabe3/uploads
+          SVC_USER=$(systemctl show -p User --value mutabe3-backend); [ -n "$SVC_USER" ] && chown -R "$SVC_USER" /var/www/mutabe3/uploads
+          # nginx defaults to 1MB request bodies; photos need more.
+          NGX=$(grep -rl 'mutabe3.news' /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null | head -1 || true)
+          if [ -n "$NGX" ] && ! grep -q client_max_body_size "$NGX"; then
+            cp "$NGX" "$NGX.bak.$(date +%s)"
+            sed -i '/server_name[^;]*mutabe3[^;]*;/a\    client_max_body_size 25m;' "$NGX"
+            nginx -t && systemctl reload nginx && echo "nginx: client_max_body_size 25m"
+          fi
 
           echo "== Installing dependencies =="
           npm install --no-audit --no-fund
