@@ -55,15 +55,24 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 // Arabic search terms match loosely: with/without the definite article, hamza
-// forms collapsed, ة/ه interchangeable. Postgres `contains` can't normalise, so
-// we OR the spellings instead.
+// forms interchangeable, ة/ه interchangeable. Postgres `contains` compares code
+// points literally, so we OR the spellings instead. Hamza is stripped from the
+// query AND re-added in its common forms — otherwise "اردن" never finds "الأردن"
+// (D-041 Found 1).
 const termVariants = (t: string): string[] => {
-  const s = new Set<string>([t]);
-  s.add(t.replace(/[أإآ]/g, 'ا'));
-  if (/^ال./.test(t)) s.add(t.replace(/^ال/, '')); else if (t.length >= 3) s.add(`ال${t}`);
-  if (/ة$/.test(t)) s.add(t.replace(/ة$/, 'ه'));
-  if (/ه$/.test(t)) s.add(t.replace(/ه$/, 'ة'));
-  return Array.from(s).filter((v) => v.length >= 2);
+  const bare = t.replace(/[أإآ]/g, 'ا');
+  const stem = /^ال./.test(bare) ? bare.slice(2) : bare; // no ال, no hamza
+  const stems = new Set<string>([stem]);
+  if (stem.startsWith('ا')) for (const h of ['أ', 'إ', 'آ']) stems.add(h + stem.slice(1));
+  const out = new Set<string>([t]);
+  for (const s of stems) {
+    for (const f of s.length >= 3 ? [s, `ال${s}`] : [s]) {
+      out.add(f);
+      if (f.endsWith('ة')) out.add(`${f.slice(0, -1)}ه`);
+      if (f.endsWith('ه')) out.add(`${f.slice(0, -1)}ة`);
+    }
+  }
+  return Array.from(out).filter((v) => v.length >= 2);
 };
 
 // Articles endpoints — public list; `?q=` searches title/summary/content/keywords, `?take=` up to 100
@@ -132,8 +141,10 @@ app.post('/api/articles/:id/view', async (req: Request, res: Response) => {
 app.get('/api/articles/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const article = await prisma.article.findUnique({
-      where: { id },
+    // Public read: published only. Drafts/scheduled/archived stay behind
+    // /api/admin/articles/:id, which needs an editor token (D-041 Found 4).
+    const article = await prisma.article.findFirst({
+      where: { id, status: 'PUBLISHED' },
       include: { author: { select: { id: true, name: true } }, category: true, comments: true },
     });
 

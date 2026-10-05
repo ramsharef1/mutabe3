@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authMiddleware } from '../middleware';
+import { authMiddleware, drainRequest } from '../middleware';
 import { sanitizeArticleHtml } from '../sanitize';
 import { imageUpload, uploadedFileUrl, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
 
@@ -16,6 +16,7 @@ async function requireEditor(req: Request, res: Response, next: NextFunction) {
     const userId = (req as any).userId;
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, role: true } });
     if (!user || !EDITOR_ROLES.includes(user.role)) {
+      await drainRequest(req);
       return res.status(403).json({ error: 'Forbidden: editor access required' });
     }
     (req as any).user = user;

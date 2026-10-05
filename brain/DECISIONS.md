@@ -2,6 +2,17 @@
 
 ## 2026-10-06
 
+**D-042: Apply the D-041 follow-ups (hamza search, draft-by-id guard, drain-before-reject) + rotate the DB password**
+- **Decided by:** Rami ("go" on the open-items list)
+- **What (backend only, no schema change):**
+  1. `termVariants()` in index.ts now strips the definite article and hamza to a stem, re-adds أ/إ/آ for a leading alef, then re-adds ال and the ة/ه swap on every form — `اردن`, `الاردن`, `أردن`, `الأردن` all yield the same 8 spellings. Stand-alone check of 11 cases passes; locally all four forms return the same 3 hits.
+  2. `GET /api/articles/:id` is `findFirst({ id, status: 'PUBLISHED' })`; drafts/scheduled/archived now 404 publicly (editors still read them via `/api/admin/articles/:id`). Locally: flipping an article to DRAFT via psql → 404, restored → 200.
+  3. New `drainRequest()` in middleware.ts consumes an unread body before the 401 paths of `authMiddleware` and the 403 path of `requireEditor`, so nginx no longer sees a closed socket mid-upload. Locally a 1.5MB unauthenticated POST answers 401 JSON in 3ms.
+- **Verification:** type-check clean for the touched files (two pre-existing TS7016 errors for missing `@types/jsonwebtoken` and `@types/nodemailer` remain, prod runs tsx); exercised against the worktree backend on :9080 with the local `mutabe3_dev` DB.
+- **Status:** 🔧 pushed, CI deploy + prod verification pending · password rotation pending · 2026-10-06
+
+---
+
 **D-041: Stage 1 smoke test on production (D-039 features) + fix the CI nginx body-limit step**
 - **Decided by:** Rami ("smoke test phase one features"; pasted the VPS nginx layout so the broken step could be fixed)
 - **Public layer — PASS:** `/api/health` healthy; search exact/multi-word/nonsense (11/1/0); ة↔ه and ال-stripping variants match both ways; view counter on art-001 2450→2451 with the 30-min per-IP dedupe honoured; trending strip and الأكثر قراءة list show real, stable counts in API order; 3 header forms submit to `/search` (shows "11 نتيجة"); `/api/admin/*` 401 without a token; `/api/uploads/<missing>` 404.
