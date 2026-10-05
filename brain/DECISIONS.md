@@ -9,7 +9,9 @@
   2. `GET /api/articles/:id` is `findFirst({ id, status: 'PUBLISHED' })`; drafts/scheduled/archived now 404 publicly (editors still read them via `/api/admin/articles/:id`). Locally: flipping an article to DRAFT via psql → 404, restored → 200.
   3. New `drainRequest()` in middleware.ts consumes an unread body before the 401 paths of `authMiddleware` and the 403 path of `requireEditor`, so nginx no longer sees a closed socket mid-upload. Locally a 1.5MB unauthenticated POST answers 401 JSON in 3ms.
 - **Verification:** type-check clean for the touched files (two pre-existing TS7016 errors for missing `@types/jsonwebtoken` and `@types/nodemailer` remain, prod runs tsx); exercised against the worktree backend on :9080 with the local `mutabe3_dev` DB.
-- **Status:** 🔧 pushed, CI deploy + prod verification pending · password rotation pending · 2026-10-06
+- **Deployed & verified in prod (2026-10-06):** CI run 37383423499 shipped 25a9840, health 200. Search `الأردن`/`أردن`/`الاردن`/`اردن` → 11/11/11/11. Unauthenticated 1.1MB and 5MB POSTs → 401 in ~1s (were 502). A fresh DRAFT (created via the logged-in pane after refreshing the 15-min access token with `/api/auth/refresh`) → public by-id 404, admin by-id 200, deleted, list back to 19.
+- **Password rotation — NOT done, handed to Rami:** diagnostics from the hPanel web console showed `DATABASE_URL=postgresql://mutabe3_user:***@localhost:5432/mutabe3`, the role `mutabe3_user` exists, and `mutabe3-backend` runs as root via `npx tsx watch src/index.ts`. The one-liner that generates a password server-side, runs `ALTER ROLE`, rewrites the env file (with a `.bak-<ts>` copy, chmod 600), restarts the backend and checks `/api/health` was blocked by Claude Code's permission classifier (secret-store write); Claude did not retry it by other means. Rami runs it in the web console himself, or allows the action and asks again.
+- **Status:** ✅ 3 fixes LIVE · ⚠️ `mutabe3_user` password rotation pending (Rami) · 2026-10-06
 
 ---
 
