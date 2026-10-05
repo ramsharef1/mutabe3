@@ -10,7 +10,7 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 - ☑ Stage 1 — rich-text editor, image upload + media library, real view counts, working search; deployed via CI and smoke-tested in prod (D-039, D-041); hamza search, draft privacy, drain-before-reject fixes (D-042)
 
 ## "Finish the site" — stage order (D-043)
-Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (◐ shipping 2026-10-06) → Stage 4 readers → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
+Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (☑ live 2026-10-06) → Stage 4 readers → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
 
 ---
 
@@ -19,14 +19,14 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 ### Now — makes the CMS truly usable
 - ☑ **Rich-text editor** — headings, bold/italic, lists, quotes, links, YouTube, paste-cleaning, HTML view (D-039, verified in prod D-041)
 - ☑ **Image upload + media library** — `POST /api/admin/upload` + `GET /api/admin/media`, featured-image upload; nginx limit 25MB (D-039, D-041)
-- ◐ **Category management** — 13 nav categories seeded into the DB; `/dashboard/categories` rename/describe/reorder/show-in-nav/add/delete-empty; header, footer, category pages and sitemap read the DB (D-043 Stage 3)
+- ☑ **Category management** — 13 nav categories seeded into the DB; `/dashboard/categories` rename/describe/reorder/show-in-nav/add/delete-empty; header, footer, category pages and sitemap read the DB (D-043 Stage 3)
 - ☑ **Draft preview** — `/dashboard/preview/[id]` renders the article view from the admin API; dashboard "معاينة" links drafts there (D-043 Stage 2)
 
 ### Next — editorial operations
-- ◐ **User management** — `/dashboard/users`: admin creates verified accounts, changes roles, sets passwords; VIEWER revokes access (D-043 Stage 3)
-- ◐ **Role permissions** — journalists own drafts only, editors publish/schedule/categories/homepage, admin everything; enforced server-side (D-043 Stage 3)
-- ◐ **Scheduled publishing** — date/time in the editor; 60-second backend tick publishes due articles (D-043 Stage 3)
-- ◐ **Homepage curation** — `/dashboard/homepage`: lead story, ordered editor's picks, breaking bar; instant homepage refresh on save (D-043 Stage 3)
+- ☑ **User management** — `/dashboard/users`: admin creates verified accounts, changes roles, sets passwords; VIEWER revokes access (D-043 Stage 3)
+- ☑ **Role permissions** — journalists own drafts only, editors publish/schedule/categories/homepage, admin everything; enforced server-side (D-043 Stage 3)
+- ☑ **Scheduled publishing** — date/time in the editor; 60-second backend tick publishes due articles (D-043 Stage 3)
+- ☑ **Homepage curation** — `/dashboard/homepage`: lead story, ordered editor's picks, breaking bar; instant homepage refresh on save (D-043 Stage 3)
 - ☐ **Comments moderation** — approve/delete reader comments ⚙️ (Comment model exists)
 - ☐ **Analytics** — views per article, top content, trends ⚙️ (`viewsCount` exists)
 
