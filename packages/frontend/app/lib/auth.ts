@@ -1,4 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// In the browser, always call the same origin (nginx proxies /api → backend).
+// A build-time NEXT_PUBLIC_API_URL pointing at localhost makes client fetches
+// unreachable ("Failed to fetch" → "An error occurred"). Only fall back to env
+// for any server-side use.
+const API_URL = typeof window === 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || '') : '';
 
 export interface User {
   id: string;
