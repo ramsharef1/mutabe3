@@ -1944,3 +1944,9 @@ button[type="submit"]:active, .btn-primary:active {
 .rte-lib .grid button:hover{border-color:#c41e3a}
 .rte-lib .grid img{width:100%;height:100%;object-fit:cover;display:block}
 @media(max-width:600px){.rte-bar{top:0}.adm-cover{flex-direction:column}.adm-cover img,.adm-cover .ph{width:100%;height:160px}}
+
+/* ---------- Stage 2: draft preview bar + CMS author avatar (D-043) ---------- */
+.preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;padding:8px 14px;background:#b45309;color:#fff;font:700 13px/1.4 var(--font-kufi,sans-serif)}
+.preview-bar a{color:#fff;text-decoration:underline}
+.au-init{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#990000;color:#fff;font:700 14px/1 var(--font-kufi,sans-serif);flex:none;border:2px solid var(--line3)}
+.aubox .au-init{width:64px;height:64px;font-size:24px;border:3px solid var(--bg);box-shadow:0 1px 3px rgba(0,0,0,.2)}

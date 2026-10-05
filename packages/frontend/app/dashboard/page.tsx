@@ -96,7 +96,8 @@ export default function Dashboard() {
                   <td className="adm-date">{fmt(a.updatedAt)}</td>
                   <td className="adm-ops">
                     <a href={`/dashboard/article/${a.id}`}>تعديل</a>
-                    <a href={`/article/${a.id}`} target="_blank" rel="noopener">معاينة</a>
+                    {/* published → the live page; anything else → the admin-only preview (the public route 404s for drafts) */}
+                    <a href={a.status === 'PUBLISHED' ? `/article/${a.id}` : `/dashboard/preview/${a.id}`} target="_blank" rel="noopener">معاينة</a>
                     <button type="button" onClick={() => del(a.id, a.title)}>حذف</button>
                   </td>
                 </tr>

@@ -80,7 +80,9 @@ app.get('/api/articles', async (req: Request, res: Response) => {
   try {
     const take = Math.min(100, Math.max(1, parseInt(String(req.query.take), 10) || 20));
     const q = String(req.query.q || '').trim().slice(0, 100);
+    const category = String(req.query.category || '').trim().slice(0, 60);
     const where: any = { status: 'PUBLISHED' };
+    if (category) where.category = { slug: category }; // `?category=<slug>` — category pages fetch their own list
     if (q) {
       const terms = q.split(/\s+/).filter((t) => t.length >= 2).slice(0, 6);
       if (terms.length) {
@@ -141,10 +143,10 @@ app.post('/api/articles/:id/view', async (req: Request, res: Response) => {
 app.get('/api/articles/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // Public read: published only. Drafts/scheduled/archived stay behind
-    // /api/admin/articles/:id, which needs an editor token (D-041 Found 4).
+    // Public read by id OR slug, published only. Drafts/scheduled/archived stay
+    // behind /api/admin/articles/:id, which needs an editor token (D-041 Found 4).
     const article = await prisma.article.findFirst({
-      where: { id, status: 'PUBLISHED' },
+      where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
       include: { author: { select: { id: true, name: true } }, category: true, comments: true },
     });
 

@@ -7,9 +7,13 @@ export interface Article {
   summary?: string;
   content: string;
   category?: { name: string; slug: string };
+  author?: { id: string; name: string };
+  status?: string;
   publishedAt?: string;
+  updatedAt?: string;
   viewsCount?: number;
   featuredImageUrl?: string;
+  seoKeywords?: string[];
 }
 
 export const WRITERS = [

@@ -2,6 +2,18 @@
 
 ## 2026-10-06
 
+**D-043: "Finish the site" — staged plan, Stage 2 (real-content foundation) starts now**
+- **Decided by:** Rami ("lets finish the site first")
+- **Why staged:** the roadmap's remaining items are large; the established pattern (D-036/D-038/D-039) is one verified, deployed stage at a time. Stage 2 is foundation that every later stage depends on, so it goes first without a separate approval; stages 3–5 are proposed and will be confirmed one by one.
+- **Structural findings that drive Stage 2:** every public page is client-rendered from one `GET /api/articles` call capped at 20 items, and the article page finds itself in that list — the 21st article would read "المقال غير موجود"; there are no per-article meta/OG tags, no sitemap/robots/RSS; the DB has 3 categories (politics/economy/sports) while the static NAV has 13 slugs with different labels (politics → "اخبار الاردن"); all 19 articles carry the seed author "مسؤول" and bylines are drawn from a fake rotating WRITERS list; the dashboard's "معاينة" link opens the public URL, so drafts preview as "not found".
+- **Stage 2 — real-content foundation (this stage):** (1) article page becomes a server component: fetches the article by id *or slug* from the backend (`VPS_API`, default `http://127.0.0.1:9080`), `generateMetadata` emits title/description/canonical/OpenGraph/Twitter with the featured image, `notFound()` for unpublished; the interactive body moves to a client `ArticleView` that still uses the list for related/sidebar/prev-next. (2) `GET /api/articles/:id` accepts a slug; `GET /api/articles` gains `?category=<slug>`; category pages fetch their own list (take 60) instead of filtering the homepage's 20. (3) Real bylines for CMS articles (`author.name`), seeded demo articles keep their dressing. (4) Draft preview at `/dashboard/preview/[id]` rendering the same view from the admin API with a "معاينة مسودة" bar; dashboard list links drafts there. (5) `sitemap.xml`, `robots.txt`, `feed.xml` as dynamic Next routes.
+- **Stage 3 — editorial ops (proposed):** seed the 13 NAV categories into the DB and drive nav/labels from `/api/categories`; admin categories CRUD + ordering; user management + role permissions (ADMIN/EDITOR/JOURNALIST); scheduled publishing job; homepage curation (hero/featured/breaking).
+- **Stage 4 — readers (proposed):** comments (post → PENDING, admin moderation, approved shown — replaces the sample comments), newsletter delivery (Subscription + nodemailer), server-side polls.
+- **Stage 5 — reach & money (proposed):** schema.org NewsArticle, OG image generation, AdSense/ad-server slots, PWA.
+- **Status:** ◐ Stage 2 IN PROGRESS · 2026-10-06
+
+---
+
 **D-042: Apply the D-041 follow-ups (hamza search, draft-by-id guard, drain-before-reject) + rotate the DB password**
 - **Decided by:** Rami ("go" on the open-items list)
 - **What (backend only, no schema change):**

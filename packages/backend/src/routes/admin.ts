@@ -49,7 +49,10 @@ router.get('/articles', async (_req: Request, res: Response) => {
 // GET one (incl. drafts) for the editor
 router.get('/articles/:id', async (req: Request, res: Response) => {
   try {
-    const a = await prisma.article.findUnique({ where: { id: req.params.id }, include: { category: true } });
+    const a = await prisma.article.findUnique({
+      where: { id: req.params.id },
+      include: { category: true, author: { select: { id: true, name: true } } }, // author feeds the draft preview byline
+    });
     if (!a) return res.status(404).json({ error: 'Not found' });
     res.json({ success: true, data: a });
   } catch (e) { res.status(500).json({ error: String(e) }); }

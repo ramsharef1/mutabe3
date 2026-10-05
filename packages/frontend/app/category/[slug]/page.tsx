@@ -39,7 +39,8 @@ const Rows = ({ list, page, cycle }: { list: Article[]; page: number; cycle: boo
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { articles, loading } = useArticles();
+  const { articles, loading } = useArticles(); // site-wide list: header, sidebar, thin-category fallback
+  const [catList, setCatList] = useState<Article[] | null>(null); // this category's own list, not capped by the homepage's 20
   const [sort, setSort] = useState<'new' | 'top'>('new');
   const [sub, setSub] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -49,6 +50,14 @@ export default function CategoryPage() {
   const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => { try { if (localStorage.getItem('catmode') === 'scroll') setMode('scroll'); } catch {} }, []);
+
+  useEffect(() => {
+    setCatList(null);
+    fetch(`/api/articles?category=${encodeURIComponent(slug)}&take=60`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setCatList(d.data || []))
+      .catch(() => setCatList([]));
+  }, [slug]);
 
   // Infinite mode: append the next page when the sentinel scrolls into view (with a short delay so the spinner is visible).
   useEffect(() => {
@@ -64,10 +73,11 @@ export default function CategoryPage() {
     return () => io.disconnect();
   }, [mode, loaded, busy]);
 
-  if (loading || articles.length === 0) return <Loading />;
+  if (loading || articles.length === 0 || catList === null) return <Loading />;
 
-  const label = CAT_LABELS[slug] || articles.find((a) => a.category?.slug === slug)?.category?.name || slug;
-  let base = articles.filter((a) => a.category?.slug === slug);
+  const label = CAT_LABELS[slug] || catList[0]?.category?.name || articles.find((a) => a.category?.slug === slug)?.category?.name || slug;
+  // Own list first; while a category is still thin (demo content) fall back to the site-wide list so the page stays full.
+  let base = catList.length ? catList : articles.filter((a) => a.category?.slug === slug);
   if (base.length < 6) base = articles;
   const subs = topTags(base, 6);
   let list = sub ? base.filter((a) => tagsFor(a).includes(sub)) : base;

@@ -7,16 +7,20 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 - ☑ Homepage revamp — trending topics, feed sharing, For You, live strip, newsletter editions, community band; tablet/fold/hydration fixes; news-first reorganization into Core News → Services → Community zones with distributed ads (D-036)
 - ☑ Auth live — login works, JWT secrets set, DB synced (D-037)
 - ☑ Custom CMS — protected `/api/admin/articles` CRUD, `/dashboard` list, create/edit editor, publish/draft/delete, change-password (D-038)
+- ☑ Stage 1 — rich-text editor, image upload + media library, real view counts, working search; deployed via CI and smoke-tested in prod (D-039, D-041); hamza search, draft privacy, drain-before-reject fixes (D-042)
+
+## "Finish the site" — stage order (D-043)
+Stage 2 real-content foundation (◐ now) → Stage 3 editorial ops → Stage 4 readers → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
 
 ---
 
 ## 🛠️ Admin / CMS
 
 ### Now — makes the CMS truly usable
-- ◐ **Rich-text editor** — built (D-039): headings, bold/italic, lists, quotes, links, YouTube, paste-cleaning, HTML view · awaiting deploy
-- ◐ **Image upload + media library** — built (D-039): `POST /api/admin/upload` + `GET /api/admin/media`, featured-image upload · awaiting deploy
-- ☐ **Category management** — create/edit/reorder (currently read-only) ⚙️
-- ☐ **Draft preview** — see a draft as it will publish
+- ☑ **Rich-text editor** — headings, bold/italic, lists, quotes, links, YouTube, paste-cleaning, HTML view (D-039, verified in prod D-041)
+- ☑ **Image upload + media library** — `POST /api/admin/upload` + `GET /api/admin/media`, featured-image upload; nginx limit 25MB (D-039, D-041)
+- ☐ **Category management** — create/edit/reorder; DB has 3 categories vs 13 static NAV slugs → seed + drive nav from the DB ⚙️ (Stage 3)
+- ◐ **Draft preview** — `/dashboard/preview/[id]` renders the article view from the admin API (Stage 2)
 
 ### Next — editorial operations
 - ☐ **User management** — admin creates editors/journalists, assigns roles ⚙️ (ADMIN/EDITOR/JOURNALIST/VIEWER already in schema)
@@ -37,10 +41,12 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 ## 🌐 Website / public
 
 ### Now — make it real, not demo
-- ☐ **Real content** — replace the 19 dummy articles via the admin (editorial)
-- ◐ **View tracking** — built (D-039): `POST /api/articles/:id/view`, MostRead/Trending show real counts · awaiting deploy
-- ◐ **Working search** — built (D-039): `GET /api/articles?q=` + `/search` page, header forms wired · awaiting deploy
-- ☐ **Related articles** — `relatedByTag` exists; surface on article pages ⚙️
+- ☐ **Real content** — replace the 19 dummy articles via the admin (editorial; unblocked once Stage 2 lands)
+- ◐ **Article pages that scale** — server-rendered article route fetching by id/slug (not from the latest-20 list), per-article title/description/OG/Twitter meta, real bylines for CMS articles, category pages with their own list (Stage 2)
+- ◐ **SEO plumbing** — `sitemap.xml`, `robots.txt`, `feed.xml` (Stage 2)
+- ☑ **View tracking** — `POST /api/articles/:id/view`, MostRead/Trending show real counts (D-039, verified D-041)
+- ☑ **Working search** — `GET /api/articles?q=` + `/search` page, header forms wired; hamza/ال/ة-ه variants (D-039, D-042)
+- ☑ **Related articles** — `relatedByTag` surfaced on article pages ("أخبار ذات صلة" + "اقرأ أيضاً")
 
 ### Next — engagement & retention
 - ☐ **Newsletter delivery** — signup UI + nodemailer exist; wire sending ⚙️
@@ -58,5 +64,6 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 ---
 
 ## Operational
-- ◐ **One-click deploys** — 4 `VPS_*` secrets set + dedicated deploy key generated (D-039); public key still to be installed on the VPS once via hPanel Browser terminal, then push-to-main deploys (operator IP 92.241.37.76 is banned at Hostinger's network edge — see D-038)
-- ☐ Reconcile `packages/backend/.env` (stale DB password; backend reads `/etc/mutabe3/backend.env`)
+- ☑ **One-click deploys** — deploy key installed, every push to `main` touching `packages/**` deploys itself; `gh workflow run deploy-vps.yml` on demand (D-039, D-041)
+- ☑ `packages/backend/.env` untracked, `.env` ignored, `packages/backend/.env.example` complete (D-040); `mutabe3_user` password rotated (D-042)
+- ☐ Run `mutabe3-backend` under a dedicated service user instead of root; add `@types/jsonwebtoken` + `@types/nodemailer` (D-041/D-042 notes)
