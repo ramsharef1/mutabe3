@@ -1,5 +1,17 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-10-06
+
+**D-040: Stop tracking `packages/backend/.env` (secret in a public repo)**
+- **Decided by:** Rami (explicit: `git rm --cached`, ignore `.env`, complete `.env.example`, log here, push to main)
+- **What:** `packages/backend/.env` had been committed since 8b5614d (2026-09) and held a `DATABASE_URL` with the `mutabe3_user` Postgres password — stale and no longer valid, but public on GitHub (repo is PUBLIC). Removed from the index (file stays on disk), added plain `.env` to the root `.gitignore` (`.env.example` files stay tracked), and added `packages/backend/.env.example` listing every variable the backend reads: `DATABASE_URL, PORT, NODE_ENV, FRONTEND_URL, JWT_SECRET, JWT_REFRESH_SECRET, UPLOAD_DIR, SMTP_HOST/PORT/USER/PASSWORD/FROM/SECURE` (placeholders only). Root `.env.example` now points to it.
+- **Why:** Secrets must not live in a public repo, even stale ones. The running service never read this file (systemd uses `EnvironmentFile=/etc/mutabe3/backend.env`, see D-037), and local dev sources `packages/backend/.env.local`, so nothing depends on it.
+- **Deploy impact:** deploy-vps.yml does `git reset --hard origin/main` on the VPS, so the next deploy deletes prod's `packages/backend/.env`. The service is unaffected. Only the Prisma CLI run by hand from `packages/backend` used to pick it up; operators now export the real env first: `set -a; . /etc/mutabe3/backend.env; set +a` (then `npx prisma …`). D-037 already records that `/etc/mutabe3/backend.env` is the only real backend env on the VPS.
+- **Not done:** git history was not rewritten; the old value remains in 8b5614d. Follow-up: if the `mutabe3_user` role still exists on the VPS Postgres, rotate its password (`ALTER ROLE mutabe3_user PASSWORD '…'`) and update `/etc/mutabe3/backend.env` + restart `mutabe3-backend`.
+- **Status:** ✅ COMMITTED & PUSHED to main · 2026-10-06
+
+---
+
 ## 2026-10-05
 
 **D-039: Features Roadmap saved + Stage 1 of the "Now" items (rich editor, uploads, search, real view counts)**
