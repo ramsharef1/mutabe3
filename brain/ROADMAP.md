@@ -10,7 +10,7 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 - ☑ Stage 1 — rich-text editor, image upload + media library, real view counts, working search; deployed via CI and smoke-tested in prod (D-039, D-041); hamza search, draft privacy, drain-before-reject fixes (D-042)
 
 ## "Finish the site" — stage order (D-043)
-Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (☑ live 2026-10-06) → Stage 4 readers (◐ shipping 2026-10-06) → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
+Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (☑ live 2026-10-06) → Stage 4 readers (☑ live 2026-10-06; inbox delivery needs DNS) → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
 
 ---
 
@@ -27,13 +27,13 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 - ☑ **Role permissions** — journalists own drafts only, editors publish/schedule/categories/homepage, admin everything; enforced server-side (D-043 Stage 3)
 - ☑ **Scheduled publishing** — date/time in the editor; 60-second backend tick publishes due articles (D-043 Stage 3)
 - ☑ **Homepage curation** — `/dashboard/homepage`: lead story, ordered editor's picks, breaking bar; instant homepage refresh on save (D-043 Stage 3)
-- ◐ **Comments moderation** — `/dashboard/comments`: pending/approved/rejected, approve/reject/delete, pending badge in the nav (D-043 Stage 4)
+- ☑ **Comments moderation** — `/dashboard/comments`: pending/approved/rejected, approve/reject/delete, pending badge in the nav (D-043 Stage 4)
 - ☐ **Analytics** — views per article, top content, trends ⚙️ (`viewsCount` exists)
 
 ### Later
 - ☐ Live-blog manager (live strip data is hardcoded) ⚙️
-- ◐ **Poll manager** — `/dashboard/polls` for the homepage poll and the «وجهان» debate (D-043 Stage 4); breaking bar is in `/dashboard/homepage` (Stage 3)
-- ◐ **Newsletter manager** — `/dashboard/newsletter`: stats, compose, test, send, CSV export, automatic morning digest (off by default) (D-043 Stage 4)
+- ☑ **Poll manager** — `/dashboard/polls` for the homepage poll and the «وجهان» debate (D-043 Stage 4); breaking bar is in `/dashboard/homepage` (Stage 3)
+- ☑ **Newsletter manager** — `/dashboard/newsletter`: stats, compose, test, send, CSV export, automatic morning digest (off by default) (D-043 Stage 4)
 - ☐ Revision history · bulk actions · audit log · English edition
 
 ---
@@ -50,9 +50,9 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 
 ### Next — engagement & retention
 - ◐ **Newsletter delivery** — both signup forms store subscriptions; sending works from the dashboard via the VPS Postfix. **Blocked on DNS for inbox delivery:** mutabe3.news has no SPF/DKIM/DMARC (D-043 Stage 4)
-- ◐ **Reader comments** — post (held for moderation) + approved list on articles; "الأكثر نقاشاً" uses real counts (D-043 Stage 4)
+- ☑ **Reader comments** — post (held for moderation) + approved list on articles; "الأكثر نقاشاً" uses real counts (D-043 Stage 4)
 - ☐ **Reader accounts** — save articles / follow topics ⚙️ (SavedArticle model exists)
-- ◐ **Server-side polls** — votes persist for everyone, one per browser, IP ceiling (D-043 Stage 4)
+- ☑ **Server-side polls** — votes persist for everyone, one per browser, IP ceiling (D-043 Stage 4)
 - ☐ **Breaking-news notifications** — Follow button is local; real alerts ⚙️
 
 ### Later — reach, SEO, money
