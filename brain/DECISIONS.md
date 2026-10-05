@@ -8,7 +8,8 @@
 - **Why:** Secrets must not live in a public repo, even stale ones. The running service never read this file (systemd uses `EnvironmentFile=/etc/mutabe3/backend.env`, see D-037), and local dev sources `packages/backend/.env.local`, so nothing depends on it.
 - **Deploy impact:** deploy-vps.yml does `git reset --hard origin/main` on the VPS, so the next deploy deletes prod's `packages/backend/.env`. The service is unaffected. Only the Prisma CLI run by hand from `packages/backend` used to pick it up; operators now export the real env first: `set -a; . /etc/mutabe3/backend.env; set +a` (then `npx prisma …`). D-037 already records that `/etc/mutabe3/backend.env` is the only real backend env on the VPS.
 - **Not done:** git history was not rewritten; the old value remains in 8b5614d. Follow-up: if the `mutabe3_user` role still exists on the VPS Postgres, rotate its password (`ALTER ROLE mutabe3_user PASSWORD '…'`) and update `/etc/mutabe3/backend.env` + restart `mutabe3-backend`.
-- **Status:** ✅ COMMITTED & PUSHED to main · 2026-10-06
+- **Deployed (2026-10-06):** first successful CI deploy, run 37378977963, shipped f7cec60 in 1m11s; `git reset --hard` removed prod's `packages/backend/.env` as predicted; frontend (:9100) and backend (:9080) both 200, https://mutabe3.news 200 from outside. Password rotation for `mutabe3_user` still open.
+- **Status:** ✅ PUSHED & DEPLOYED via CI · ⚠️ rotate `mutabe3_user` password if the role still exists · 2026-10-06
 
 ---
 
@@ -23,7 +24,8 @@
   - **Ops:** uploads live in `UPLOAD_DIR=/var/www/mutabe3/uploads` (outside the git checkout) and are served at `/api/uploads/*` through the existing nginx `/api` rule; only `client_max_body_size` needs raising for >1MB files.
 - **Why:** Publishing real content was painful (plain textarea, URL-only images) and most-read/trending/search were fake — these are the prerequisites for replacing the 19 dummy articles.
 - **CI deploys (2026-10-06):** Rami asked to "add credentials" so deploys stop being manual. Generated a dedicated ed25519 deploy key (`~/.ssh/mutabe3_deploy` on Rami's Mac; the old `~/.ssh/hostinger_key` is corrupt/"invalid format") and set the 4 repo secrets `VPS_HOST/VPS_USER/VPS_PORT/VPS_SSH_KEY` via `gh secret set`; added `workflow_dispatch` to deploy-vps.yml. The public key still has to be appended to `/root/.ssh/authorized_keys` once from the hPanel Browser terminal (bundled into the same paste as the Stage-1 deploy). After that, every push to main deploys from GitHub's IPs, bypassing the Hostinger edge ban on this Mac.
-- **Status:** 🔧 BUILT · pending VPS deploy via hPanel Browser terminal (needs `npm install` for multer/sanitize-html + `UPLOAD_DIR` in /etc/mutabe3/backend.env + CI public key) · 2026-10-05
+- **CI live (2026-10-06):** Rami appended the deploy public key (`SHA256:/8dozz9uMZVTIbkCp/s8WE4RU3G2GxBVVf3fmZGHQlg`) to `/root/.ssh/authorized_keys` from the hPanel Browser terminal. The three earlier runs had failed with `Permission denied (publickey)`; run 37378977963 then deployed f7cec60 end-to-end (npm install, idempotent UPLOAD_DIR, frontend build, restarts, both health checks 200). Every push to main that touches `packages/**` now deploys itself; `gh workflow run deploy-vps.yml` re-deploys on demand.
+- **Status:** ✅ Stage 1 DEPLOYED via CI (f7cec60) · Stage 1 features still to be smoke-tested in prod by hand (editor, upload, search, view counts) · 2026-10-06
 
 ---
 
