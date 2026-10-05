@@ -11,7 +11,8 @@
 - **Verification:** type-check clean for the touched files (two pre-existing TS7016 errors for missing `@types/jsonwebtoken` and `@types/nodemailer` remain, prod runs tsx); exercised against the worktree backend on :9080 with the local `mutabe3_dev` DB.
 - **Deployed & verified in prod (2026-10-06):** CI run 37383423499 shipped 25a9840, health 200. Search `الأردن`/`أردن`/`الاردن`/`اردن` → 11/11/11/11. Unauthenticated 1.1MB and 5MB POSTs → 401 in ~1s (were 502). A fresh DRAFT (created via the logged-in pane after refreshing the 15-min access token with `/api/auth/refresh`) → public by-id 404, admin by-id 200, deleted, list back to 19.
 - **Password rotation — NOT done, handed to Rami:** diagnostics from the hPanel web console showed `DATABASE_URL=postgresql://mutabe3_user:***@localhost:5432/mutabe3`, the role `mutabe3_user` exists, and `mutabe3-backend` runs as root via `npx tsx watch src/index.ts`. The one-liner that generates a password server-side, runs `ALTER ROLE`, rewrites the env file (with a `.bak-<ts>` copy, chmod 600), restarts the backend and checks `/api/health` was blocked by Claude Code's permission classifier (secret-store write); Claude did not retry it by other means. Rami runs it in the web console himself, or allows the action and asks again.
-- **Status:** ✅ 3 fixes LIVE · ⚠️ `mutabe3_user` password rotation pending (Rami) · 2026-10-06
+- **Rotation done (2026-10-06):** Rami switched the session to a prompting permission mode and said "run the rotation"; Claude typed the one-liner into the hPanel web console with Rami's approval. New password generated server-side (`openssl rand -hex 24`), `ALTER ROLE` applied, env file rewritten (backup `/etc/mutabe3/backend.env.bak-<ts>`, mode 600), backend restarted, `/api/health` reported `database: connected`; from outside health/articles/search/homepage all 200. The value exists only in `/etc/mutabe3/backend.env` on the VPS. Operators running the Prisma CLI by hand keep using `set -a; . /etc/mutabe3/backend.env; set +a`.
+- **Status:** ✅ 3 fixes LIVE · ✅ `mutabe3_user` password ROTATED · 2026-10-06
 
 ---
 
@@ -37,7 +38,7 @@
 - **Deploy impact:** deploy-vps.yml does `git reset --hard origin/main` on the VPS, so the next deploy deletes prod's `packages/backend/.env`. The service is unaffected. Only the Prisma CLI run by hand from `packages/backend` used to pick it up; operators now export the real env first: `set -a; . /etc/mutabe3/backend.env; set +a` (then `npx prisma …`). D-037 already records that `/etc/mutabe3/backend.env` is the only real backend env on the VPS.
 - **Not done:** git history was not rewritten; the old value remains in 8b5614d. Follow-up: if the `mutabe3_user` role still exists on the VPS Postgres, rotate its password (`ALTER ROLE mutabe3_user PASSWORD '…'`) and update `/etc/mutabe3/backend.env` + restart `mutabe3-backend`.
 - **Deployed (2026-10-06):** first successful CI deploy, run 37378977963, shipped f7cec60 in 1m11s; `git reset --hard` removed prod's `packages/backend/.env` as predicted; frontend (:9100) and backend (:9080) both 200, https://mutabe3.news 200 from outside. Password rotation for `mutabe3_user` still open.
-- **Status:** ✅ PUSHED & DEPLOYED via CI · ⚠️ rotate `mutabe3_user` password if the role still exists · 2026-10-06
+- **Status:** ✅ PUSHED & DEPLOYED via CI · ✅ `mutabe3_user` password rotated on 2026-10-06 (D-042); the leaked value now fails authentication · 2026-10-06
 
 ---
 
