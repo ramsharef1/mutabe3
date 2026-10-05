@@ -10,7 +10,8 @@
 - **Stage 3 — editorial ops (proposed):** seed the 13 NAV categories into the DB and drive nav/labels from `/api/categories`; admin categories CRUD + ordering; user management + role permissions (ADMIN/EDITOR/JOURNALIST); scheduled publishing job; homepage curation (hero/featured/breaking).
 - **Stage 4 — readers (proposed):** comments (post → PENDING, admin moderation, approved shown — replaces the sample comments), newsletter delivery (Subscription + nodemailer), server-side polls.
 - **Stage 5 — reach & money (proposed):** schema.org NewsArticle, OG image generation, AdSense/ad-server slots, PWA.
-- **Status:** ◐ Stage 2 IN PROGRESS · 2026-10-06
+- **Stage 2 shipped (2026-10-06, f4eeaf8, CI run 37385819448):** verified locally (worktree backend + Next dev) then in prod: `/article/art-001` carries title/description/canonical/og:image/twitter card, `/article/<slug>` resolves with the id canonical, unknown and draft ids return the branded 404 with `noindex`, `sitemap.xml` 33 URLs and `feed.xml` 19 items both well-formed, `robots.txt` disallows dashboard/auth/admin, `?category=` lists (politics 10 / economy 6 / sports 3), `/dashboard/preview/<draft>` renders through Rami's session with the orange "معاينة · مسودة" bar, the real byline "مسؤول" with an initial avatar and "غير منشور"; the public URL of that draft stays 404. Test draft deleted, list back to 19. Gotcha found: Next 14 hands Arabic slug params still percent-encoded, so the server helper decodes before encoding once.
+- **Status:** ✅ Stage 2 LIVE · next: Stage 3 editorial ops (awaiting Rami's go) · 2026-10-06
 
 ---
 

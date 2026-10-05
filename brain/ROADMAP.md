@@ -10,7 +10,7 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 - ☑ Stage 1 — rich-text editor, image upload + media library, real view counts, working search; deployed via CI and smoke-tested in prod (D-039, D-041); hamza search, draft privacy, drain-before-reject fixes (D-042)
 
 ## "Finish the site" — stage order (D-043)
-Stage 2 real-content foundation (◐ now) → Stage 3 editorial ops → Stage 4 readers → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
+Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (next) → Stage 4 readers → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
 
 ---
 
@@ -20,7 +20,7 @@ Stage 2 real-content foundation (◐ now) → Stage 3 editorial ops → Stage 4 
 - ☑ **Rich-text editor** — headings, bold/italic, lists, quotes, links, YouTube, paste-cleaning, HTML view (D-039, verified in prod D-041)
 - ☑ **Image upload + media library** — `POST /api/admin/upload` + `GET /api/admin/media`, featured-image upload; nginx limit 25MB (D-039, D-041)
 - ☐ **Category management** — create/edit/reorder; DB has 3 categories vs 13 static NAV slugs → seed + drive nav from the DB ⚙️ (Stage 3)
-- ◐ **Draft preview** — `/dashboard/preview/[id]` renders the article view from the admin API (Stage 2)
+- ☑ **Draft preview** — `/dashboard/preview/[id]` renders the article view from the admin API; dashboard "معاينة" links drafts there (D-043 Stage 2)
 
 ### Next — editorial operations
 - ☐ **User management** — admin creates editors/journalists, assigns roles ⚙️ (ADMIN/EDITOR/JOURNALIST/VIEWER already in schema)
@@ -42,8 +42,8 @@ Stage 2 real-content foundation (◐ now) → Stage 3 editorial ops → Stage 4 
 
 ### Now — make it real, not demo
 - ☐ **Real content** — replace the 19 dummy articles via the admin (editorial; unblocked once Stage 2 lands)
-- ◐ **Article pages that scale** — server-rendered article route fetching by id/slug (not from the latest-20 list), per-article title/description/OG/Twitter meta, real bylines for CMS articles, category pages with their own list (Stage 2)
-- ◐ **SEO plumbing** — `sitemap.xml`, `robots.txt`, `feed.xml` (Stage 2)
+- ☑ **Article pages that scale** — server-rendered article route fetching by id/slug (not from the latest-20 list), per-article title/description/OG/Twitter meta, real bylines for CMS articles, category pages with their own list (D-043 Stage 2)
+- ☑ **SEO plumbing** — `sitemap.xml`, `robots.txt`, `feed.xml`, branded 404 with noindex (D-043 Stage 2)
 - ☑ **View tracking** — `POST /api/articles/:id/view`, MostRead/Trending show real counts (D-039, verified D-041)
 - ☑ **Working search** — `GET /api/articles?q=` + `/search` page, header forms wired; hamza/ال/ة-ه variants (D-039, D-042)
 - ☑ **Related articles** — `relatedByTag` surfaced on article pages ("أخبار ذات صلة" + "اقرأ أيضاً")
