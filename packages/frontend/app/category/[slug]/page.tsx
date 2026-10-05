@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Article, Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, CAT_LABELS, CAT_DESC, Crumbs, Chip, ago, Ico, AdBanner, catColor, excerpt } from '../../components/site';
+import { Article, Img, useArticles, useNav, Loading, SiteHeader, SiteFooter, Sidebar, CAT_LABELS, CAT_DESC, Crumbs, Chip, ago, Ico, AdBanner, catColor, excerpt } from '../../components/site';
 import { tagsFor, topTags } from '../../components/content';
 
 const PAGES = 5;
@@ -41,6 +41,7 @@ export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const { articles, loading } = useArticles(); // site-wide list: header, sidebar, thin-category fallback
   const [catList, setCatList] = useState<Article[] | null>(null); // this category's own list, not capped by the homepage's 20
+  const navItem = useNav().find((n) => n.slug === slug); // name/description as managed in /dashboard/categories
   const [sort, setSort] = useState<'new' | 'top'>('new');
   const [sub, setSub] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -75,7 +76,8 @@ export default function CategoryPage() {
 
   if (loading || articles.length === 0 || catList === null) return <Loading />;
 
-  const label = CAT_LABELS[slug] || catList[0]?.category?.name || articles.find((a) => a.category?.slug === slug)?.category?.name || slug;
+  const label = navItem?.label || catList[0]?.category?.name || CAT_LABELS[slug] || articles.find((a) => a.category?.slug === slug)?.category?.name || slug;
+  const desc = navItem?.description || CAT_DESC[slug] || `آخر أخبار ${label} على موقع المتابع الاخباري`;
   // Own list first; while a category is still thin (demo content) fall back to the site-wide list so the page stays full.
   let base = catList.length ? catList : articles.filter((a) => a.category?.slug === slug);
   if (base.length < 6) base = articles;
@@ -106,7 +108,7 @@ export default function CategoryPage() {
             <div className="cathead" style={{ borderColor: catColor(slug) }}>
               <div>
                 <h1>{label}</h1>
-                <p>{CAT_DESC[slug] || `آخر أخبار ${label} على موقع المتابع الاخباري`}</p>
+                <p>{desc}</p>
               </div>
               <div className="catnum"><b>{total}</b><small>خبر</small></div>
             </div>

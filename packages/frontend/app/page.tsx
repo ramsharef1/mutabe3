@@ -14,7 +14,7 @@ import { LiveStrip } from './components/blocks/livestrip';
 import { CommunityBand } from './components/blocks/community';
 import { NewsletterCTA } from './components/blocks/newsletter';
 import { MostDiscussed } from './components/blocks/discussed';
-import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText } from './components/feeds';
+import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText, BreakingItem } from './components/feeds';
 
 export const revalidate = 60;
 
@@ -27,6 +27,19 @@ async function getArticles(): Promise<Article[]> {
     return j.data || [];
   } catch {
     return [];
+  }
+}
+
+// Editor curation from /dashboard/homepage (D-043 Stage 3). Saving there revalidates '/'.
+interface Curated { hero: Article | null; picks: Article[]; breaking: BreakingItem | null }
+async function getCuration(): Promise<Curated> {
+  try {
+    const r = await fetch(`${API}/api/homepage`, { next: { revalidate: 60 } });
+    if (!r.ok) throw new Error(String(r.status));
+    const d = (await r.json()).data || {};
+    return { hero: d.hero || null, picks: d.picks || [], breaking: d.breaking || null };
+  } catch {
+    return { hero: null, picks: [], breaking: null };
   }
 }
 
@@ -80,7 +93,9 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
 );
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
-  const [articles, wx] = await Promise.all([getArticles(), fetchWeather()]);
+  const [latestArticles, wx, curated] = await Promise.all([getArticles(), fetchWeather(), getCuration()]);
+  // A curated lead story goes first (and is removed from its newest-first slot) so the pool hands it to the hero.
+  const articles = curated.hero ? [curated.hero, ...latestArticles.filter((a) => a.id !== curated.hero!.id)] : latestArticles;
   if (!articles.length) {
     return <div className="am"><SiteHeader /><div className="wrap loading">لا تتوفر أخبار حالياً — حاول بعد قليل.</div><SiteFooter /></div>;
   }
@@ -115,9 +130,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
       <div className="wrap">
         <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
 
-        <BreakingBar />
+        <BreakingBar item={curated.breaking} />
         <MetAlert />
-        <Ticker items={ticker} />
+        <Ticker items={ticker} hot={!!curated.breaking} />
         <LiveStrip />
         <MarketStrip updated={ammanTime(now)} />
         <Missed articles={articles} />
@@ -159,12 +174,12 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         {/* Picks + Obituaries below the fold (desktop) so the sidebar height matches the main column */}
         <div className="desk">
           <div className="two" style={{ marginTop: 12 }}>
-            <div className="sec"><PicksBox articles={articles} /></div>
+            <div className="sec"><PicksBox articles={articles} picks={curated.picks} /></div>
             <div className="sec"><ObitsBox /></div>
           </div>
         </div>
 
-        <div className="mob"><PicksBox articles={articles} rail /></div>
+        <div className="mob"><PicksBox articles={articles} picks={curated.picks} rail /></div>
 
         <AdBanner variant={4} className="adrow ad90" />
 

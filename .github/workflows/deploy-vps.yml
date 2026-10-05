@@ -70,6 +70,17 @@ jobs:
           echo "== Installing dependencies =="
           npm install --no-audit --no-fund
 
+          echo "== Database schema (additive push + client generate) =="
+          # Prisma reads DATABASE_URL from the service's env file (D-037/D-040). `db push`
+          # refuses anything that would lose data, so a destructive schema change fails
+          # the deploy here instead of silently breaking the API.
+          # Subshell so the backend's env (PORT, NODE_ENV, …) never leaks into the frontend build.
+          (
+            set -a; . /etc/mutabe3/backend.env; set +a
+            npx prisma db push --schema=packages/backend/prisma/schema.prisma --skip-generate
+            npx prisma generate --schema=packages/backend/prisma/schema.prisma
+          )
+
           echo "== Building frontend =="
           npm run build --workspace=packages/frontend
 

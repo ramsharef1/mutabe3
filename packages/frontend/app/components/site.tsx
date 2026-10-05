@@ -8,6 +8,33 @@ import { AudioPill } from './blocks/jordan';
 export * from './util';
 import { Article, NAV, WRITERS, face, ago, catColor } from './util';
 
+/* ---------- navigation from the DB (D-043 Stage 3) ---------- */
+export interface NavItem { label: string; slug: string; description?: string | null }
+let navCache: NavItem[] | null = null;
+let navPending: Promise<NavItem[] | null> | null = null;
+/**
+ * Header/footer categories as managed in /dashboard/categories (showInNav, displayOrder).
+ * First render uses the built-in NAV so server and client markup match; the DB list
+ * replaces it after mount and is cached for the rest of the page's life.
+ */
+export function useNav(): NavItem[] {
+  const [items, setItems] = useState<NavItem[]>(NAV);
+  useEffect(() => {
+    if (navCache) { setItems(navCache); return; }
+    navPending ??= fetch('/api/categories')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        const list: NavItem[] = (d.data || [])
+          .filter((c: any) => c.showInNav !== false)
+          .map((c: any) => ({ label: c.name, slug: c.slug, description: c.description }));
+        return list.length ? (navCache = list) : null;
+      })
+      .catch(() => null);
+    navPending.then((l) => { if (l) setItems(l); });
+  }, []);
+  return items;
+}
+
 export function Img({ src, alt = '', priority = false }: { src?: string; alt?: string; priority?: boolean }) {
   const [err, setErr] = useState(false);
   if (!src || err) return <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#c9c9c9,#8f8f8f)' }} />;
@@ -111,7 +138,8 @@ export const Ico = {
 /* ---------- header ---------- */
 export function Nav({ compact = false }: { compact?: boolean }) {
   const path = usePathname() || '/';
-  const items = compact ? NAV.slice(0, 9) : NAV;
+  const nav = useNav();
+  const items = compact ? nav.slice(0, 9) : nav;
   return (
     <ul>
       {items.map((n) => {
@@ -193,6 +221,7 @@ export function Crumbs({ items }: { items: { label: string; href?: string }[] })
 
 /* ---------- footer ---------- */
 export function SiteFooter() {
+  const nav = useNav();
   return (
     <div className="footer" id="footer">
       <div className="wrap">
@@ -207,11 +236,11 @@ export function SiteFooter() {
         <div className="fcols">
           <div>
             <b>الأقسام</b>
-            <ul>{NAV.slice(0, 7).map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
+            <ul>{nav.slice(0, 7).map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
           </div>
           <div>
             <b>المزيد</b>
-            <ul>{NAV.slice(7).map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
+            <ul>{nav.slice(7).map((n) => <li key={n.slug}><a href={`/category/${n.slug}`}>{n.label}</a></li>)}</ul>
           </div>
           <div>
             <b>خدمات</b>

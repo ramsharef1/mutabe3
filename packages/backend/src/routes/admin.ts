@@ -3,21 +3,32 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, drainRequest } from '../middleware';
 import { sanitizeArticleHtml } from '../sanitize';
 import { imageUpload, uploadedFileUrl, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
+import { hashPassword } from '../auth';
+import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
 
 const router = Router();
 const prisma = new PrismaClient();
 
+// Roles (D-043 Stage 3): ADMIN everything · EDITOR all content + categories +
+// homepage · JOURNALIST own drafts only, no publishing · VIEWER no dashboard.
+const STAFF_ROLES = ['ADMIN', 'EDITOR', 'JOURNALIST'];
 const EDITOR_ROLES = ['ADMIN', 'EDITOR'];
+const ROLES = ['ADMIN', 'EDITOR', 'JOURNALIST', 'VIEWER'];
 const STATUSES = ['DRAFT', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED'];
 
-// Every admin route needs a valid token AND an editor/admin role.
-async function requireEditor(req: Request, res: Response, next: NextFunction) {
+type Staff = { id: string; name: string; role: string };
+const who = (req: Request) => (req as any).user as Staff;
+const isEditor = (u: Staff) => EDITOR_ROLES.includes(u.role);
+const isUniqueError = (e: any) => e && e.code === 'P2002';
+
+// Every admin route needs a valid token AND a staff role.
+async function requireStaff(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = (req as any).userId;
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, role: true } });
-    if (!user || !EDITOR_ROLES.includes(user.role)) {
+    if (!user || !STAFF_ROLES.includes(user.role)) {
       await drainRequest(req);
-      return res.status(403).json({ error: 'Forbidden: editor access required' });
+      return res.status(403).json({ error: 'Forbidden: staff access required' });
     }
     (req as any).user = user;
     next();
@@ -26,7 +37,15 @@ async function requireEditor(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-router.use(authMiddleware, requireEditor);
+const requireRole = (...roles: string[]) => async (req: Request, res: Response, next: NextFunction) => {
+  if (!roles.includes(who(req).role)) {
+    await drainRequest(req);
+    return res.status(403).json({ error: 'Forbidden: insufficient role' });
+  }
+  next();
+};
+
+router.use(authMiddleware, requireStaff);
 
 const slugify = (s: string) =>
   (s || '').toString().trim().toLowerCase().replace(/\s+/g, '-')
@@ -34,10 +53,21 @@ const slugify = (s: string) =>
 const makeSlug = (title: string, provided?: string) =>
   `${slugify(provided || title) || 'article'}-${Math.random().toString(36).slice(2, 8)}`;
 
-// GET /api/admin/articles — every status, newest edits first (dashboard list)
-router.get('/articles', async (_req: Request, res: Response) => {
+/** ISO string → Date; null when empty; undefined when unparseable. */
+const parseWhen = (v: unknown): Date | null | undefined => {
+  if (v === undefined || v === null || v === '') return null;
+  const d = new Date(String(v));
+  return isNaN(d.getTime()) ? undefined : d;
+};
+
+/* ───────────────────────────── articles ───────────────────────────── */
+
+// GET /api/admin/articles — every status, newest edits first. Journalists see their own.
+router.get('/articles', async (req: Request, res: Response) => {
   try {
+    const u = who(req);
     const articles = await prisma.article.findMany({
+      where: isEditor(u) ? {} : { authorId: u.id },
       include: { author: { select: { id: true, name: true } }, category: { select: { id: true, name: true } } },
       orderBy: { updatedAt: 'desc' },
       take: 200,
@@ -46,14 +76,16 @@ router.get('/articles', async (_req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-// GET one (incl. drafts) for the editor
+// GET one (incl. drafts) for the editor and the preview
 router.get('/articles/:id', async (req: Request, res: Response) => {
   try {
+    const u = who(req);
     const a = await prisma.article.findUnique({
       where: { id: req.params.id },
-      include: { category: true, author: { select: { id: true, name: true } } }, // author feeds the draft preview byline
+      include: { category: true, author: { select: { id: true, name: true } } },
     });
     if (!a) return res.status(404).json({ error: 'Not found' });
+    if (!isEditor(u) && a.authorId !== u.id) return res.status(403).json({ error: 'ليس لديك صلاحية على هذا المقال' });
     res.json({ success: true, data: a });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -61,11 +93,16 @@ router.get('/articles/:id', async (req: Request, res: Response) => {
 // POST create
 router.post('/articles', async (req: Request, res: Response) => {
   try {
-    const { title, summary, content, categoryId, featuredImageUrl, status, seoKeywords, slug } = req.body || {};
+    const u = who(req);
+    const { title, summary, content, categoryId, featuredImageUrl, status, seoKeywords, slug, scheduledPublishAt } = req.body || {};
     if (!title || !content || !categoryId) {
       return res.status(400).json({ error: 'title, content and categoryId are required' });
     }
     const st = STATUSES.includes(status) ? status : 'DRAFT';
+    if (!isEditor(u) && st !== 'DRAFT') return res.status(403).json({ error: 'النشر والجدولة يتطلبان صلاحية محرر' });
+    const when = parseWhen(scheduledPublishAt);
+    if (when === undefined) return res.status(400).json({ error: 'scheduledPublishAt is not a valid date' });
+    if (st === 'SCHEDULED' && !when) return res.status(400).json({ error: 'حدّد موعد النشر للمقال المجدول' });
     const article = await prisma.article.create({
       data: {
         title,
@@ -74,9 +111,10 @@ router.post('/articles', async (req: Request, res: Response) => {
         slug: makeSlug(title, slug),
         featuredImageUrl: featuredImageUrl || null,
         categoryId,
-        authorId: (req as any).user.id,
+        authorId: u.id,
         status: st,
         publishedAt: st === 'PUBLISHED' ? new Date() : null,
+        scheduledPublishAt: st === 'SCHEDULED' ? when : null,
         seoKeywords: Array.isArray(seoKeywords) ? seoKeywords : [],
       },
     });
@@ -87,9 +125,14 @@ router.post('/articles', async (req: Request, res: Response) => {
 // PUT update
 router.put('/articles/:id', async (req: Request, res: Response) => {
   try {
+    const u = who(req);
     const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: 'Not found' });
-    const { title, summary, content, categoryId, featuredImageUrl, status, seoKeywords } = req.body || {};
+    if (!isEditor(u)) {
+      if (existing.authorId !== u.id) return res.status(403).json({ error: 'ليس لديك صلاحية على هذا المقال' });
+      if (existing.status !== 'DRAFT') return res.status(403).json({ error: 'المقال غير المسوّد لا يعدّله إلا محرر' });
+    }
+    const { title, summary, content, categoryId, featuredImageUrl, status, seoKeywords, scheduledPublishAt } = req.body || {};
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (summary !== undefined) data.summary = summary || null;
@@ -97,22 +140,42 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
     if (categoryId !== undefined) data.categoryId = categoryId;
     if (featuredImageUrl !== undefined) data.featuredImageUrl = featuredImageUrl || null;
     if (Array.isArray(seoKeywords)) data.seoKeywords = seoKeywords;
+    const when = parseWhen(scheduledPublishAt);
+    if (when === undefined) return res.status(400).json({ error: 'scheduledPublishAt is not a valid date' });
     if (status !== undefined && STATUSES.includes(status)) {
+      if (!isEditor(u) && status !== 'DRAFT') return res.status(403).json({ error: 'النشر والجدولة يتطلبان صلاحية محرر' });
       data.status = status;
       if (status === 'PUBLISHED' && !existing.publishedAt) data.publishedAt = new Date();
+      if (status === 'SCHEDULED') {
+        const at = when ?? existing.scheduledPublishAt;
+        if (!at) return res.status(400).json({ error: 'حدّد موعد النشر للمقال المجدول' });
+        data.scheduledPublishAt = at;
+      } else {
+        data.scheduledPublishAt = null;
+      }
+    } else if (scheduledPublishAt !== undefined && existing.status === 'SCHEDULED') {
+      data.scheduledPublishAt = when;
     }
     const article = await prisma.article.update({ where: { id: req.params.id }, data });
     res.json({ success: true, data: article });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-// DELETE
+// DELETE — editors anything; journalists their own drafts
 router.delete('/articles/:id', async (req: Request, res: Response) => {
   try {
+    const u = who(req);
+    const existing = await prisma.article.findUnique({ where: { id: req.params.id }, select: { authorId: true, status: true } });
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (!isEditor(u) && (existing.authorId !== u.id || existing.status !== 'DRAFT')) {
+      return res.status(403).json({ error: 'الحذف هنا يتطلب صلاحية محرر' });
+    }
     await prisma.article.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
+
+/* ───────────────────────────── media ───────────────────────────── */
 
 // POST /api/admin/upload — multipart field "file" (image) → { url } under /api/uploads/…
 router.post('/upload', (req: Request, res: Response) => {
@@ -131,6 +194,170 @@ router.post('/upload', (req: Request, res: Response) => {
 router.get('/media', (_req: Request, res: Response) => {
   try { res.json({ success: true, data: listMedia() }); }
   catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+/* ───────────────────────────── categories (editors) ───────────────────────────── */
+
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const CATEGORY_SELECT = { id: true, name: true, slug: true, description: true, displayOrder: true, showInNav: true, _count: { select: { articles: true } } } as const;
+
+router.get('/categories', requireRole(...EDITOR_ROLES), async (_req: Request, res: Response) => {
+  try {
+    const data = await prisma.category.findMany({ select: CATEGORY_SELECT, orderBy: { displayOrder: 'asc' } });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.post('/categories', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const { name, slug, description, showInNav } = req.body || {};
+    const n = String(name || '').trim(), s = String(slug || '').trim().toLowerCase();
+    if (!n || !s) return res.status(400).json({ error: 'الاسم والمعرّف (slug) مطلوبان' });
+    if (!SLUG_RE.test(s)) return res.status(400).json({ error: 'المعرّف يقبل حروفاً لاتينية صغيرة وأرقاماً وشرطات فقط' });
+    const last = await prisma.category.aggregate({ _max: { displayOrder: true } });
+    const data = await prisma.category.create({
+      data: { name: n, slug: s, description: description ? String(description).trim() : null, showInNav: showInNav !== false, displayOrder: (last._max.displayOrder || 0) + 1 },
+      select: CATEGORY_SELECT,
+    });
+    res.status(201).json({ success: true, data });
+  } catch (e) {
+    if (isUniqueError(e)) return res.status(409).json({ error: 'الاسم أو المعرّف مستخدم لقسم آخر' });
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// PUT /api/admin/categories/order { ids: [...] } — declared before /:id so "order" is never read as an id
+router.put('/categories/order', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const ids: unknown = req.body?.ids;
+    if (!Array.isArray(ids) || !ids.every((x) => typeof x === 'string')) return res.status(400).json({ error: 'ids[] required' });
+    await prisma.$transaction((ids as string[]).map((id, i) => prisma.category.update({ where: { id }, data: { displayOrder: i + 1 } })));
+    const data = await prisma.category.findMany({ select: CATEGORY_SELECT, orderBy: { displayOrder: 'asc' } });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.put('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const { name, slug, description, showInNav, displayOrder } = req.body || {};
+    const data: any = {};
+    if (name !== undefined) { const n = String(name).trim(); if (!n) return res.status(400).json({ error: 'الاسم مطلوب' }); data.name = n; }
+    if (slug !== undefined) { const s = String(slug).trim().toLowerCase(); if (!SLUG_RE.test(s)) return res.status(400).json({ error: 'معرّف غير صالح' }); data.slug = s; }
+    if (description !== undefined) data.description = description ? String(description).trim() : null;
+    if (showInNav !== undefined) data.showInNav = !!showInNav;
+    if (displayOrder !== undefined && Number.isFinite(Number(displayOrder))) data.displayOrder = Number(displayOrder);
+    const row = await prisma.category.update({ where: { id: req.params.id }, data, select: CATEGORY_SELECT });
+    res.json({ success: true, data: row });
+  } catch (e: any) {
+    if (isUniqueError(e)) return res.status(409).json({ error: 'الاسم أو المعرّف مستخدم لقسم آخر' });
+    if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+router.delete('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const n = await prisma.article.count({ where: { categoryId: req.params.id } });
+    if (n > 0) return res.status(409).json({ error: `لا يمكن حذف قسم يحتوي ${n} مقالاً — انقل مقالاته أولاً` });
+    await prisma.category.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (e: any) {
+    if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+/* ───────────────────────────── users (admin) ───────────────────────────── */
+
+const USER_SELECT = { id: true, name: true, email: true, role: true, emailVerified: true, createdAt: true, _count: { select: { articles: true } } } as const;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+router.get('/users', requireRole('ADMIN'), async (_req: Request, res: Response) => {
+  try {
+    const data = await prisma.user.findMany({ select: USER_SELECT, orderBy: { createdAt: 'asc' } });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// POST /api/admin/users { name, email, role, password } — created verified, ready to log in
+router.post('/users', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const { name, email, role, password } = req.body || {};
+    const n = String(name || '').trim(), em = String(email || '').trim().toLowerCase(), pw = String(password || '');
+    if (!n || !em || !pw) return res.status(400).json({ error: 'الاسم والبريد وكلمة المرور مطلوبة' });
+    if (!EMAIL_RE.test(em)) return res.status(400).json({ error: 'بريد إلكتروني غير صالح' });
+    if (pw.length < 8) return res.status(400).json({ error: 'كلمة المرور 8 أحرف على الأقل' });
+    const r = ROLES.includes(role) ? role : 'JOURNALIST';
+    const data = await prisma.user.create({
+      data: { name: n, email: em, role: r as any, password: await hashPassword(pw), emailVerified: true },
+      select: USER_SELECT,
+    });
+    res.status(201).json({ success: true, data });
+  } catch (e) {
+    if (isUniqueError(e)) return res.status(409).json({ error: 'هذا البريد مستخدم بالفعل' });
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// PUT /api/admin/users/:id { name?, role?, password? }. No DELETE: deleting a user
+// cascades to their articles; set role VIEWER to revoke access instead.
+router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const me = who(req);
+    const { name, role, password } = req.body || {};
+    const data: any = {};
+    if (name !== undefined) { const n = String(name).trim(); if (!n) return res.status(400).json({ error: 'الاسم مطلوب' }); data.name = n; }
+    if (role !== undefined) {
+      if (!ROLES.includes(role)) return res.status(400).json({ error: 'دور غير صالح' });
+      if (req.params.id === me.id && role !== 'ADMIN') return res.status(400).json({ error: 'لا يمكنك إزالة صلاحية المدير عن نفسك' });
+      if (role !== 'ADMIN') {
+        const target = await prisma.user.findUnique({ where: { id: req.params.id }, select: { role: true } });
+        if (target?.role === 'ADMIN') {
+          const admins = await prisma.user.count({ where: { role: 'ADMIN' } });
+          if (admins <= 1) return res.status(400).json({ error: 'يجب أن يبقى مدير واحد على الأقل' });
+        }
+      }
+      data.role = role;
+    }
+    if (password !== undefined) { const pw = String(password); if (pw.length < 8) return res.status(400).json({ error: 'كلمة المرور 8 أحرف على الأقل' }); data.password = await hashPassword(pw); }
+    const row = await prisma.user.update({ where: { id: req.params.id }, data, select: USER_SELECT });
+    res.json({ success: true, data: row });
+  } catch (e: any) {
+    if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+/* ───────────────────────────── homepage curation (editors) ───────────────────────────── */
+
+router.get('/homepage', requireRole(...EDITOR_ROLES), async (_req: Request, res: Response) => {
+  try {
+    const setting = await readHomepageSetting(prisma);
+    const resolved = await resolveHomepage(prisma, setting);
+    res.json({ success: true, data: { setting, resolved } });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// PUT /api/admin/homepage { heroId?, pickIds?, breaking?: { title, href } | null }
+router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const { heroId, pickIds, breaking } = req.body || {};
+    const next: HomepageSetting = {};
+    next.heroId = heroId ? String(heroId) : null;
+    if (pickIds !== undefined) {
+      if (!Array.isArray(pickIds) || !pickIds.every((x) => typeof x === 'string')) return res.status(400).json({ error: 'pickIds[] of ids' });
+      if (pickIds.length > MAX_PICKS) return res.status(400).json({ error: `حتى ${MAX_PICKS} مختارات` });
+      next.pickIds = Array.from(new Set(pickIds as string[]));
+    } else next.pickIds = (await readHomepageSetting(prisma)).pickIds;
+    if (breaking && typeof breaking === 'object' && String(breaking.title || '').trim()) {
+      const title = String(breaking.title).trim().slice(0, 200);
+      const href = String(breaking.href || '/').trim().slice(0, 300);
+      if (!/^(\/|https?:\/\/)/.test(href)) return res.status(400).json({ error: 'رابط العاجل يجب أن يبدأ بـ / أو https://' });
+      next.breaking = { title, href, at: breaking.at && !isNaN(new Date(breaking.at).getTime()) ? new Date(breaking.at).toISOString() : new Date().toISOString() };
+    } else next.breaking = null;
+    const setting = await writeHomepageSetting(prisma, next);
+    res.json({ success: true, data: { setting, resolved: await resolveHomepage(prisma, setting) } });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
 export default router;

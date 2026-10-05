@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Article } from '../../../components/util';
 import ArticleView from '../../../article/[id]/ArticleView';
+import { adminFetch } from '../../components/staff';
 
 // Editor-only preview: renders an article of ANY status exactly as the public
 // page would, using the admin API (the public route 404s for drafts). Views are
@@ -16,11 +17,12 @@ export default function PreviewPage() {
 
   useEffect(() => {
     let t: string | null = null;
-    try { t = localStorage.getItem('accessToken'); } catch {}
+    try { t = localStorage.getItem('accessToken') || localStorage.getItem('refreshToken'); } catch {}
     if (!t) { router.replace('/auth/login'); return; }
-    fetch(`/api/admin/articles/${id}`, { headers: { Authorization: `Bearer ${t}` } })
+    adminFetch(`/api/admin/articles/${id}`)
       .then(async (r) => {
-        if (r.status === 401 || r.status === 403) { router.replace('/auth/login'); return; }
+        if (r.status === 401) { router.replace('/auth/login'); return; }
+        if (r.status === 403) { setErr((await r.json().catch(() => ({}))).error || 'ليس لديك صلاحية على هذا المقال.'); return; }
         if (!r.ok) { setErr('المقال غير موجود.'); return; }
         setA((await r.json()).data as Article);
       })

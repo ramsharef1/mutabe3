@@ -135,7 +135,8 @@ model Category {
   description String?
   imageUrl    String?
   displayOrder Int     @default(0)
-  
+  showInNav   Boolean   @default(true) // header/footer navigation (D-043 Stage 3)
+
   articles    Article[]
   
   createdAt   DateTime  @default(now())
@@ -161,6 +162,14 @@ model Comment {
 
   @@index([articleId])
   @@index([status])
+}
+
+// Key/value site configuration edited from the dashboard (homepage curation,
+// seed flags, …). One row per key, JSON value (D-043 Stage 3).
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }
 
 model Subscription {

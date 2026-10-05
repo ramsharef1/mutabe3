@@ -2,29 +2,28 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Article, Img, Ico, ago, Chip, WRITERS, face } from '../site';
-import { BREAKING, MARKET, PICKS, OBITS, SIXTY, DEBATE } from '../feeds';
+import { MARKET, PICKS, OBITS, SIXTY, DEBATE, BreakingItem } from '../feeds';
 
 const link = (a: Article) => `/article/${a.id}`;
 
-/* ---- C1 breaking bar (only when an item is flagged) ---- */
-export function BreakingBar() {
+/* ---- C1 breaking bar: only when an editor sets one in /dashboard/homepage ---- */
+export function BreakingBar({ item }: { item?: BreakingItem | null }) {
   const [open, setOpen] = useState(true);
-  if (!BREAKING || !open) return null;
+  if (!item || !open) return null;
   return (
     <div className="brk" role="alert">
       <span className="live"><i />عاجل</span>
-      <a href={BREAKING.href}><b>{BREAKING.title}</b></a>
-      <span className="tm" suppressHydrationWarning>{Ico.clock}{ago(BREAKING.at)}</span>
-      <a className="go" href={BREAKING.href}>تابع التغطية ›</a>
+      <a href={item.href}><b>{item.title}</b></a>
+      <span className="tm" suppressHydrationWarning>{Ico.clock}{ago(item.at)}</span>
+      <a className="go" href={item.href}>تابع التغطية ›</a>
       <button type="button" className="x" onClick={() => setOpen(false)} aria-label="إخفاء">×</button>
     </div>
   );
 }
 
 /* ---- B7 ticker: red «عاجل» when breaking, calm «آخر الأخبار» otherwise; pause button; reduced-motion safe ---- */
-export function Ticker({ items }: { items: Article[] }) {
+export function Ticker({ items, hot = false }: { items: Article[]; hot?: boolean }) {
   const [paused, setPaused] = useState(false);
-  const hot = !!BREAKING;
   const list = [...items, ...items];
   return (
     <div className={`ticker ${hot ? 'hot' : ''} ${paused ? 'paused' : ''}`}>
@@ -90,8 +89,9 @@ export function LatestBox({ items }: { items: Article[] }) {
   );
 }
 
-export function PicksBox({ articles, rail = false }: { articles: Article[]; rail?: boolean }) {
-  const list = PICKS.map((id) => articles.find((a) => a.id === id)).filter(Boolean) as Article[];
+export function PicksBox({ articles, picks, rail = false }: { articles: Article[]; picks?: Article[]; rail?: boolean }) {
+  // Curated list from /dashboard/homepage when set; otherwise the built-in defaults.
+  const list = picks && picks.length ? picks : (PICKS.map((id) => articles.find((a) => a.id === id)).filter(Boolean) as Article[]);
   if (rail) {
     return <div className="picks-rail">{list.map((a, i) => <a key={a.id} href={link(a)}><i>{i + 1}</i>{a.title}</a>)}</div>;
   }

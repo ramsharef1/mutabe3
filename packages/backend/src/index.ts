@@ -4,6 +4,9 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import { UPLOAD_DIR, UPLOAD_URL } from './uploads';
+import { ensureCategories } from './categories';
+import { startScheduler } from './scheduler';
+import { resolveHomepage } from './homepage';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -160,10 +163,11 @@ app.get('/api/articles/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Categories endpoint
+// Categories endpoint — drives the header/footer nav (showInNav) and the editor's category select
 app.get('/api/categories', async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
+      select: { id: true, name: true, slug: true, description: true, displayOrder: true, showInNav: true },
       orderBy: { displayOrder: 'asc' },
     });
 
@@ -171,6 +175,15 @@ app.get('/api/categories', async (req: Request, res: Response) => {
       success: true,
       data: categories,
     });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+// Homepage curation (hero / editor's picks / breaking) — PUBLISHED articles only (D-043 Stage 3)
+app.get('/api/homepage', async (_req: Request, res: Response) => {
+  try {
+    res.json({ success: true, data: await resolveHomepage(prisma) });
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
@@ -226,6 +239,9 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 app.listen(port, () => {
   console.log(`🚀 mutabe3 API running on http://localhost:${port}`);
   console.log(`📊 Health check: http://localhost:${port}/api/health`);
+  // One-time category seeding + the scheduled-publishing tick (D-043 Stage 3)
+  ensureCategories(prisma).catch((e) => console.error('categories seed:', e));
+  startScheduler(prisma);
 });
 
 // Graceful shutdown

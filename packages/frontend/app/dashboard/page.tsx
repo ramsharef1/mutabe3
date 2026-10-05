@@ -1,111 +1,116 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import AdminNav, { Denied } from './components/AdminNav';
+import { adminFetch, useStaff, isEditorRole } from './components/staff';
 
 interface Row {
   id: string;
   title: string;
   status: string;
   updatedAt: string;
+  scheduledPublishAt?: string | null;
+  authorId?: string;
   category?: { name: string } | null;
-  author?: { name: string } | null;
+  author?: { id: string; name: string } | null;
 }
 
 const STATUS_AR: Record<string, string> = { DRAFT: 'مسودة', PUBLISHED: 'منشور', SCHEDULED: 'مجدول', ARCHIVED: 'مؤرشف' };
+const fmt = (d?: string | null) => { if (!d) return ''; try { return new Date(d).toLocaleString('ar-JO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
 
 export default function Dashboard() {
-  const router = useRouter();
+  const { me, denied } = useStaff();
   const [rows, setRows] = useState<Row[]>([]);
-  const [me, setMe] = useState<{ name: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-
-  const token = () => { try { return localStorage.getItem('accessToken'); } catch { return null; } };
+  const [filter, setFilter] = useState<string>('ALL');
 
   const load = useCallback(async () => {
-    const t = token();
-    if (!t) { router.replace('/auth/login'); return; }
     setLoading(true);
     try {
-      const meRes = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${t}` } });
-      if (!meRes.ok) { router.replace('/auth/login'); return; }
-      setMe(await meRes.json());
-      const res = await fetch('/api/admin/articles', { headers: { Authorization: `Bearer ${t}` } });
-      if (res.status === 401) { router.replace('/auth/login'); return; }
+      const res = await adminFetch('/api/admin/articles');
+      if (res.status === 401) { window.location.href = '/auth/login'; return; }
       if (res.status === 403) { setErr('ليس لديك صلاحية الوصول إلى لوحة التحكم.'); setRows([]); return; }
-      const j = await res.json();
-      setRows(j.data || []);
+      setRows((await res.json()).data || []);
       setErr('');
     } catch {
       setErr('تعذّر تحميل المقالات. تحقّق من الاتصال.');
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
 
-  const logout = () => {
-    try { localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); } catch {}
-    router.replace('/auth/login');
-  };
+  const editor = isEditorRole(me?.role);
+  const canDelete = (a: Row) => editor || (a.author?.id === me?.id && a.status === 'DRAFT');
 
   const del = async (id: string, title: string) => {
     if (!confirm(`حذف المقال «${title}»؟ لا يمكن التراجع.`)) return;
-    const t = token();
-    const res = await fetch(`/api/admin/articles/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${t}` } });
+    const res = await adminFetch(`/api/admin/articles/${id}`, { method: 'DELETE' });
     if (res.ok) setRows((r) => r.filter((x) => x.id !== id));
-    else alert('تعذّر الحذف.');
+    else alert((await res.json().catch(() => ({}))).error || 'تعذّر الحذف.');
   };
 
-  const fmt = (d: string) => { try { return new Date(d).toLocaleDateString('ar-JO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+  const counts = rows.reduce<Record<string, number>>((m, r) => { m[r.status] = (m[r.status] || 0) + 1; return m; }, {});
+  const shown = filter === 'ALL' ? rows : rows.filter((r) => r.status === filter);
 
   return (
     <div className="adm">
-      <header className="adm-top">
-        <div className="adm-brand"><b>المتابع</b><span>لوحة التحكم</span></div>
-        <div className="adm-actions">
-          <a className="adm-link" href="/" target="_blank" rel="noopener">عرض الموقع ↗</a>
-          <a className="adm-link" href="/dashboard/account">كلمة المرور</a>
-          {me && <span className="adm-user">{me.name} · {me.role}</span>}
-          <button type="button" className="adm-logout" onClick={logout}>خروج</button>
-        </div>
-      </header>
+      <AdminNav me={me} />
+      {denied ? <Denied /> : (
+        <main className="adm-main">
+          <div className="adm-head">
+            <h1>{editor ? 'المقالات' : 'مقالاتي'} {rows.length ? `(${rows.length})` : ''}</h1>
+            <a className="adm-new" href="/dashboard/article/new">+ مقال جديد</a>
+          </div>
 
-      <main className="adm-main">
-        <div className="adm-head">
-          <h1>المقالات {rows.length ? `(${rows.length})` : ''}</h1>
-          <a className="adm-new" href="/dashboard/article/new">+ مقال جديد</a>
-        </div>
-
-        {err && <div className="adm-err">{err}</div>}
-        {loading ? (
-          <div className="adm-loading">جاري التحميل…</div>
-        ) : !err && rows.length === 0 ? (
-          <div className="adm-empty">لا توجد مقالات بعد. ابدأ بإنشاء <a href="/dashboard/article/new">مقال جديد</a>.</div>
-        ) : (
-          <table className="adm-table">
-            <thead><tr><th>العنوان</th><th>القسم</th><th>الحالة</th><th>آخر تحديث</th><th>إجراءات</th></tr></thead>
-            <tbody>
-              {rows.map((a) => (
-                <tr key={a.id}>
-                  <td className="adm-title">{a.title}</td>
-                  <td>{a.category?.name || '—'}</td>
-                  <td><span className={`adm-badge s-${a.status.toLowerCase()}`}>{STATUS_AR[a.status] || a.status}</span></td>
-                  <td className="adm-date">{fmt(a.updatedAt)}</td>
-                  <td className="adm-ops">
-                    <a href={`/dashboard/article/${a.id}`}>تعديل</a>
-                    {/* published → the live page; anything else → the admin-only preview (the public route 404s for drafts) */}
-                    <a href={a.status === 'PUBLISHED' ? `/article/${a.id}` : `/dashboard/preview/${a.id}`} target="_blank" rel="noopener">معاينة</a>
-                    <button type="button" onClick={() => del(a.id, a.title)}>حذف</button>
-                  </td>
-                </tr>
+          {rows.length > 0 && (
+            <div className="adm-tabs" role="tablist">
+              {['ALL', 'PUBLISHED', 'SCHEDULED', 'DRAFT', 'ARCHIVED'].map((s) => (
+                (s === 'ALL' || counts[s]) ? (
+                  <button key={s} type="button" role="tab" aria-selected={filter === s} className={filter === s ? 'on' : ''} onClick={() => setFilter(s)}>
+                    {s === 'ALL' ? 'الكل' : STATUS_AR[s]} <small>{s === 'ALL' ? rows.length : counts[s]}</small>
+                  </button>
+                ) : null
               ))}
-            </tbody>
-          </table>
-        )}
-      </main>
+            </div>
+          )}
+
+          {err && <div className="adm-err">{err}</div>}
+          {loading ? (
+            <div className="adm-loading">جاري التحميل…</div>
+          ) : !err && rows.length === 0 ? (
+            <div className="adm-empty">لا توجد مقالات بعد. ابدأ بإنشاء <a href="/dashboard/article/new">مقال جديد</a>.</div>
+          ) : (
+            <div className="adm-scroll">
+            <table className="adm-table">
+              <thead><tr><th>العنوان</th><th>القسم</th><th className="adm-hide-sm">الكاتب</th><th>الحالة</th><th className="adm-hide-sm">آخر تحديث</th><th>إجراءات</th></tr></thead>
+              <tbody>
+                {shown.map((a) => (
+                  <tr key={a.id}>
+                    <td className="adm-title">{a.title}</td>
+                    <td>{a.category?.name || '—'}</td>
+                    <td className="adm-hide-sm">{a.author?.name || '—'}</td>
+                    <td>
+                      <span className={`adm-badge s-${a.status.toLowerCase()}`}>{STATUS_AR[a.status] || a.status}</span>
+                      {a.status === 'SCHEDULED' && a.scheduledPublishAt && <small className="adm-when">⏰ {fmt(a.scheduledPublishAt)}</small>}
+                    </td>
+                    <td className="adm-date adm-hide-sm">{fmt(a.updatedAt)}</td>
+                    <td className="adm-ops">
+                      {(editor || a.status === 'DRAFT') && <a href={`/dashboard/article/${a.id}`}>تعديل</a>}
+                      {/* published → the live page; anything else → the admin-only preview (the public route 404s for drafts) */}
+                      <a href={a.status === 'PUBLISHED' ? `/article/${a.id}` : `/dashboard/preview/${a.id}`} target="_blank" rel="noopener">معاينة</a>
+                      {canDelete(a) && <button type="button" onClick={() => del(a.id, a.title)}>حذف</button>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            </div>
+          )}
+        </main>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 // Dashboard-side helpers for the admin API: auth header + image upload/listing.
+import { adminFetch } from './staff';
 
 export const token = () => { try { return localStorage.getItem('accessToken'); } catch { return null; } };
 export const authHeaders = (): Record<string, string> => { const t = token(); return t ? { Authorization: `Bearer ${t}` } : {}; };
@@ -27,14 +28,15 @@ export async function uploadImage(file: File): Promise<string> {
   const f = await shrink(file);
   const fd = new FormData();
   fd.append('file', f, f.name);
-  const res = await fetch('/api/admin/upload', { method: 'POST', headers: authHeaders(), body: fd });
+  const res = await adminFetch('/api/admin/upload', { method: 'POST', body: fd });
   const j = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error('انتهت الجلسة — سجّل الدخول من جديد');
   if (!res.ok) throw new Error(j.error || 'فشل رفع الصورة');
   return j.url as string;
 }
 
 export async function listMedia(): Promise<MediaItem[]> {
-  const res = await fetch('/api/admin/media', { headers: authHeaders() });
+  const res = await adminFetch('/api/admin/media');
   if (!res.ok) throw new Error('media');
   return ((await res.json()).data || []) as MediaItem[];
 }

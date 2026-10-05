@@ -66,11 +66,11 @@ export async function fetchWeather(): Promise<Wx[]> {
 export const wxIcon = (c: number) => (c === 0 ? '☀' : c <= 3 ? '⛅' : c <= 48 ? '🌫' : c <= 67 ? '🌧' : c <= 77 ? '❄' : c <= 82 ? '🌦' : '⛈');
 export const wxText = (c: number) => (c === 0 ? 'صحو' : c <= 3 ? 'غائم جزئياً' : c <= 48 ? 'ضباب' : c <= 67 ? 'أمطار' : c <= 77 ? 'ثلوج' : c <= 82 ? 'زخات' : 'عواصف');
 
-/* ---------------- editorial flags (demo) ---------------- */
-export const BREAKING = { // set to null when nothing is breaking → ticker falls back to «آخر الأخبار»
-  title: 'الحكومة تقرّ تعديلات على قانون الضريبة العامة على المبيعات وتخفّض الضريبة على 12 سلعة أساسية',
-  at: new Date(Date.now() - 6 * 60000).toISOString(), href: '/article/art-001',
-};
+/* ---------------- editorial flags ---------------- */
+// The breaking bar is now set from /dashboard/homepage (D-043 Stage 3); nothing is
+// "breaking" unless an editor says so. PICKS is only the fallback when the
+// editor's-picks list in the dashboard is empty.
+export interface BreakingItem { title: string; href: string; at: string }
 export const PICKS = ['art-001', 'art-006', 'art-010', 'art-014', 'art-017'];
 
 /* ---------------- market strip ---------------- */
