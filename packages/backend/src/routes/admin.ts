@@ -5,6 +5,7 @@ import { sanitizeArticleHtml } from '../sanitize';
 import { imageUpload, uploadedFileUrl, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
 import { hashPassword } from '../auth';
 import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
+import readerAdmin from './adminReaders';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -46,6 +47,9 @@ const requireRole = (...roles: string[]) => async (req: Request, res: Response, 
 };
 
 router.use(authMiddleware, requireStaff);
+
+// Comment moderation, polls, newsletter (D-043 Stage 4) — inherits the auth + staff check above
+router.use(readerAdmin);
 
 const slugify = (s: string) =>
   (s || '').toString().trim().toLowerCase().replace(/\s+/g, '-')

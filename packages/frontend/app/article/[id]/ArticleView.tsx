@@ -6,6 +6,7 @@ import { Article, Img, useArticles, SiteHeader, SiteFooter, Sidebar, SecHd, fmtD
 import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
 import { LiveBlog, LiveBadge } from '../../components/live';
+import { Comments } from '../../components/comments';
 
 // Article body font, loaded only on this route (B11).
 const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri', display: 'swap' });
@@ -16,10 +17,6 @@ const FILLER = [
   'ومن المتوقع أن تعلن الجهات المختصة عن مزيد من التفاصيل خلال مؤتمر صحفي يعقد الأسبوع المقبل، يتناول آليات التنفيذ ومصادر التمويل والجدول الزمني للمراحل اللاحقة، إضافة إلى الإجابة عن استفسارات وسائل الإعلام المحلية والعربية.',
 ];
 const QUOTE = 'نعمل على أن تكون النتائج ملموسة للمواطن خلال الأشهر الستة المقبلة، وليس مجرد أرقام في تقرير.';
-const SAMPLE_COMMENTS = [
-  { n: 'أبو محمد', t: 'منذ ساعتين', c: 'خطوة جيدة، نتمنى أن تنفذ على أرض الواقع وليس على الورق فقط.' },
-  { n: 'سارة', t: 'منذ 40 دقيقة', c: 'المهم متابعة التنفيذ. شكراً للمتابع على التغطية.' },
-];
 
 // Stable writer index for the demo byline (the article may not be in the list any more).
 const hashIdx = (s: string, mod: number) => Math.abs(Array.from(s).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % mod;
@@ -202,21 +199,7 @@ export default function ArticleView({ article: a, preview = false }: { article: 
               </div>
             )}
 
-            <div className="comments">
-              <h4>التعليقات <span>({SAMPLE_COMMENTS.length})</span></h4>
-              <ul className="clist">
-                {SAMPLE_COMMENTS.map((c, i) => (
-                  <li key={i}><i>{c.n[0]}</i><div><b>{c.n}</b><small>{c.t}</small><p>{c.c}</p></div></li>
-                ))}
-              </ul>
-              <h4>أضف تعليقك</h4>
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="row2"><input placeholder="الاسم" /><input placeholder="البريد الإلكتروني (لن يُنشر)" /></div>
-                <textarea placeholder="اكتب تعليقك هنا..." />
-                <div className="row2"><div className="cap">رمز التحقق</div><button>إرسال التعليق</button></div>
-              </form>
-              <small className="note">التعليقات المنشورة تعبر عن رأي أصحابها ولا تعبر عن رأي الموقع. يُحذف أي تعليق يتضمن إساءة أو تحريضاً.</small>
-            </div>
+            <Comments articleId={a.id} enabled={!preview && a.status !== 'DRAFT'} />
           </div>
 
           <Sidebar articles={articles} />

@@ -14,6 +14,7 @@ export interface Article {
   viewsCount?: number;
   featuredImageUrl?: string;
   seoKeywords?: string[];
+  _count?: { comments?: number }; // approved reader comments (D-043 Stage 4)
 }
 
 export const WRITERS = [

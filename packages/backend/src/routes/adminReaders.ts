@@ -1,0 +1,213 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { drainRequest } from '../middleware';
+import { pollDto } from '../polls';
+import { sendMail, mailStatus } from '../email';
+import { sendIssue, renderIssue, issueArticles, recipientWhere, readAuto, writeAuto, newToken } from '../newsletter';
+
+// Reader-facing admin (D-043 Stage 4): comment moderation, polls, newsletter.
+// Mounted inside routes/admin.ts AFTER its auth + staff check, so req.user is set.
+const router = Router();
+const prisma = new PrismaClient();
+
+type Staff = { id: string; name: string; role: string };
+const who = (req: Request) => (req as any).user as Staff;
+const only = (...roles: string[]) => async (req: Request, res: Response, next: NextFunction) => {
+  if (!roles.includes(who(req).role)) { await drainRequest(req); return res.status(403).json({ error: 'Forbidden: insufficient role' }); }
+  next();
+};
+const editors = only('ADMIN', 'EDITOR');
+
+/* ───────────── comments ───────────── */
+
+const COMMENT_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'];
+
+router.get('/comments/counts', editors, async (_req: Request, res: Response) => {
+  try {
+    const g = await prisma.comment.groupBy({ by: ['status'], _count: { _all: true } });
+    const data: Record<string, number> = { PENDING: 0, APPROVED: 0, REJECTED: 0 };
+    g.forEach((x) => { data[x.status] = x._count._all; });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.get('/comments', editors, async (req: Request, res: Response) => {
+  try {
+    const status = COMMENT_STATUSES.includes(String(req.query.status)) ? String(req.query.status) : 'PENDING';
+    const rows = await prisma.comment.findMany({
+      where: { status: status as any },
+      select: { id: true, content: true, status: true, authorName: true, authorEmail: true, ipHash: true, createdAt: true, article: { select: { id: true, title: true } } },
+      orderBy: { createdAt: status === 'PENDING' ? 'asc' : 'desc' },
+      take: 200,
+    });
+    res.json({ success: true, data: rows.map((r) => ({ ...r, ipHash: r.ipHash ? r.ipHash.slice(0, 8) : null })) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.put('/comments/:id', editors, async (req: Request, res: Response) => {
+  try {
+    const status = String(req.body?.status || '');
+    if (!COMMENT_STATUSES.includes(status)) return res.status(400).json({ error: 'status must be PENDING, APPROVED or REJECTED' });
+    const row = await prisma.comment.update({ where: { id: req.params.id }, data: { status: status as any }, select: { id: true, status: true } });
+    res.json({ success: true, data: row });
+  } catch (e: any) {
+    if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+router.delete('/comments/:id', editors, async (req: Request, res: Response) => {
+  try { await prisma.comment.delete({ where: { id: req.params.id } }); res.json({ success: true }); }
+  catch (e: any) { if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' }); res.status(500).json({ error: String(e) }); }
+});
+
+/* ───────────── polls ───────────── */
+
+const SLOTS = ['home', 'debate'];
+
+router.get('/polls', editors, async (_req: Request, res: Response) => {
+  try {
+    const rows = await prisma.poll.findMany({ include: { options: true }, orderBy: { createdAt: 'desc' }, take: 100 });
+    res.json({ success: true, data: rows.map(pollDto) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// POST /api/admin/polls { slot, question, options: [{ label, byline?, note? }], active? }
+router.post('/polls', editors, async (req: Request, res: Response) => {
+  try {
+    const { slot, question, options, active } = req.body || {};
+    const s = SLOTS.includes(slot) ? slot : 'home';
+    const q = String(question || '').trim().slice(0, 200);
+    const opts = Array.isArray(options) ? options.map((o: any) => ({ label: String(o?.label || '').trim().slice(0, 80), byline: o?.byline ? String(o.byline).trim().slice(0, 80) : null, note: o?.note ? String(o.note).trim().slice(0, 600) : null })).filter((o) => o.label) : [];
+    if (!q) return res.status(400).json({ error: 'اكتب السؤال' });
+    if (s === 'debate' ? opts.length !== 2 : opts.length < 2 || opts.length > 6) return res.status(400).json({ error: s === 'debate' ? 'المناظرة تحتاج رأيين بالضبط' : 'من خيارين إلى ستة خيارات' });
+    const created = await prisma.$transaction(async (tx) => {
+      if (active) await tx.poll.updateMany({ where: { slot: s, active: true }, data: { active: false } });
+      return tx.poll.create({ data: { slot: s, question: q, active: !!active, options: { create: opts.map((o, order) => ({ ...o, order })) } }, include: { options: true } });
+    });
+    res.status(201).json({ success: true, data: pollDto(created) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// PUT /api/admin/polls/:id { active?, question? } — activating closes the slot's current poll
+router.put('/polls/:id', editors, async (req: Request, res: Response) => {
+  try {
+    const p = await prisma.poll.findUnique({ where: { id: req.params.id } });
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    const { active, question } = req.body || {};
+    const updated = await prisma.$transaction(async (tx) => {
+      if (active === true) await tx.poll.updateMany({ where: { slot: p.slot, active: true, NOT: { id: p.id } }, data: { active: false } });
+      const data: any = {};
+      if (typeof active === 'boolean') data.active = active;
+      if (question !== undefined) { const q = String(question).trim().slice(0, 200); if (q) data.question = q; }
+      return tx.poll.update({ where: { id: p.id }, data, include: { options: true } });
+    });
+    res.json({ success: true, data: pollDto(updated) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.delete('/polls/:id', editors, async (req: Request, res: Response) => {
+  try { await prisma.poll.delete({ where: { id: req.params.id } }); res.json({ success: true }); }
+  catch (e: any) { if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' }); res.status(500).json({ error: String(e) }); }
+});
+
+/* ───────────── newsletter ───────────── */
+
+router.get('/newsletter', editors, async (_req: Request, res: Response) => {
+  try {
+    const [g, issues, mail, auto] = await Promise.all([
+      prisma.subscription.groupBy({ by: ['status'], _count: { _all: true } }),
+      prisma.newsletterIssue.findMany({ orderBy: { createdAt: 'desc' }, take: 30 }),
+      mailStatus(),
+      readAuto(prisma),
+    ]);
+    const stats: Record<string, number> = { active: 0, unsubscribed: 0 };
+    g.forEach((x) => { stats[x.status] = x._count._all; });
+    res.json({ success: true, data: { stats, issues, mail, auto } });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// Subscriber emails are personal data: admins only.
+router.get('/newsletter/subscribers', only('ADMIN'), async (_req: Request, res: Response) => {
+  try {
+    const data = await prisma.subscription.findMany({ select: { email: true, status: true, categories: true, source: true, subscribedAt: true, unsubscribedAt: true }, orderBy: { subscribedAt: 'desc' }, take: 5000 });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// PUT /api/admin/newsletter/auto { enabled, hour } — automatic morning digest (admins decide mass mail)
+router.put('/newsletter/auto', only('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const cur = await readAuto(prisma);
+    const hour = req.body?.hour !== undefined ? Number(req.body.hour) : cur.hour;
+    if (!Number.isFinite(hour) || hour < 0 || hour > 23) return res.status(400).json({ error: 'الساعة بين 0 و23' });
+    res.json({ success: true, data: await writeAuto(prisma, { ...cur, enabled: !!req.body?.enabled, hour }) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+const cleanIssue = (b: any) => ({
+  subject: String(b?.subject || '').trim().slice(0, 150),
+  intro: b?.intro ? String(b.intro).trim().slice(0, 1500) : null,
+  articleIds: Array.isArray(b?.articleIds) ? Array.from(new Set(b.articleIds.map(String))).slice(0, 12) as string[] : [],
+  edition: b?.edition ? String(b.edition).trim().slice(0, 40) : null,
+});
+
+router.post('/newsletter/issues', editors, async (req: Request, res: Response) => {
+  try {
+    const d = cleanIssue(req.body);
+    if (!d.subject) return res.status(400).json({ error: 'اكتب عنوان العدد' });
+    if (!d.articleIds.length) return res.status(400).json({ error: 'اختر مقالاً واحداً على الأقل' });
+    const issue = await prisma.newsletterIssue.create({ data: { ...d, createdById: who(req).id } });
+    const recipients = await prisma.subscription.count({ where: recipientWhere(issue.edition) as any });
+    res.status(201).json({ success: true, data: issue, recipients });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.get('/newsletter/issues/:id', editors, async (req: Request, res: Response) => {
+  try {
+    const issue = await prisma.newsletterIssue.findUnique({ where: { id: req.params.id } });
+    if (!issue) return res.status(404).json({ error: 'Not found' });
+    const recipients = await prisma.subscription.count({ where: recipientWhere(issue.edition) as any });
+    res.json({ success: true, data: issue, recipients });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// POST /api/admin/newsletter/issues/:id/test — sends the issue only to the signed-in staff member
+router.post('/newsletter/issues/:id/test', editors, async (req: Request, res: Response) => {
+  try {
+    const issue = await prisma.newsletterIssue.findUnique({ where: { id: req.params.id } });
+    if (!issue) return res.status(404).json({ error: 'Not found' });
+    const me = await prisma.user.findUnique({ where: { id: who(req).id }, select: { email: true } });
+    if (!me?.email) return res.status(400).json({ error: 'لا يوجد بريد لحسابك' });
+    const articles = await issueArticles(prisma, issue.articleIds);
+    if (!articles.length) return res.status(400).json({ error: 'لا توجد مقالات منشورة في هذا العدد' });
+    const { html, text, headers } = renderIssue(issue, articles, `test-${newToken()}`);
+    await sendMail({ to: me.email, subject: `[تجربة] ${issue.subject}`, html, text, headers });
+    res.json({ success: true, to: me.email });
+  } catch (e: any) { res.status(502).json({ error: `تعذّر الإرسال: ${String(e?.message || e).slice(0, 200)}` }); }
+});
+
+// POST /api/admin/newsletter/issues/:id/send — starts the background send; poll GET …/issues/:id for progress
+router.post('/newsletter/issues/:id/send', editors, async (req: Request, res: Response) => {
+  try {
+    const issue = await prisma.newsletterIssue.findUnique({ where: { id: req.params.id } });
+    if (!issue) return res.status(404).json({ error: 'Not found' });
+    if (!['draft', 'failed'].includes(issue.status)) return res.status(409).json({ error: 'هذا العدد أُرسل أو قيد الإرسال' });
+    const recipients = await prisma.subscription.count({ where: recipientWhere(issue.edition) as any });
+    if (!recipients) return res.status(400).json({ error: 'لا يوجد مشتركون نشطون لهذا العدد' });
+    sendIssue(prisma, issue.id).catch((e) => console.error('newsletter send:', e));
+    res.status(202).json({ success: true, recipients });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+router.delete('/newsletter/issues/:id', editors, async (req: Request, res: Response) => {
+  try {
+    const issue = await prisma.newsletterIssue.findUnique({ where: { id: req.params.id } });
+    if (!issue) return res.status(404).json({ error: 'Not found' });
+    if (issue.status !== 'draft') return res.status(409).json({ error: 'لا تُحذف إلا المسودات' });
+    await prisma.newsletterIssue.delete({ where: { id: issue.id } });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+export default router;

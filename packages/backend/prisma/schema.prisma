@@ -156,7 +156,12 @@ model Comment {
   
   userId    String?  // Nullable for anonymous comments
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
+
+  // Reader comments (D-043 Stage 4): public name, private email, salted IP hash for moderation
+  authorName  String?
+  authorEmail String?  // never returned by public endpoints
+  ipHash      String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -184,6 +189,74 @@ model Subscription {
   unsubscribedAt DateTime?
   updatedAt DateTime @updatedAt
 
+  // D-043 Stage 4: one-click unsubscribe link + where the signup came from.
+  // Indexed, not @unique: adding a unique constraint to this existing table makes
+  // `prisma db push` stop with a data-loss prompt, which fails the deploy. Tokens are
+  // 144 random bits, so collisions are not a practical concern.
+  unsubToken String?
+  source     String?
+
   @@index([email])
   @@index([status])
+  @@index([unsubToken])
+}
+
+// One newsletter send (manual from the dashboard or the automatic morning digest)
+model NewsletterIssue {
+  id          String    @id @default(cuid())
+  subject     String
+  intro       String?
+  articleIds  String[]
+  edition     String?   // null = every active subscriber
+  status      String    @default("draft") // draft | sending | sent | failed
+  auto        Boolean   @default(false)
+  recipients  Int       @default(0)
+  sent        Int       @default(0)
+  failed      Int       @default(0)
+  lastError   String?
+  createdById String?
+  createdAt   DateTime  @default(now())
+  sentAt      DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Reader polls (D-043 Stage 4). slot "home" = the community poll, "debate" = the two-sided debate.
+model Poll {
+  id        String       @id @default(cuid())
+  slot      String       @default("home")
+  question  String
+  active    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  options   PollOption[]
+  votes     PollVote[]
+
+  @@index([slot, active])
+}
+
+model PollOption {
+  id     String  @id @default(cuid())
+  pollId String
+  poll   Poll    @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label  String
+  byline String? // debate: who argues this side
+  note   String? // debate: the argument
+  order  Int     @default(0)
+  votes  Int     @default(0)
+
+  @@index([pollId])
+}
+
+// One row per (poll, browser) so a reader votes once; voterHash never stores the raw id or IP
+model PollVote {
+  id        String   @id @default(cuid())
+  pollId    String
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  voterHash String
+  createdAt DateTime @default(now())
+
+  @@unique([pollId, voterHash])
 }

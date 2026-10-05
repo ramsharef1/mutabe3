@@ -1,15 +1,25 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Me, ROLE_AR, isEditorRole, logout } from './staff';
+import { Me, ROLE_AR, isEditorRole, logout, adminFetch } from './staff';
 
-// Shared dashboard header: sections the signed-in role may open (D-043 Stage 3).
+// Shared dashboard header: sections the signed-in role may open (D-043 Stages 3–4).
 export default function AdminNav({ me }: { me: Me | null }) {
   const path = usePathname() || '';
+  const editor = isEditorRole(me?.role);
+  const [pending, setPending] = useState(0);
+  useEffect(() => {
+    if (!editor) return;
+    adminFetch('/api/admin/comments/counts').then((r) => (r.ok ? r.json() : null)).then((j) => j && setPending(j.data?.PENDING || 0)).catch(() => {});
+  }, [editor, path]);
   const links = [
     { href: '/dashboard', label: 'المقالات', show: true },
-    { href: '/dashboard/homepage', label: 'الصفحة الرئيسية', show: isEditorRole(me?.role) },
-    { href: '/dashboard/categories', label: 'الأقسام', show: isEditorRole(me?.role) },
+    { href: '/dashboard/comments', label: 'التعليقات', badge: pending, show: editor },
+    { href: '/dashboard/homepage', label: 'الصفحة الرئيسية', show: editor },
+    { href: '/dashboard/polls', label: 'الاستطلاعات', show: editor },
+    { href: '/dashboard/newsletter', label: 'النشرة', show: editor },
+    { href: '/dashboard/categories', label: 'الأقسام', show: editor },
     { href: '/dashboard/users', label: 'المستخدمون', show: me?.role === 'ADMIN' },
     { href: '/dashboard/account', label: 'كلمة المرور', show: !!me },
   ].filter((l) => l.show);
@@ -19,7 +29,11 @@ export default function AdminNav({ me }: { me: Me | null }) {
       <nav className="adm-nav" aria-label="أقسام لوحة التحكم">
         {links.map((l) => {
           const on = l.href === '/dashboard' ? path === '/dashboard' : path.startsWith(l.href);
-          return <a key={l.href} href={l.href} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}>{l.label}</a>;
+          return (
+            <a key={l.href} href={l.href} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}>
+              {l.label}{l.badge ? <span className="adm-count" aria-label={`${l.badge} بانتظار المراجعة`}>{l.badge}</span> : null}
+            </a>
+          );
         })}
       </nav>
       <div className="adm-actions">

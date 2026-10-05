@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { autoDigestTick } from './newsletter';
 
 // Scheduled publishing: once a minute, every SCHEDULED article whose
 // scheduledPublishAt has passed becomes PUBLISHED, dated at the scheduled time
@@ -19,7 +20,10 @@ export async function publishDue(prisma: PrismaClient) {
 }
 
 export function startScheduler(prisma: PrismaClient, everyMs = 60_000) {
-  const tick = () => publishDue(prisma).catch((e) => console.error('scheduler:', e));
+  const tick = () => {
+    publishDue(prisma).catch((e) => console.error('scheduler:', e));
+    autoDigestTick(prisma).catch((e) => console.error('auto digest:', e)); // D-043 Stage 4, off unless enabled
+  };
   tick();
   const handle = setInterval(tick, everyMs);
   handle.unref?.(); // never keeps the process alive on its own

@@ -7,6 +7,11 @@ import { UPLOAD_DIR, UPLOAD_URL } from './uploads';
 import { ensureCategories } from './categories';
 import { startScheduler } from './scheduler';
 import { resolveHomepage } from './homepage';
+import readerRoutes from './routes/readers';
+import { ensurePolls } from './polls';
+
+// Approved reader comments only (D-043 Stage 4) — pending/rejected rows and emails never leave the API
+const APPROVED_COMMENTS = { _count: { select: { comments: { where: { status: 'APPROVED' as const } } } } };
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -103,7 +108,7 @@ app.get('/api/articles', async (req: Request, res: Response) => {
     }
     const articles = await prisma.article.findMany({
       where,
-      include: { author: { select: { id: true, name: true } }, category: true },
+      include: { author: { select: { id: true, name: true } }, category: true, ...APPROVED_COMMENTS },
       orderBy: { publishedAt: 'desc' },
       take,
     });
@@ -150,7 +155,8 @@ app.get('/api/articles/:id', async (req: Request, res: Response) => {
     // behind /api/admin/articles/:id, which needs an editor token (D-041 Found 4).
     const article = await prisma.article.findFirst({
       where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
-      include: { author: { select: { id: true, name: true } }, category: true, comments: true },
+      // was `comments: true`, which returned every comment row incl. pending/rejected and emails
+      include: { author: { select: { id: true, name: true } }, category: true, ...APPROVED_COMMENTS },
     });
 
     if (!article) {
@@ -194,6 +200,9 @@ app.use('/api/auth', authRoutes);
 
 // Admin routes (protected: editor/admin only) — article CRUD
 app.use('/api/admin', adminRoutes);
+
+// Public reader routes: comments, polls, newsletter (D-043 Stage 4)
+app.use('/api', readerRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -241,6 +250,7 @@ app.listen(port, () => {
   console.log(`📊 Health check: http://localhost:${port}/api/health`);
   // One-time category seeding + the scheduled-publishing tick (D-043 Stage 3)
   ensureCategories(prisma).catch((e) => console.error('categories seed:', e));
+  ensurePolls(prisma).catch((e) => console.error('polls seed:', e));
   startScheduler(prisma);
 });
 

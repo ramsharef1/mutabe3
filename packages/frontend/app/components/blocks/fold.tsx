@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Article, Img, Ico, ago, Chip, WRITERS, face } from '../site';
-import { MARKET, PICKS, OBITS, SIXTY, DEBATE, BreakingItem } from '../feeds';
+import { MARKET, PICKS, OBITS, SIXTY, BreakingItem } from '../feeds';
+import { usePoll, pct, votesAr, PollOpt } from '../polls';
 
 const link = (a: Article) => `/article/${a.id}`;
 
@@ -150,23 +151,23 @@ export function Sixty() {
 }
 
 /* ---- A8 poll, functional (localStorage) ---- */
+/* ---- community poll: editor-managed, votes persist on the server (D-043 Stage 4) ---- */
 export function Poll() {
-  const opts = ['نعم', 'لا', 'لا أعرف'];
-  const [votes, setVotes] = useState([412, 287, 96]);
-  const [mine, setMine] = useState<number | null>(null);
-  useEffect(() => { try { const v = localStorage.getItem('poll1'); if (v !== null) setMine(parseInt(v, 10)); } catch {} }, []);
-  const total = votes.reduce((a, b) => a + b, 0);
-  const vote = (i: number) => { if (mine !== null) return; setMine(i); setVotes((v) => v.map((x, k) => (k === i ? x + 1 : x))); try { localStorage.setItem('poll1', String(i)); } catch {} };
+  const { poll, mine, vote, err } = usePoll('home');
+  if (poll === undefined) return <fieldset className="poll" aria-busy="true"><legend><b>استطلاع المتابع</b></legend><small>جاري التحميل…</small></fieldset>;
+  if (!poll) return <fieldset className="poll"><legend><b>استطلاع المتابع</b></legend><small>لا يوجد استطلاع مفتوح حالياً.</small></fieldset>;
+  const shown = mine !== null;
   return (
     <fieldset className="poll">
-      <legend><b>هل تؤيد قرار رفع سعر الفائدة؟</b></legend>
-      {opts.map((o, i) => (
-        <button type="button" key={o} className={`opt ${mine === i ? 'me' : ''}`} onClick={() => vote(i)} disabled={mine !== null}>
-          <span>{o}</span>
-          {mine !== null && <><span className="bar" style={{ width: `${Math.round((votes[i] / total) * 100)}%` }} /><em>{Math.round((votes[i] / total) * 100)}%</em></>}
+      <legend><b>{poll.question}</b></legend>
+      {poll.options.map((o) => (
+        <button type="button" key={o.id} className={`opt ${mine === o.id ? 'me' : ''}`} onClick={() => vote(o.id)} disabled={shown}>
+          <span>{o.label}</span>
+          {shown && <><span className="bar" style={{ width: `${pct(o.votes, poll.total)}%` }} /><em>{pct(o.votes, poll.total)}%</em></>}
         </button>
       ))}
-      <small>{total} صوتاً · {mine === null ? 'اضغط للتصويت' : 'شكراً لمشاركتك'}</small>
+      <small>{poll.total ? votesAr(poll.total) : 'كن أول من يصوّت'} · {shown ? 'شكراً لمشاركتك' : 'اضغط للتصويت'}</small>
+      {err && <small className="perr" role="status">{err}</small>}
     </fieldset>
   );
 }
@@ -187,27 +188,36 @@ export function Carousel({ items }: { items: Article[] }) {
 }
 
 /* ---- C12 وجهان ---- */
+/* ---- C9 «وجهان» debate: editor-managed two-sided poll; votes persist on the server (D-043 Stage 4) ---- */
+const SIDE_COL = ['#1b5e20', '#c62828'];
 export function Debate() {
-  const [v, setV] = useState<[number, number]>([58, 42]);
-  const [mine, setMine] = useState<'a' | 'b' | null>(null);
-  const vote = (s: 'a' | 'b') => { if (mine) return; setMine(s); setV(s === 'a' ? [60, 40] : [56, 44]); };
-  const side = (s: typeof DEBATE.a, key: 'a' | 'b') => (
+  const { poll, mine, vote, err } = usePoll('debate');
+  if (poll === undefined) return <div className="debate loadingbox" aria-busy="true" />;
+  if (!poll || poll.options.length < 2) return null;
+  const [a, b] = poll.options;
+  const pa = pct(a.votes, poll.total);
+  const side = (o: PollOpt, k: number) => (
     <div className="side2">
-      <img src={face(s.face)} alt="" />
+      <span className="au-init" aria-hidden>{(o.byline || o.label).trim()[0]}</span>
       <div>
-        <span className="name">{s.name}</span>
-        <span className="pos" style={{ background: s.col }}>{s.pos}</span>
-        <p>{s.p}</p>
-        <button type="button" onClick={() => vote(key)} disabled={!!mine} className={mine === key ? 'on' : ''}>{mine === key ? 'صوّتت لهذا الرأي' : 'أؤيد هذا الرأي'}</button>
+        {o.byline && <span className="name">{o.byline}</span>}
+        <span className="pos" style={{ background: SIDE_COL[k] }}>{o.label}</span>
+        {o.note && <p>{o.note}</p>}
+        <button type="button" onClick={() => vote(o.id)} disabled={!!mine} className={mine === o.id ? 'on' : ''}>{mine === o.id ? 'صوّتَّ لهذا الرأي' : 'أؤيد هذا الرأي'}</button>
       </div>
     </div>
   );
   return (
     <div className="debate">
-      <div className="q">وجهان: {DEBATE.q}</div>
-      {side(DEBATE.a, 'a')}
-      <div className="vs"><b>VS</b><span className="bar" style={{ background: `linear-gradient(#1b5e20 0 ${v[0]}%, #c62828 ${v[0]}%)` }} /><small>{v[0]}% · {v[1]}%</small></div>
-      {side(DEBATE.b, 'b')}
+      <div className="q">وجهان: {poll.question}</div>
+      {side(a, 0)}
+      <div className="vs">
+        <b>VS</b>
+        <span className="bar" style={{ background: poll.total ? `linear-gradient(${SIDE_COL[0]} 0 ${pa}%, ${SIDE_COL[1]} ${pa}%)` : 'var(--line)' }} />
+        <small>{poll.total ? `${pa}% · ${100 - pa}% · ${votesAr(poll.total)}` : 'لا أصوات بعد'}</small>
+      </div>
+      {side(b, 1)}
+      {err && <small className="perr" role="status">{err}</small>}
     </div>
   );
 }

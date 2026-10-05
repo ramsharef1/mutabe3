@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { subscribe } from '../newsletter';
 
 const EDITIONS = ['سياسة', 'اقتصاد', 'رياضة', 'فلسطين'];
 
+// Homepage newsletter box: the picked editions are stored with the subscription
+// (D-043 Stage 4); an empty pick means "everything".
 export function NewsletterCTA() {
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [hp, setHp] = useState('');
+  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [err, setErr] = useState('');
   const [picks, setPicks] = useState<string[]>([]);
 
   useEffect(() => {
@@ -25,21 +30,19 @@ export function NewsletterCTA() {
     });
   };
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: backend wires the picked editions to delivery; preference persists locally for now.
-    setSubmitted(true);
-    setTimeout(() => {
-      setEmail('');
-      setSubmitted(false);
-    }, 3000);
+    setErr('');
+    setState('busy');
+    const r = await subscribe(email, { categories: picks, source: 'homepage', website: hp });
+    if (r.ok) { setState('done'); setEmail(''); } else { setState('idle'); setErr(r.error || ''); }
   }
 
   return (
     <div className="news-cta">
       <div className="content">
-        <h3>اشترك في النشرة اليومية</h3>
-        <p>اختر نشراتك — يصلك ملخّصها كل صباح</p>
+        <h3>اشترك في نشرة المتابع</h3>
+        <p>اختر نشراتك — يصلك ملخّصها على بريدك</p>
       </div>
 
       <div className="editions" role="group" aria-label="نشرات حسب القسم">
@@ -50,19 +53,26 @@ export function NewsletterCTA() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="بريدك الإلكتروني"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          disabled={submitted}
-        />
-        <button type="submit" disabled={submitted}>
-          {submitted ? '✓ تم' : 'اشترك'}
-        </button>
-      </form>
+      {state === 'done' ? (
+        <p className="nl-ok" role="status">✓ تم اشتراكك. يمكنك إلغاؤه في أي وقت من رابط أسفل كل رسالة.</p>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <input
+            type="email"
+            placeholder="بريدك الإلكتروني"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={state === 'busy'}
+            aria-label="البريد الإلكتروني"
+          />
+          <input className="hp" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} aria-hidden="true" name="website" />
+          <button type="submit" disabled={state === 'busy'}>
+            {state === 'busy' ? '…' : 'اشترك'}
+          </button>
+        </form>
+      )}
+      {err && <p className="nl-err" role="alert">{err}</p>}
     </div>
   );
 }

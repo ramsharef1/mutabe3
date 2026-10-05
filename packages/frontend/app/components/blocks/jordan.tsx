@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Article, Ico, ago, face, Img } from '../site';
 import { CROSSINGS, ROADS, SERVICES, ROYAL, DECISIONS, VOTE, TAWJIHI, ELECTIONS, MATCH, LEAGUE, FX, CLOCKS, GULF_TZ, UGC, GREETINGS, MEMORY, JOBS, FACTS, prayerTimes, Season } from '../feeds';
 import { LIVE, fmtTime } from '../content';
+import { subscribe } from '../newsletter';
 
 /* ---------- J3 / J4 / J5 ---------- */
 export function Crossings() {
@@ -250,16 +251,31 @@ export function Memory() {
 
 /* ---------- C7 capture ---------- */
 export function Capture() {
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [email, setEmail] = useState('');
+  const [hp, setHp] = useState('');
+  const [err, setErr] = useState('');
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr('');
+    setState('busy');
+    const r = await subscribe(email, { source: 'capture', website: hp });
+    if (r.ok) setState('done'); else { setState('idle'); setErr(r.error || ''); }
+  };
   return (
     <div className="cap-card">
       <b>تابع المتابع أينما كنت</b>
       <p>الأخبار العاجلة على هاتفك لحظة وقوعها — بلا إعلانات وبلا خوارزميات.</p>
       <div className="btns"><a className="wa" href="https://whatsapp.com/channel/mutabe3" target="_blank" rel="noopener">{Ico.wa}قناة واتساب</a><a className="tg" href="https://t.me/mutabe3" target="_blank" rel="noopener">{Ico.tg}تيليغرام</a></div>
-      {done ? <div className="ok">تم! ستصلك النشرة الصباحية غداً 7:00.</div> : (
-        <form className="em" onSubmit={(e) => { e.preventDefault(); setDone(true); }}><input type="email" required placeholder="بريدك الإلكتروني للنشرة الصباحية" aria-label="البريد الإلكتروني" /><button type="submit">اشترك</button></form>
+      {state === 'done' ? <div className="ok" role="status">تم اشتراكك في نشرة المتابع.</div> : (
+        <form className="em" onSubmit={submit}>
+          <input type="email" required placeholder="بريدك الإلكتروني للنشرة" aria-label="البريد الإلكتروني" value={email} onChange={(e) => setEmail(e.target.value)} disabled={state === 'busy'} />
+          <input className="hp" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} aria-hidden="true" name="website" />
+          <button type="submit" disabled={state === 'busy'}>{state === 'busy' ? '…' : 'اشترك'}</button>
+        </form>
       )}
-      <small>يتابعنا 48,200 مشترك · إلغاء الاشتراك بضغطة واحدة</small>
+      {err && <small className="nl-err" role="alert">{err}</small>}
+      <small>إلغاء الاشتراك بضغطة واحدة من أسفل كل رسالة</small>
     </div>
   );
 }

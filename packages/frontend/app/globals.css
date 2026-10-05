@@ -1978,6 +1978,49 @@ button[type="submit"]:active, .btn-primary:active {
 .adm-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 @media(max-width:760px){.adm-top{flex-wrap:wrap;padding:10px 12px}.adm-main{padding:16px 12px}.adm-nav{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}.adm-inline{flex-direction:column;align-items:stretch}.adm-hide-sm{display:none}}
 
+/* ---------- Stage 4: readers — comments, polls, newsletter (D-043) ---------- */
+.hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none}
+.comments .cempty{color:var(--muted);font-size:13px;margin:0 0 12px}
+.comments .cmsg{padding:8px 10px;margin:0 0 8px;font-size:13px;border-radius:4px}
+.comments .cmsg.ok{background:#e8f5e9;color:#1b5e20}
+.comments .cmsg.err{background:#fdecea;color:#b71c1c}
+.comments .row2.send{align-items:center}
+.comments .row2.send .cnt{color:var(--muted);font-size:11px}
+.comments button:disabled{opacity:.6;cursor:default}
+.comments .clist p{white-space:pre-line}
+.nl-ok{margin:0;font-size:13px;font-weight:700}
+.nl-err{display:block;margin:6px 0 0;font-size:12px;color:#ffd7d7}
+.cap-card .nl-err{color:#b71c1c}
+.perr{display:block;color:#b71c1c;margin-top:4px}
+.debate.loadingbox{min-height:180px;background:var(--bg2)}
+.debate .side2 .au-init{width:56px;height:56px;font-size:22px}
+.unsub-btn{background:#990000;color:#fff;border:0;border-radius:4px;padding:10px 22px;font:700 14px/1 var(--font-kufi,sans-serif);cursor:pointer}
+.unsub-btn:disabled{opacity:.6}
+.adm-count{display:inline-block;min-width:18px;padding:0 5px;margin-inline-start:6px;border-radius:9px;background:#b45309;color:#fff;font-size:11px;line-height:18px;text-align:center}
+.adm-nav a.on .adm-count{background:#fff;color:#990000}
+.adm-comments{list-style:none;margin:0;padding:0}
+.adm-comments li{background:#fff;border:1px solid #e6e6e6;border-radius:8px;padding:12px 14px;margin:0 0 10px}
+.adm-comments .meta{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;color:#777;font-size:12px}
+.adm-comments .meta b{color:#222;font-size:14px}
+.adm-comments p{margin:8px 0;white-space:pre-line;line-height:1.7}
+.adm-comments .on-article{font-size:12px;color:#777;margin-bottom:8px}
+.adm-ops button.ok{background:#1b5e20;color:#fff;border-color:#1b5e20}
+.adm-poll{border:1px solid #eee;border-radius:6px;padding:10px 12px;margin:0 0 10px;background:#fafafa}
+.adm-poll.on{border-color:#1b5e20;background:#f3faf3}
+.adm-poll .hd{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.adm-poll ul{list-style:none;margin:8px 0;padding:0}
+.adm-poll li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #e6e6e6;font-size:13px}
+.adm-poll li em{font-style:normal;color:#555;white-space:nowrap}
+.adm-poll .adm-ops{display:flex;gap:8px;align-items:center}
+.adm-opt{border-inline-start:3px solid #eee;padding-inline-start:10px;margin:8px 0}
+.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
+.adm-stats div{background:#fff;border:1px solid #e6e6e6;border-radius:8px;padding:12px;text-align:center}
+.adm-stats b{display:block;font:700 22px/1.2 var(--font-kufi,sans-serif);color:#990000}
+.adm-stats small{color:#777}
+.adm-pickarts{list-style:none;margin:6px 0 12px;padding:0;max-height:320px;overflow:auto;border:1px solid #eee;border-radius:6px}
+.adm-pickarts li{padding:6px 10px;border-bottom:1px solid #f3f3f3;font-size:13px}
+.adm-pickarts em{display:inline-block;min-width:20px;text-align:center;font-style:normal;background:#990000;color:#fff;border-radius:10px;font-size:11px;margin-inline-end:6px}
+
 /* ---------- Stage 2: draft preview bar + CMS author avatar (D-043) ---------- */
 .preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;padding:8px 14px;background:#b45309;color:#fff;font:700 13px/1.4 var(--font-kufi,sans-serif)}
 .preview-bar a{color:#fff;text-decoration:underline}

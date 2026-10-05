@@ -112,7 +112,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   const latest = pool.take(6);
   const premium = pool.take(3);
   const trending = pool.take(5);
-  const discussed = pool.take(6);
+  pool.take(6); // formerly "discussed"; still consumed so the sections below keep their picks
   const jordan = pool.take(4), jordanS = pool.take(4);
   const econ = pool.take(5), econS = pool.take(4);
   const pal = pool.take(3), world = pool.take(4);
@@ -306,7 +306,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <AdBanner variant={2} className="adrow ad90" />
 
-        <MostDiscussed items={discussed} />
+        <MostDiscussed items={latestArticles} />
 
         <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>
       </div>
