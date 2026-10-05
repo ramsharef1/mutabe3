@@ -8,9 +8,10 @@
   - Stage A (backend): `/api/admin/*` protected router (authMiddleware + ADMIN/EDITOR role check) with article CRUD — list all statuses, get one, create, update, delete; slug auto-gen; publish sets status=PUBLISHED + publishedAt
   - Stage B (frontend): `/dashboard` (auth-guarded — fixes the login 404) — article list + status, new button, logout
   - Stage C: create/edit editor form (title, summary, content, category, image, status, publish)
-  - Stage D: delete, validation, change-password
+  - Stage D (remaining): change-password UI (temp admin pw still needs a DB update to change)
 - **Why:** Site had no write path — login dead-ended at a 404 and content was 19 dummy articles. Custom admin is the fastest path to publishing real content on the current stack.
-- **Status:** ▶ IN PROGRESS · 2026-10-05
+- **Deploy note:** my egress IP 92.241.37.76 is banned at HOSTINGER'S NETWORK EDGE (brute-force guard, not the OS) after ~50 SSH connections — survives reboot, not in nft/fail2ban/hosts, port 22 RSTs while 222/2222 time out. SSH from this Mac is unreliable; deploys were done via the **Hostinger hPanel Browser terminal** (`cd .../projects/mutabe3 && git fetch origin main && git checkout origin/main -- packages/frontend packages/backend && npm install && npm run build --workspace=packages/frontend && systemctl restart mutabe3-frontend mutabe3-backend`). Longer term: fix CI (add 4 VPS_* secrets) so GitHub's IP deploys instead.
+- **Status:** ✅ A+B+C DEPLOYED & VERIFIED end-to-end (login→list→create→delete all pass over HTTPS) · admin@mutabe3.news can publish · 2026-10-05
 
 ---
 
