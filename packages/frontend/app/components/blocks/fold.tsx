@@ -125,15 +125,17 @@ export function ObitsBox() {
 export function MostRead({ articles }: { articles: Article[] }) {
   const [tab, setTab] = useState(0);
   const sorted = [...articles].sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
-  // demo windows: hour = recent+views, day = views, week = views reversed-ish
-  const list = tab === 0 ? sorted.filter((a) => a.publishedAt && Date.now() - new Date(a.publishedAt).getTime() < 8 * 3600e3).slice(0, 5).concat(sorted).slice(0, 5)
-    : tab === 1 ? sorted.slice(0, 5) : sorted.slice(2, 7);
+  // Real view counts (POST /api/articles/:id/view). Tabs narrow by publish window and
+  // fall back to all-time when a window has too few items to rank.
+  const WINDOWS = [24 * 3600e3, 7 * 24 * 3600e3, Infinity];
+  const inWin = sorted.filter((a) => a.publishedAt && Date.now() - new Date(a.publishedAt).getTime() < WINDOWS[tab]);
+  const list = (inWin.length >= 5 ? inWin : sorted).slice(0, 5);
   return (
     <div className="mostread">
       <div className="tabs" role="tablist">
-        {['آخر ساعة', '24 ساعة', 'الأسبوع'].map((t, i) => <button type="button" role="tab" aria-selected={tab === i} key={t} className={tab === i ? 'on' : ''} onClick={() => setTab(i)}>{t}</button>)}
+        {['اليوم', 'الأسبوع', 'الكل'].map((t, i) => <button type="button" role="tab" aria-selected={tab === i} key={t} className={tab === i ? 'on' : ''} onClick={() => setTab(i)}>{t}</button>)}
       </div>
-      <ol>{list.map((a, i) => <li key={a.id}><span className="rank">{i + 1}</span><a href={link(a)}>{a.title}<span className="tm">{Ico.eye}{(a.viewsCount || 0) * (3 - tab)} مشاهدة</span></a></li>)}</ol>
+      <ol>{list.map((a, i) => <li key={a.id}><span className="rank">{i + 1}</span><a href={link(a)}>{a.title}<span className="tm">{Ico.eye}{a.viewsCount || 0} مشاهدة</span></a></li>)}</ol>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function TrendingNow({ items }: { items: Article[] }) {
               <div className="t">{a.title}</div>
               <div className="meta">
                 <span className="time">{ago(a.publishedAt)}</span>
-                <span className="views">👁 {Math.floor(Math.random() * 5000) + 500}</span>
+                <span className="views">👁 {a.viewsCount ?? 0}</span>
               </div>
             </div>
           </a>

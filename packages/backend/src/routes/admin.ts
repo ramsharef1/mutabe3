@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware';
+import { sanitizeArticleHtml } from '../sanitize';
+import { imageUpload, uploadedFileUrl, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -64,7 +66,7 @@ router.post('/articles', async (req: Request, res: Response) => {
       data: {
         title,
         summary: summary || null,
-        content,
+        content: sanitizeArticleHtml(String(content)),
         slug: makeSlug(title, slug),
         featuredImageUrl: featuredImageUrl || null,
         categoryId,
@@ -87,7 +89,7 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (summary !== undefined) data.summary = summary || null;
-    if (content !== undefined) data.content = content;
+    if (content !== undefined) data.content = sanitizeArticleHtml(String(content));
     if (categoryId !== undefined) data.categoryId = categoryId;
     if (featuredImageUrl !== undefined) data.featuredImageUrl = featuredImageUrl || null;
     if (Array.isArray(seoKeywords)) data.seoKeywords = seoKeywords;
@@ -106,6 +108,25 @@ router.delete('/articles/:id', async (req: Request, res: Response) => {
     await prisma.article.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// POST /api/admin/upload — multipart field "file" (image) → { url } under /api/uploads/…
+router.post('/upload', (req: Request, res: Response) => {
+  imageUpload.single('file')(req, res, (err: any) => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? `الملف أكبر من ${Math.round(MAX_UPLOAD_BYTES / 1048576)}MB` : err.message || 'Upload failed';
+      return res.status(400).json({ error: msg });
+    }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) return res.status(400).json({ error: 'No file received' });
+    res.status(201).json({ success: true, url: uploadedFileUrl(file), name: file.originalname, size: file.size });
+  });
+});
+
+// GET /api/admin/media — newest uploads first, for the editor's picker
+router.get('/media', (_req: Request, res: Response) => {
+  try { res.json({ success: true, data: listMedia() }); }
+  catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
 export default router;

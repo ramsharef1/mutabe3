@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace=packages/frontend", "--", "--port", "3100"],
       "port": 3100
+    },
+    {
+      "name": "backend-dev",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "set -a; . /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/.env.local; set +a; exec npx tsx /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/src/index.ts"],
+      "port": 9080
     }
   ]
 }

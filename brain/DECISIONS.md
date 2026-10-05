@@ -2,6 +2,18 @@
 
 ## 2026-10-05
 
+**D-039: Features Roadmap saved + Stage 1 of the "Now" items (rich editor, uploads, search, real view counts)**
+- **Decided by:** Rami ("add it and lets build features list for admin and website" → "save it in the roadmap and start")
+- **What:** `brain/ROADMAP.md` is now the living feature list (Admin + Website · Now/Next/Later). First build stage, on the existing stack:
+  - **Admin:** dependency-free rich-text editor (headings, bold/italic/underline, lists, quotes, links, YouTube embeds, Word/Docs paste-cleaning, HTML source view) replaces the plain textarea; image upload `POST /api/admin/upload` (multer, 15MB, jpeg/png/webp/gif, client-side downscale ≤1600px) + media library `GET /api/admin/media`; featured-image upload. Bodies are sanitized server-side (`sanitize-html` allowlist, YouTube-only iframes) and plain text is normalized to HTML on write.
+  - **Website:** article page renders CMS HTML (seeded plaintext keeps its demo dressing); `POST /api/articles/:id/view` increments `viewsCount` (30-min per-IP dedupe) and MostRead/Trending show real counts instead of `Math.random`; working search — `GET /api/articles?q=&take=` with Arabic-variant matching (ال/hamza/ة-ه) + `/search` page; the 3 header search forms now submit.
+  - **Dev:** the Next `/api/[...path]` proxy now passes method/auth/body through (was GET/POST-only, stripped Authorization) so the dashboard works under `next dev`.
+  - **Ops:** uploads live in `UPLOAD_DIR=/var/www/mutabe3/uploads` (outside the git checkout) and are served at `/api/uploads/*` through the existing nginx `/api` rule; only `client_max_body_size` needs raising for >1MB files.
+- **Why:** Publishing real content was painful (plain textarea, URL-only images) and most-read/trending/search were fake — these are the prerequisites for replacing the 19 dummy articles.
+- **Status:** 🔧 BUILT · pending VPS deploy via hPanel Browser terminal (needs `npm install` for multer/sanitize-html + `UPLOAD_DIR` in /etc/mutabe3/backend.env) · 2026-10-05
+
+---
+
 **D-038: Custom Admin / CMS — make the site operable (publish real content)**
 - **Decided by:** Rami ("lets finish the website" → Custom admin; content added via admin by the team)
 - **What:** Build a custom admin on the existing stack (reuses current auth + Article schema + read API; not Strapi). Staged, each verified + deployed:

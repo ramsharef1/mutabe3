@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import RichEditor, { textToHtml } from '../../components/RichEditor';
+import { token, uploadImage, listMedia } from '../../components/upload';
+import { isHtml, plain } from '../../../components/util';
 
 interface Cat { id: string; name: string }
 
@@ -20,9 +23,9 @@ export default function Editor() {
   const [keywords, setKeywords] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imgBusy, setImgBusy] = useState(false);
   const [err, setErr] = useState('');
-
-  const token = () => { try { return localStorage.getItem('accessToken'); } catch { return null; } };
+  const coverRef = useRef<HTMLInputElement>(null);
 
   const init = useCallback(async () => {
     const t = token();
@@ -37,7 +40,9 @@ export default function Editor() {
         if (res.status === 401 || res.status === 403) { router.replace('/auth/login'); return; }
         if (!res.ok) { setErr('المقال غير موجود.'); setLoading(false); return; }
         const a = (await res.json()).data;
-        setTitle(a.title || ''); setSummary(a.summary || ''); setContent(a.content || '');
+        const c: string = a.content || '';
+        setTitle(a.title || ''); setSummary(a.summary || '');
+        setContent(isHtml(c) ? c : textToHtml(c)); // seeded articles are plain text
         setCategoryId(a.categoryId || cl[0]?.id || ''); setImage(a.featuredImageUrl || '');
         setStatus(a.status || 'DRAFT'); setKeywords((a.seoKeywords || []).join('، '));
       } else {
@@ -51,11 +56,12 @@ export default function Editor() {
 
   const save = async (publish?: boolean) => {
     setErr('');
-    if (!title.trim() || !content.trim() || !categoryId) { setErr('العنوان والمحتوى والقسم مطلوبة.'); return; }
+    const hasBody = plain(content).trim() || /<(img|iframe)/i.test(content);
+    if (!title.trim() || !hasBody || !categoryId) { setErr('العنوان والمحتوى والقسم مطلوبة.'); return; }
     setSaving(true);
     const t = token();
     const body = {
-      title: title.trim(), summary: summary.trim(), content: content.trim(), categoryId,
+      title: title.trim(), summary: summary.trim(), content, categoryId,
       featuredImageUrl: featuredImageUrl.trim() || null,
       status: publish === true ? 'PUBLISHED' : publish === false ? 'DRAFT' : status,
       seoKeywords: keywords.split(/[,،]/).map((s) => s.trim()).filter(Boolean),
@@ -70,6 +76,14 @@ export default function Editor() {
       if (!res.ok) { const j = await res.json().catch(() => ({})); setErr(j.error || 'تعذّر الحفظ.'); setSaving(false); return; }
       router.replace('/dashboard');
     } catch { setErr('تعذّر الحفظ. تحقّق من الاتصال.'); setSaving(false); }
+  };
+
+  const pickCover = async (f?: File) => {
+    if (!f) return;
+    setImgBusy(true); setErr('');
+    try { setImage(await uploadImage(f)); }
+    catch (e: any) { setErr(e?.message || 'فشل رفع الصورة'); }
+    finally { setImgBusy(false); }
   };
 
   if (loading) return <div className="adm"><div className="adm-loading">جاري التحميل…</div></div>;
@@ -90,7 +104,11 @@ export default function Editor() {
 
         <label>العنوان<input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان المقال" /></label>
         <label>الملخّص<textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} placeholder="ملخّص قصير يظهر في القوائم" /></label>
-        <label>المحتوى<textarea value={content} onChange={(e) => setContent(e.target.value)} rows={14} placeholder="نص المقال…" /></label>
+
+        <div className="adm-field">
+          <span className="adm-lbl">المحتوى</span>
+          <RichEditor value={content} onChange={setContent} upload={uploadImage} listMedia={listMedia} />
+        </div>
 
         <div className="adm-row">
           <label>القسم
@@ -108,7 +126,19 @@ export default function Editor() {
           </label>
         </div>
 
-        <label>رابط صورة الغلاف<input value={featuredImageUrl} onChange={(e) => setImage(e.target.value)} placeholder="https://…" dir="ltr" /></label>
+        <div className="adm-field">
+          <span className="adm-lbl">صورة الغلاف</span>
+          <div className="adm-cover">
+            {featuredImageUrl ? <img src={featuredImageUrl} alt="" /> : <div className="ph">لا توجد صورة</div>}
+            <div className="ops">
+              <button type="button" className="adm-logout" onClick={() => coverRef.current?.click()} disabled={imgBusy}>{imgBusy ? 'جاري الرفع…' : 'رفع صورة'}</button>
+              {featuredImageUrl && <button type="button" className="adm-logout" onClick={() => setImage('')}>إزالة</button>}
+              <input value={featuredImageUrl} onChange={(e) => setImage(e.target.value)} placeholder="أو الصق رابط صورة https://…" dir="ltr" />
+            </div>
+          </div>
+          <input ref={coverRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => { pickCover(e.target.files?.[0]); e.target.value = ''; }} />
+        </div>
+
         <label>كلمات مفتاحية (SEO)<input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="الأردن، اقتصاد، عمّان" /></label>
       </main>
     </div>

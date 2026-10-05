@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Amiri } from 'next/font/google';
-import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner } from '../../components/site';
+import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner, isHtml, plain } from '../../components/site';
 import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
 import { LiveBlog, LiveBadge } from '../../components/live';
@@ -42,7 +42,8 @@ export default function ArticlePage() {
   const [size, setSize] = useState(0); // -1 / 0 / 1 / 2 → font-size steps
   const lb = useLightbox();
 
-  // Record this read into a rolling local history — powers homepage "مختارة لك".
+  // Record this read: locally (powers homepage "مختارة لك") and on the server
+  // (viewsCount → most-read / trending). One server hit per article per tab session.
   useEffect(() => {
     if (!id || !articles.length) return;
     const found = articles.find((x) => x.id === id || x.slug === id);
@@ -50,6 +51,13 @@ export default function ArticlePage() {
     try {
       const prev = JSON.parse(localStorage.getItem('seen') || '[]') as string[];
       localStorage.setItem('seen', JSON.stringify([found.id, ...prev.filter((x) => x !== found.id)].slice(0, 20)));
+    } catch {}
+    try {
+      const k = `viewed:${found.id}`;
+      if (!sessionStorage.getItem(k)) {
+        sessionStorage.setItem(k, '1');
+        fetch(`/api/articles/${found.id}/view`, { method: 'POST', keepalive: true }).catch(() => {});
+      }
     } catch {}
   }, [id, articles]);
 
@@ -72,11 +80,15 @@ export default function ArticlePage() {
   const related = relatedByTag(a, articles);
   const tags = tagsFor(a);
   const live = LIVE[a.id];
-  const shots = [{ src: a.featuredImageUrl?.replace('/500/350', '/1200/800') || '', thumb: a.featuredImageUrl || '', cap: a.title }, ...gallery(a, 4)];
+  // CMS articles are stored as sanitized HTML; the seeded demo set is plain text and keeps its filler/gallery dressing.
+  const html = isHtml(a.content);
+  const lead = { src: a.featuredImageUrl?.replace('/500/350', '/1200/800') || '', thumb: a.featuredImageUrl || '', cap: a.title };
+  const shots = html ? [lead] : [lead, ...gallery(a, 4)];
   const relCards = related.slice(0, 3);
   const relList = related.slice(3, 8);
   const alsoRead = related.slice(0, 2);
-  const paras = [a.content, ...FILLER];
+  const paras = html ? [] : [a.content, ...FILLER];
+  const bodyText = html ? plain(a.content) : paras.join(' ');
   const prev = articles[idx + 1];
   const next = articles[idx - 1];
   const wi = idx % WRITERS.length;
@@ -100,7 +112,7 @@ export default function ArticlePage() {
                 <a className="au" href="/category/writers"><img src={face(wi)} alt="" /><span><b>{author}</b><small>المتابع - {catName}</small></span></a>
                 <span title={fmtDate(a.publishedAt)}>{Ico.clock}{ago(a.publishedAt)}</span>
                 <span>{Ico.eye}{views} مشاهدة</span>
-                <span className="rt">{readMins(paras.join(' '))} دقائق قراءة</span>
+                <span className="rt">{readMins(bodyText)} دقائق قراءة</span>
                 <span className="fs">
                   <button type="button" onClick={() => setSize((s) => Math.max(-1, s - 1))} title="تصغير الخط">أ-</button>
                   <button type="button" onClick={() => setSize((s) => Math.min(2, s + 1))} title="تكبير الخط">أ+</button>
@@ -117,7 +129,18 @@ export default function ArticlePage() {
             {live && <LiveBlog entries={live} />}
 
             <div className={`artbody fs${size}`}>
-              {paras.map((p, i) => (
+              {html ? (
+                <>
+                  {/* sanitized on write by the backend (sanitize-html allowlist) */}
+                  <div className="rich" dangerouslySetInnerHTML={{ __html: a.content }} />
+                  {alsoRead.length > 0 && (
+                    <aside className="also">
+                      <b>اقرأ أيضاً</b>
+                      <ul>{alsoRead.map((r) => <li key={r.id}><a href={`/article/${r.id}`}>{r.title}</a></li>)}</ul>
+                    </aside>
+                  )}
+                </>
+              ) : paras.map((p, i) => (
                 <div key={i}>
                   <p>{p}</p>
                   {i === 0 && <blockquote className="pull">{QUOTE}</blockquote>}

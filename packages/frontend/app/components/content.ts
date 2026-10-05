@@ -1,4 +1,5 @@
 import type { Article } from './site';
+import { plain } from './util';
 
 /* ---------- tags (derived from text until the CMS carries real tags) ---------- */
 const KEYWORDS = [
@@ -13,7 +14,7 @@ const bare = (s: string) => s.replace(/(^|\s)ال/g, '$1');
 const KN = KEYWORDS.map((k) => [k, norm(k), bare(norm(k))] as const);
 
 export const tagsFor = (a: Article): string[] => {
-  const txt = norm(`${a.title} ${a.summary || ''} ${a.content}`);
+  const txt = norm(`${a.title} ${a.summary || ''} ${plain(a.content)}`);
   const hits = KN.filter(([, n, b]) => txt.includes(n) || txt.includes(b)).map(([k]) => k);
   if (a.category?.name && !hits.includes(a.category.name)) hits.push(a.category.name);
   return hits.slice(0, 7);

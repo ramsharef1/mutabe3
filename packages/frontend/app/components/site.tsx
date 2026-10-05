@@ -136,8 +136,8 @@ function StickyBar() {
       <div className="wrap">
         <a className="slogo" href="/"><img src="/logo.svg" alt="المتابع" /></a>
         <nav className="snav" aria-label="الأقسام"><Nav compact /></nav>
-        <form className="sq" action="/category/politics" onSubmit={(e) => e.preventDefault()}>
-          <input placeholder="بحث..." aria-label="بحث" />
+        <form className="sq" action="/search" role="search">
+          <input name="q" placeholder="بحث..." aria-label="بحث" />
           <button type="submit" aria-label="بحث">{Ico.search}</button>
         </form>
         <ThemeToggle className="ico" />
@@ -157,7 +157,7 @@ export function SiteHeader({ articles = [], temp, wxLabel }: { articles?: Articl
           </div>
           <div className="weather">
             {articles.length > 0 && <AudioPill articles={articles} />}
-            <form className="tsq" action="/tag/الأردن" onSubmit={(e) => e.preventDefault()}><input placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
+            <form className="tsq" action="/search" role="search"><input name="q" placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
             <span className="city">عمّان<br />{wxLabel || 'الآن'}</span>
             <span className="deg">{temp ?? 24}°</span>
             <span className="en">ENGLISH</span>
@@ -171,7 +171,7 @@ export function SiteHeader({ articles = [], temp, wxLabel }: { articles?: Articl
         </nav>
         <div className="brand">
           <a className="logo" href="/"><img src="/logo.svg" alt="المتابع" width="338" height="134" /><small>الاخباري</small></a>
-          <form className="msq" action="/tag/الأردن" onSubmit={(e) => e.preventDefault()}><input placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
+          <form className="msq" action="/search" role="search"><input name="q" placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
           <AdBanner variant={0} className="ad728" />
         </div>
       </div>

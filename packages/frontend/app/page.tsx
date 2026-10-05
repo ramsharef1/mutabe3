@@ -1,6 +1,6 @@
 // Server component (B9): articles + weather are fetched on the server and revalidated; interactive blocks are client islands.
 import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, AdBox, Chip } from './components/site';
-import { Article, WRITERS, face, ago, readMins } from './components/util';
+import { Article, WRITERS, face, ago, readMins, excerpt } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
 import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Carousel, Debate, WritersRail } from './components/blocks/fold';
@@ -73,7 +73,7 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
   <>
     <div className="bigtext">
       <a className="im" href={link(a)}><Img src={a.featuredImageUrl} /><Chip a={a} /></a>
-      <div><a className="t" href={link(a)}>{a.title}</a><p>{a.summary || a.content}</p></div>
+      <div><a className="t" href={link(a)}>{a.title}</a><p>{excerpt(a, 220)}</p></div>
     </div>
     <div style={{ marginTop: 6 }}><Bullets items={more} /></div>
   </>
@@ -284,7 +284,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <SecHd t="بانوراما" slug="panorama" />
           <div className="pano">
             <div className="grid">{pano.slice(1).map((a) => <a key={a.id} className="th" href={link(a)}><Img src={a.featuredImageUrl} /></a>)}</div>
-            <div className="big"><a className="im" href={link(pano[0])} style={{ display: 'block' }}><Img src={pano[0].featuredImageUrl} /></a><a className="t" href={link(pano[0])}>{pano[0].title}</a><p>{pano[0].summary || pano[0].content}</p></div>
+            <div className="big"><a className="im" href={link(pano[0])} style={{ display: 'block' }}><Img src={pano[0].featuredImageUrl} /></a><a className="t" href={link(pano[0])}>{pano[0].title}</a><p>{excerpt(pano[0], 220)}</p></div>
           </div>
           <More slug="panorama" />
         </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Article, Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, CAT_LABELS, CAT_DESC, Crumbs, Chip, ago, Ico, AdBanner, catColor } from '../../components/site';
+import { Article, Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, CAT_LABELS, CAT_DESC, Crumbs, Chip, ago, Ico, AdBanner, catColor, excerpt } from '../../components/site';
 import { tagsFor, topTags } from '../../components/content';
 
 const PAGES = 5;
@@ -29,7 +29,7 @@ const Rows = ({ list, page, cycle }: { list: Article[]; page: number; cycle: boo
         <div className="th"><Img src={a.featuredImageUrl} /></div>
         <div className="t">
           <span className="ttl">{a.title}</span>
-          <span className="ex">{(a.summary || a.content).slice(0, 110)}…</span>
+          <span className="ex">{excerpt(a)}</span>
           <span className="tm">{Ico.clock}{ago(a.publishedAt)}<em>·</em>{Ico.eye}{a.viewsCount ?? 0}</span>
         </div>
       </a>
@@ -118,7 +118,7 @@ export default function CategoryPage() {
                 <div className="catfeat2">
                   <a className="lead" href={link(feat.id)}>
                     <div className="im"><Img src={feat.featuredImageUrl} /></div>
-                    <div className="cap"><Chip a={feat} /><h2>{feat.title}</h2><p>{feat.summary || feat.content}</p><span className="tm">{Ico.clock}{ago(feat.publishedAt)}</span></div>
+                    <div className="cap"><Chip a={feat} /><h2>{feat.title}</h2><p>{excerpt(feat, 220)}</p><span className="tm">{Ico.clock}{ago(feat.publishedAt)}</span></div>
                   </a>
                   {subCards.length > 0 && (
                     <div className="subs">

@@ -89,3 +89,6 @@ strapi.log
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Editor image uploads (local dev; prod uses UPLOAD_DIR outside the checkout)
+packages/backend/uploads/

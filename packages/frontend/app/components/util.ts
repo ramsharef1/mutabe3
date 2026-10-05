@@ -112,4 +112,22 @@ export const ago = (d?: string) => {
   return dd === 1 ? 'منذ يوم' : dd === 2 ? 'منذ يومين' : dd <= 10 ? `منذ ${dd} أيام` : `منذ ${dd} يوماً`;
 };
 
-export const readMins = (text: string) => Math.max(1, Math.round(text.split(/\s+/).length / 180));
+/** True when `content` is stored as HTML (CMS articles) rather than seeded plain text. */
+export const isHtml = (s?: string) => /<\/?[a-z][^>]*>/i.test(s || '');
+
+/** HTML → plain text for excerpts, read-time and tag matching. */
+export const plain = (s?: string) =>
+  (s || '')
+    .replace(/<(style|script)[\s\S]*?<\/\1>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Summary if the editor wrote one, otherwise the first `n` characters of the body text. */
+export const excerpt = (a: { summary?: string; content: string }, n = 110) => {
+  const t = a.summary || plain(a.content);
+  return t.length > n ? `${t.slice(0, n)}…` : t;
+};
+
+export const readMins = (text: string) => Math.max(1, Math.round(plain(text).split(/\s+/).length / 180));

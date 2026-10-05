@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, Crumbs, Chip, ago, Ico } from '../../components/site';
+import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, Crumbs, Chip, ago, Ico, excerpt } from '../../components/site';
 import { tagsFor } from '../../components/content';
 
 export default function TagPage() {
@@ -48,7 +48,7 @@ export default function TagPage() {
                     <div className="th"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
                     <div className="t">
                       <span className="ttl">{a.title}</span>
-                      <span className="ex">{(a.summary || a.content).slice(0, 110)}…</span>
+                      <span className="ex">{excerpt(a)}</span>
                       <span className="tm">{Ico.clock}{ago(a.publishedAt)}<em>·</em>{Ico.eye}{a.viewsCount ?? 0}</span>
                     </div>
                   </a>
