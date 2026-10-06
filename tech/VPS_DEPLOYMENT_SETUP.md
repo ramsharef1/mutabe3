@@ -1,5 +1,7 @@
 # VPS Deployment Setup for mutabe3
 
+> **Legacy — 2026-09-12 plan (Docker on port 3100), superseded.** Production now runs as systemd services (`mutabe3-frontend` :9100, `mutabe3-backend` :9080) deployed by GitHub Actions; see `COMMANDS.md`, `connectors/production.md` and brain/DECISIONS.md D-037 → D-046. Kept for history only.
+
 **Target VPS:** 72.62.132.138 (srv1772644.hstgr.cloud)  
 **Port:** 3100  
 **OS:** AlmaLinux + AdminBolt  

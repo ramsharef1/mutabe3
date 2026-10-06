@@ -1,256 +1,106 @@
 # mutabe3 — COMMANDS
 
-**Registry of operational procedures for mutabe3.** Run from `~/Projects/forge/projects/mutabe3`.
+**Operational procedures for mutabe3 as it actually runs.** Every fact below comes from `brain/DECISIONS.md` (D-037 → D-046) and `.github/workflows/deploy-vps.yml`. The 2026-09-12 version of this file described a Docker + Vercel + Strapi plan that was never deployed.
 
 ---
 
-## VPS Access
+## Where things run
 
-```bash
-# SSH into VPS (as root)
-ssh -i ~/.ssh/id_ed25519 root@72.62.132.138
-
-# Or use the hostname
-ssh -i ~/.ssh/id_ed25519 root@srv1772644.hstgr.cloud
-
-# Check mutabe3 container status
-docker ps | grep mutabe3
-
-# View logs
-docker logs -f mutabe3-frontend
-docker logs -f mutabe3-backend
-docker logs -f mutabe3-postgres
-```
+| Thing | Value |
+|---|---|
+| VPS | `72.62.132.138` · `srv1772644.hstgr.cloud` (Hostinger, root) |
+| Site | https://mutabe3.news — nginx → Next on `:9100`; `/api/*` → Express on `:9080` |
+| Checkout | `/var/www/mutabe3/current/projects/mutabe3` (git, branch `main`, hard-synced by CI) |
+| Services | systemd `mutabe3-frontend` (`next start`, :9100) · `mutabe3-backend` (Express API, :9080; currently runs as root — D-041) |
+| Backend env | `/etc/mutabe3/backend.env` — the backend unit's `EnvironmentFile` and the **only** real env on the VPS (D-037/D-040) |
+| Database | Postgres on the VPS, database `mutabe3`, role `mutabe3_user`; `DATABASE_URL` lives in backend.env (password rotated 2026-10-06, D-042) |
+| Uploads | `/var/www/mutabe3/uploads` (`UPLOAD_DIR`), served at `/api/uploads/*`; WebP derivatives at `/api/img/<w>/*` cached in `.cache/` (D-045) |
+| nginx | mutabe3 server blocks live inside the shared `/etc/nginx/conf.d/all-domains.conf`; `client_max_body_size 25m` marked `# mutabe3-upload-limit` (D-041) |
+| Deploys | GitHub Actions `deploy-vps.yml` over SSH — repo secrets `VPS_HOST` `VPS_USER` `VPS_PORT` `VPS_SSH_KEY` (D-039) |
+| Mail | VPS Postfix `localhost:25` by default, or the dashboard's SMTP account (D-044); inbox delivery still needs SPF/DKIM at ns1/ns2.webhubteam.com |
 
 ---
 
-## Deployment
+## Deploy
 
-### Push to Deploy
+- **Automatic:** every push to `main` that touches `packages/**` or the workflow file.
+- **Manual re-deploy:** `gh workflow run deploy-vps.yml`
+- **With the image backfill (D-045):** `gh workflow run deploy-vps.yml -f images_backfill=dry` (then `apply`, then `apply-delete-original` once the dry run looks right).
+- **Watch:** `gh run list --workflow=deploy-vps.yml -L 3` · `gh run watch <id>` · `gh run view <id> --log`
+- **What a run does:** fast-forward the checkout to `origin/main` (refuses if prod has commits of its own) → idempotent server config (`UPLOAD_DIR`, uploads dir, nginx body limit) → `npm install` → prints `node -v` and loads `sharp` (fails here, before any restart, if the platform binary is missing) → `prisma db push` + `prisma generate` with backend.env sourced (a destructive schema change fails the deploy instead of losing data) → optional backfill → `next build` → restart both units → health checks must return 200/200.
+- **Rollback:** `git revert <bad commit>` on `main` and push; CI redeploys. Never reset the prod checkout by hand.
+
+---
+
+## Getting onto the VPS
+
+- Rami's Mac is **edge-banned by Hostinger for SSH** (see the project memory). Do server work through CI or the hPanel **Web console**: hPanel → VPS → Settings → SSH keys → *Web console*. hPanel's Settings page also has *Unblock my SSH IP*.
+- Deploy key: `~/.ssh/mutabe3_deploy` on Rami's Mac; its public key is in `/root/.ssh/authorized_keys` and in hPanel's SSH keys. Secrets were set with `gh secret set`.
+- Rule: never hand Rami ```bash blocks for the server — he runs them on his Mac. Type into the console yourself or go through CI.
+
+### In the web console
+
 ```bash
-# Commit and push to main branch
-git add -A
-git commit -m "feat: <description>"
-git push origin main
-
-# GitHub Actions will automatically:
-# 1. Build Docker images
-# 2. SSH to VPS
-# 3. Pull latest code
-# 4. Run docker-compose up
-# 5. Run database migrations
-```
-
-### Manual Deployment (if GH Actions fails)
-
-```bash
-# On VPS, as root:
-cd /var/www/mutabe3/current
-git pull origin main
-
-# Rebuild and restart services
-docker-compose down
-docker-compose up -d
-
-# Run migrations
-docker-compose exec backend npm run db:migrate
+systemctl status mutabe3-backend mutabe3-frontend
+journalctl -u mutabe3-backend -n 100 -f
+journalctl -u mutabe3-frontend -n 100 -f
+systemctl restart mutabe3-backend        # or mutabe3-frontend
+nginx -t && systemctl reload nginx
+curl -s localhost:9080/api/health; curl -sI localhost:9100 | head -1
+du -sh /var/www/mutabe3/uploads; ls /var/www/mutabe3/uploads/.cache
 ```
 
 ---
 
-## Database
-
-### Create/Reset Database
+## Database (Prisma CLI on the VPS)
 
 ```bash
-# On VPS, run migrations
-docker-compose exec backend npm run db:migrate
-
-# Seed database (test data)
-docker-compose exec backend npm run db:seed
+cd /var/www/mutabe3/current/projects/mutabe3
+set -a; . /etc/mutabe3/backend.env; set +a        # the CLI needs the real DATABASE_URL (D-037/D-040)
+npx prisma db push --schema=packages/backend/prisma/schema.prisma --skip-generate
+npx prisma generate --schema=packages/backend/prisma/schema.prisma
+psql "$DATABASE_URL" -c '\dt'
+pg_dump "$DATABASE_URL" > /var/backups/mutabe3-$(date +%F).sql
 ```
 
-### Backup Database
-
-```bash
-# Backup PostgreSQL
-docker-compose exec postgres pg_dump -U mutabe3_user mutabe3 > /var/backups/mutabe3-$(date +%Y%m%d-%H%M%S).sql
-
-# Restore from backup
-docker-compose exec -T postgres psql -U mutabe3_user mutabe3 < /var/backups/mutabe3-backup.sql
-```
+- Schema changes ship as additive `prisma db push` inside the deploy; nothing runs migrations by hand.
+- No backup job is recorded in DECISIONS yet — the `pg_dump` line above is manual.
+- Password rotation procedure: D-040/D-042 (`ALTER ROLE` in the console, update backend.env, `systemctl restart mutabe3-backend`).
 
 ---
 
-## Services
+## Local verification (before any deploy)
 
-### Start/Stop
-
-```bash
-# Start all services
-docker-compose up -d
-
-# Stop all services
-docker-compose down
-
-# Restart specific service
-docker-compose restart frontend
-docker-compose restart backend
-docker-compose restart postgres
-```
-
-### Health Checks
-
-```bash
-# Check if frontend is running
-curl http://localhost:3100
-
-# Check API health
-curl http://localhost:8080/api/health
-
-# Check database connectivity (from backend container)
-docker-compose exec backend npm run db:health
-
-# Check Redis
-docker-compose exec redis redis-cli ping
-```
+- `.claude/launch.json` has `backend-dev` (:9080, sources `packages/backend/.env.local`) and `frontend-dev` (:3100). Start them with the Browser pane's preview tools, not with Bash.
+- Local Postgres 15 (brew), database `mutabe3_dev`; test admin `admin@mutabe3.test` — its password is a comment in the gitignored `packages/backend/.env.local`, never paste it in chat.
+- `packages/frontend/.env.local`: `VPS_API=http://127.0.0.1:9080` to test against the local API, `https://mutabe3.news` to preview against prod data; restore to prod afterwards.
+- Checks: `npm run lint` (frontend `next lint`, backend `eslint src`), `npx tsc --noEmit` in `packages/frontend`, `npm test` (no suites yet; exits 0).
 
 ---
 
-## Nginx Configuration
+## Media
 
-### File Location
-`/etc/nginx/conf.d/mutabe3.conf`
-
-### Reload Nginx
-```bash
-nginx -t  # Test config
-systemctl reload nginx
-```
-
-### View Access Logs
-```bash
-tail -f /var/log/nginx/mutabe3-access.log
-tail -f /var/log/nginx/mutabe3-error.log
-```
+- Upload: `POST /api/admin/upload` (multipart field `file`, ≤15 MB, jpeg/png/webp/gif) → stored as one WebP master; gif and animated webp untouched (D-045).
+- List: `GET /api/admin/media` · Delete: `DELETE /api/admin/media/YYYY/MM/name.ext` — 409 while an article still references it, admins may add `?force=1` (D-046).
+- Derivatives: `/api/img/{160|320|480|640|960|1280}/YYYY/MM/name.ext`, cached under `uploads/.cache/`, regenerated when the master changes.
+- Legacy jpg/png masters: the deploy input `images_backfill` (dry → apply → apply-delete-original).
 
 ---
 
-## Monitoring & Logs
+## Prod admin testing
 
-### Container Logs
-```bash
-# Real-time logs for all services
-docker-compose logs -f
-
-# Specific service
-docker-compose logs -f backend
-docker-compose logs -f postgres
-```
-
-### System Logs
-```bash
-# VPS system journal
-journalctl -u docker.service -f
-
-# Check disk usage
-df -h
-```
+Rami keeps the dashboard signed in inside the Browser pane. Drive `/api/admin/*` from `javascript_tool` with `localStorage.accessToken`, then remove test articles and test media through the API (D-041, D-045, D-046).
 
 ---
 
-## Database Access
+## Emergency
 
-### Connect to PostgreSQL
-
-```bash
-# From VPS command line
-docker-compose exec postgres psql -U mutabe3_user -d mutabe3
-
-# From local machine (if postgres exposed)
-psql -h 72.62.132.138 -U mutabe3_user -d mutabe3
-```
-
-### View Database Schema
-```bash
-docker-compose exec postgres psql -U mutabe3_user -d mutabe3 -c "\dt"
-```
+- **Site down:** `systemctl status` both units, `journalctl -u … -n 200`, `nginx -t`; re-run the last green deploy with `gh workflow run deploy-vps.yml`.
+- **Bad release:** revert on `main`; CI redeploys.
+- **Disk full on the VPS:** `du -sh /var/www/mutabe3/uploads /var/www/mutabe3/uploads/.cache`; the `.cache` derivatives are regenerable and safe to delete.
 
 ---
 
-## Troubleshooting
-
-### Port 3100 Not Responding
-```bash
-# Check if container is running
-docker ps | grep mutabe3-frontend
-
-# Check if nginx is forwarding correctly
-curl -H "Host: mutabe3-stage.jo" http://localhost/
-
-# Check docker network
-docker network inspect mutabe3-network
-```
-
-### Database Connection Errors
-```bash
-# Verify DATABASE_URL is set
-docker-compose exec backend env | grep DATABASE_URL
-
-# Test connection
-docker-compose exec backend npm run db:health
-```
-
-### Out of Disk Space
-```bash
-# Check usage
-df -h
-
-# Clean up Docker (be careful)
-docker system prune -a
-
-# Check container sizes
-docker ps -s
-```
-
----
-
-## Emergency Procedures
-
-### Full Rebuild
-```bash
-# Stop everything
-docker-compose down -v
-
-# Remove all data (WARNING: data loss)
-rm -rf /var/lib/docker/volumes/mutabe3-*
-
-# Rebuild from scratch
-docker-compose up -d
-docker-compose exec backend npm run db:migrate
-docker-compose exec backend npm run db:seed
-```
-
-### Rollback to Previous Commit
-```bash
-git log --oneline -10  # Find previous commit hash
-git reset --hard <commit-hash>
-docker-compose down
-docker-compose up -d
-docker-compose exec backend npm run db:migrate
-```
-
----
-
-## Notes
-
-- **Backups:** Set up automated daily backups in cron (see PLAN.md)
-- **SSL/TLS:** Handled by nginx with Let's Encrypt (renewed automatically)
-- **Secrets:** All sensitive values in environment variables (GitHub Actions secrets)
-- **Monitoring:** Self-hosted logging (see ops/logging)
-
----
-
-**Last updated:** 2026-09-12  
+**Last updated:** 2026-10-06 (rewritten to the deployed stack)  
 **Authority:** FORGE (Rami approves changes to this file)  
-**Related:** FACTS.md · PLAN.md · github.com/ramsharef1/forge/blob/main/connectors/VPS-SSH.md
+**Related:** brain/DECISIONS.md · brain/ROADMAP.md · connectors/production.md · connectors/staging.md

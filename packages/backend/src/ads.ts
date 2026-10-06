@@ -104,6 +104,7 @@ export function parseAds(body: any): { ok: true; value: AdsSetting } | { ok: fal
   }
 
   // ads.txt extras (other ad networks). Plain text, one record per line.
+  // eslint-disable-next-line no-control-regex -- stripping control characters from pasted text is the point here
   const lines = String(body?.adsTxt ?? '').replace(/\r/g, '').split('\n').map((l) => l.replace(/[\u0000-\u0008\u000b-\u001f]/g, '').trim().slice(0, 300));
   if (lines.length > 100) return { ok: false, error: 'ads.txt: حتى 100 سطر.' };
   out.adsTxt = lines.join('\n').trim();

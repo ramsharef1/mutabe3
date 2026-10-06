@@ -11,7 +11,7 @@
     "build": "npm run build --workspace=packages/frontend",
     "start": "npm start --workspace=packages/frontend",
     "lint": "npm run lint --workspace=packages/frontend && npm run lint --workspace=packages/backend",
-    "test": "npm test --workspace=packages/frontend && npm test --workspace=packages/backend",
+    "test": "npm run test --workspaces --if-present",
     "db:migrate": "npm run migrate --workspace=packages/backend",
     "db:seed": "npm run seed --workspace=packages/backend",
     "setup": "npm install && npm run db:migrate && npm run db:seed"

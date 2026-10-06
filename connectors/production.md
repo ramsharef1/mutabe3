@@ -1,34 +1,50 @@
 # mutabe3 · connectors/production
 
-**Vercel production deployment configuration.**
+**Production = the Hostinger VPS, deployed by GitHub Actions.** (The 2026-09-12 template described a Vercel production that was never used; a Vercel project from that scaffold may still exist but is not production.)
 
-## Deployment Details
+## Deployment details
 
 | Setting | Value | Status |
 |---------|-------|--------|
-| **Environment** | Production | — |
-| **Branch** | main | ⏳ TBD |
-| **Domain** | TBD (.jo or .com) | ⏳ TBD |
-| **Project ID** | TBD | ⏳ TBD |
-| **Team ID** | TBD | ⏳ TBD |
+| Host | `72.62.132.138` · `srv1772644.hstgr.cloud` (Hostinger VPS, root) | ✅ live |
+| Domain | https://mutabe3.news (+ www) — DNS at ns1/ns2.webhubteam.com | ✅ live |
+| Branch | `main` → auto-deploy on push touching `packages/**` | ✅ |
+| Checkout | `/var/www/mutabe3/current/projects/mutabe3` | ✅ |
+| Frontend | systemd `mutabe3-frontend` · `next start` · `:9100` | ✅ |
+| Backend | systemd `mutabe3-backend` · Express · `:9080` · env `/etc/mutabe3/backend.env` | ✅ |
+| Database | Postgres on the VPS · db `mutabe3` · role `mutabe3_user` | ✅ |
+| Uploads | `/var/www/mutabe3/uploads` → `/api/uploads/*`, derivatives `/api/img/<w>/*` | ✅ (D-045) |
+| nginx | server blocks in `/etc/nginx/conf.d/all-domains.conf`, body limit 25m | ✅ (D-041) |
+| TLS | nginx on the VPS (shared host config) | ✅ |
+| CI | `.github/workflows/deploy-vps.yml` — secrets `VPS_HOST` `VPS_USER` `VPS_PORT` `VPS_SSH_KEY` | ✅ (D-039) |
 
-## Environment Variables
+## Environment variables
 
-### Required (Production)
-- `DATABASE_URL` → Vercel Postgres connection string
-- `JWT_SECRET` → Secure auth key
-- `SENTRY_DSN` → Error tracking
+### Backend — `/etc/mutabe3/backend.env` (EnvironmentFile of `mutabe3-backend`)
+- `DATABASE_URL` → `postgresql://mutabe3_user:…@localhost:5432/mutabe3`
+- `PORT` → 9080 · `NODE_ENV` → production · `FRONTEND_URL` → https://mutabe3.news
+- `JWT_SECRET`, `JWT_REFRESH_SECRET` → auth signing keys (also derive the SMTP password seal, D-044 — rotating them re-asks for the SMTP password)
+- `UPLOAD_DIR` → `/var/www/mutabe3/uploads` (added idempotently by the deploy)
+- Optional mail: `SMTP_HOST/PORT/USER/PASSWORD/FROM/SECURE`, `MAIL_DRY_RUN=1`; precedence `MAIL_DRY_RUN` → dashboard SMTP settings → `SMTP_*` env → Postfix `localhost:25` (D-044)
 
-### Optional (Production)
-- `VERCEL_ENV=production`
+### Frontend (`mutabe3-frontend` unit)
+- `VPS_API` → where server components and the dev proxy reach the API; defaults to `http://127.0.0.1:9080`, which is right on the VPS.
 
-## Verification
+### GitHub (repo `ramsharef1/mutabe3`, environment `production`)
+- `VPS_HOST`, `VPS_USER`, `VPS_PORT`, `VPS_SSH_KEY` (private half of `~/.ssh/mutabe3_deploy`)
 
-- [ ] Domain configured in Vercel
-- [ ] Environment variables set in Vercel dashboard
-- [ ] Deployment successful
-- [ ] Health check passes
+## Verification (every deploy, automatic)
+
+- [x] Checkout fast-forwarded to `origin/main` (refuses if prod has local commits)
+- [x] `node -v` + `sharp` load check pass before anything restarts
+- [x] `prisma db push` is additive (destructive change fails the deploy)
+- [x] `curl localhost:9100` → 200 and `curl localhost:9080/api/articles` → 200
+- [ ] Mail inbox delivery — waiting on SPF/DKIM (or provider) DNS records (D-043/D-044)
+
+## Known gaps
+- Backend service runs as root (D-041) — a dedicated service user is still to do.
+- No automated database backup job recorded yet (see COMMANDS.md for the manual `pg_dump`).
 
 ---
 
-**Last updated:** 2026-09-12 (template)
+**Last updated:** 2026-10-06 (rewritten to the deployed stack) · **Sources:** brain/DECISIONS.md D-037, D-039, D-041, D-042, D-044, D-045, D-046

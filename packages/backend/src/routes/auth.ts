@@ -5,7 +5,6 @@ import {
   verifyPassword,
   generateJWT,
   generateRefreshToken,
-  verifyJWT,
   generateEmailVerificationToken,
   setAuthCookie,
   setRefreshCookie,

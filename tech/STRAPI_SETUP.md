@@ -1,5 +1,7 @@
 # Strapi CMS Setup for mutabe3
 
+> **Legacy — 2026-09-12 plan, never deployed.** mutabe3 runs its own Express + Prisma backend with a built-in dashboard (brain/DECISIONS.md D-037 → D-046); Strapi was not adopted. Kept for history only — see `COMMANDS.md` for the real setup.
+
 **Strapi** is a headless CMS that provides:
 - Article management dashboard
 - Media library (images, videos)
