@@ -10,7 +10,7 @@ Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as o
 - ☑ Stage 1 — rich-text editor, image upload + media library, real view counts, working search; deployed via CI and smoke-tested in prod (D-039, D-041); hamza search, draft privacy, drain-before-reject fixes (D-042)
 
 ## "Finish the site" — stage order (D-043)
-Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (☑ live 2026-10-06) → Stage 4 readers (☑ live 2026-10-06; inbox delivery needs DNS) → Stage 5 reach & money. Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
+Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops (☑ live 2026-10-06) → Stage 4 readers (☑ live 2026-10-06; inbox delivery needs DNS) → Stage 5 reach & money (☑ live 2026-10-06; ads stay on demo until configured). Each stage is verified locally, deployed by CI, smoke-tested in prod, then logged.
 
 ---
 
@@ -34,6 +34,8 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 - ☐ Live-blog manager (live strip data is hardcoded) ⚙️
 - ☑ **Poll manager** — `/dashboard/polls` for the homepage poll and the «وجهان» debate (D-043 Stage 4); breaking bar is in `/dashboard/homepage` (Stage 3)
 - ☑ **Newsletter manager** — `/dashboard/newsletter`: stats, compose, test, send, CSV export, automatic morning digest (off by default) (D-043 Stage 4)
+- ☑ **Ads manager** — `/dashboard/ads` (admin): four zones, each off / demo / own banners / AdSense unit; publisher id, auto ads, ads.txt (D-043 Stage 5)
+- ☐ Ad banner reporting (impressions/clicks per advertiser) and start/end dates for sold banners
 - ☐ Revision history · bulk actions · audit log · English edition
 
 ---
@@ -56,10 +58,11 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 - ☐ **Breaking-news notifications** — Follow button is local; real alerts ⚙️
 
 ### Later — reach, SEO, money
-- ☐ **SEO** — Article schema.org, sitemap, RSS, per-article OG images
-- ☐ **Real ads** — AdSense/ad-server instead of placeholder banners (monetization goal) ⚙️
+- ☑ **SEO** — NewsArticle + breadcrumb JSON-LD, publisher/website graph, Google News sitemap, large image previews; sitemap/RSS from Stage 2 (D-043 Stage 5). Per-article generated OG cards skipped (no Arabic shaping in Satori)
+- ◐ **Real ads** — zones + AdSense + own banners + ads.txt are live (D-043 Stage 5); **waiting on Rami:** AdSense publisher id or real banners, then switch the demo zones off
 - ☐ **Media** — real video hosting, galleries, audio bulletins ⚙️
-- ☐ PWA / mobile app · multi-language · accessibility pass
+- ☑ **PWA** — installable app, offline reading of opened pages, `/offline` list (D-043 Stage 5)
+- ☐ Native mobile app · multi-language · accessibility pass · mobile layout-viewport overflow (found in Stage 5)
 
 ---
 
