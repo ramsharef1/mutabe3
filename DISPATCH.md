@@ -98,7 +98,7 @@
 
 ## Done
 
-### RELAY-WEBP · from FORGE · 2026-10-06 · ✅ built, verified locally, deploying (D-045)
+### RELAY-WEBP · from FORGE · 2026-10-06 · ✅ live in prod 7e7e727, smoke-tested, backfill dry-run clean (D-045)
 **From:** FORGE (relayed from Okath Master Control) · **To:** mutabe3 Code session · **Priority:** 🟠 High
 **Result:** sharp 0.35 installed; Layer 1 (WebP masters on upload, gif/animated passthrough, never-lose fallback) + Layer 2 (`/api/img/<w>/…` derivatives 160–1280, 640/960 srcset on cards/lead/body) + backfill script with dry-run/apply/--delete-original and a CI `images_backfill` switch. Local proof: 4000px JPEG 2.07 MB → 0.12 MB master; legacy masters 2.86 MB → 0.13 MB; sample article images 3.33 MB → 0.17 MB. Prod media had 0 jpg/png masters (nothing to backfill). Full record: brain/DECISIONS.md D-045.
 
