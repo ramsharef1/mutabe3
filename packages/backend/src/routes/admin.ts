@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, drainRequest } from '../middleware';
 import { sanitizeArticleHtml } from '../sanitize';
-import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
+import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES, UPLOAD_URL, uploadRel, uploadExists, deleteUpload } from '../uploads';
 import { hashPassword } from '../auth';
 import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
 import readerAdmin from './adminReaders';
@@ -206,6 +206,57 @@ router.get('/media', (_req: Request, res: Response) => {
   try { res.json({ success: true, data: listMedia() }); }
   catch (e) { res.status(500).json({ error: String(e) }); }
 });
+
+// Everything in the DB that still points at an upload: article covers and bodies,
+// category images and house ad banners. Matching on the bare `YYYY/MM/name.ext`
+// also catches absolute `http://host/api/uploads/…` and `/api/img/<w>/…` forms.
+async function mediaReferences(rel: string) {
+  const [articles, categories, ads] = await Promise.all([
+    prisma.article.findMany({
+      where: { OR: [{ featuredImageUrl: { contains: rel } }, { content: { contains: rel } }] },
+      select: { id: true, title: true, status: true }, orderBy: { updatedAt: 'desc' }, take: 50,
+    }),
+    prisma.category.findMany({ where: { imageUrl: { contains: rel } }, select: { id: true, name: true, slug: true } }),
+    readAds(prisma),
+  ]);
+  const banners: { zone: string; index: number; alt: string }[] = [];
+  for (const zone of Object.keys(ads.zones) as (keyof typeof ads.zones)[]) {
+    ads.zones[zone].banners.forEach((b, index) => {
+      if ((b.image || '').includes(rel) || (b.mobileImage || '').includes(rel)) banners.push({ zone, index, alt: b.alt });
+    });
+  }
+  return { articles, categories, ads: banners };
+}
+
+// DELETE /api/admin/media/YYYY/MM/name.ext  (or  DELETE /api/admin/media?url=/api/uploads/YYYY/MM/name.ext)
+// Editors and admins. Unlinks the master and every cached derivative. While an article,
+// category or ad banner still uses the file it answers 409 with those references;
+// `?force=1` (admins only) deletes anyway and the pages show a broken image.
+async function deleteMedia(req: Request, res: Response, input: string) {
+  const rel = uploadRel(input);
+  if (!rel) return res.status(404).json({ error: 'الملف غير موجود' });
+  const force = ['1', 'true', 'yes'].includes(String(req.query.force || '').toLowerCase());
+  if (force && who(req).role !== 'ADMIN') return res.status(403).json({ error: 'الحذف رغم الاستخدام للمدير فقط' });
+  if (!uploadExists(rel)) return res.status(404).json({ error: 'الملف غير موجود' });
+  try {
+    const refs = await mediaReferences(rel);
+    const used = refs.articles.length + refs.categories.length + refs.ads.length;
+    if (used && !force) {
+      return res.status(409).json({
+        error: 'الصورة ما زالت مستخدمة — أزلها من المقالات أولاً',
+        articleIds: refs.articles.map((a) => a.id),
+        ...refs,
+      });
+    }
+    const r = deleteUpload(rel);
+    if (!r) return res.status(404).json({ error: 'الملف غير موجود' });
+    console.log(`[media] ${who(req).id} deleted ${rel} (${r.removed} files${used ? `, forced over ${used} references` : ''})`);
+    res.json({ success: true, url: `${UPLOAD_URL}/${rel}`, removed: r.removed, forced: used > 0 && force, ...(used ? { references: refs } : {}) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+}
+router.delete('/media', requireRole(...EDITOR_ROLES), (req: Request, res: Response) => deleteMedia(req, res, String(req.query.url || '')));
+router.delete('/media/:year/:month/:name', requireRole(...EDITOR_ROLES), (req: Request, res: Response) =>
+  deleteMedia(req, res, `${req.params.year}/${req.params.month}/${req.params.name}`));
 
 /* ───────────────────────────── categories (editors) ───────────────────────────── */
 

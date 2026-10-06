@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { plain } from '../../components/util';
 import { imgAt } from '../../components/img';
-import type { MediaItem } from './upload';
+import { MediaInUseError, type MediaItem } from './upload';
 
 // Dependency-free rich text editor: a contentEditable body driven by execCommand,
 // emitting HTML. The backend sanitizes on save, so this only needs to produce
@@ -14,6 +14,10 @@ interface Props {
   onChange: (html: string) => void;
   upload: (file: File) => Promise<string>;    // resolves to the stored URL
   listMedia?: () => Promise<MediaItem[]>;
+  /** Removes an upload for good; rejects with MediaInUseError while something still uses it. */
+  deleteMedia?: (url: string, force?: boolean) => Promise<void>;
+  /** Admins may delete an image that is still in use (the pages then show a broken image). */
+  canForceDelete?: boolean;
   placeholder?: string;
 }
 
@@ -54,7 +58,7 @@ const TB = ({ on, title, onClick, children }: { on?: boolean; title: string; onC
   <button type="button" className={on ? 'on' : ''} title={title} aria-pressed={on} onMouseDown={(e) => e.preventDefault()} onClick={onClick}>{children}</button>
 );
 
-export default function RichEditor({ value, onChange, upload, listMedia, placeholder = 'نص المقال…' }: Props) {
+export default function RichEditor({ value, onChange, upload, listMedia, deleteMedia, canForceDelete, placeholder = 'نص المقال…' }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const last = useRef('');
@@ -64,6 +68,8 @@ export default function RichEditor({ value, onChange, upload, listMedia, placeho
   const [busy, setBusy] = useState(0);                // uploads in flight
   const [lib, setLib] = useState<MediaItem[] | null>(null); // null = picker closed
   const [libBusy, setLibBusy] = useState(false);
+  const [libMsg, setLibMsg] = useState<{ text: string; err: boolean } | null>(null);
+  const [libDeleting, setLibDeleting] = useState<string | null>(null); // url being deleted
   const [state, setState] = useState({ b: false, i: false, u: false, block: 'p' });
 
   // Load an external value (initial fetch / reset) without clobbering the caret while typing.
@@ -158,13 +164,34 @@ export default function RichEditor({ value, onChange, upload, listMedia, placeho
   const openLib = async () => {
     if (!listMedia) return;
     saveSel();
-    setLibBusy(true); setLib([]);
+    setLibBusy(true); setLib([]); setLibMsg(null);
     try { setLib(await listMedia()); } catch { setLib([]); } finally { setLibBusy(false); }
   };
   const pick = (m: MediaItem) => {
     setLib(null);
     restoreSel();
     insertHtml(`<figure><img src="${esc(m.url)}" alt=""></figure><p><br></p>`);
+  };
+
+  // Delete from the library: confirm, call the API, and on a 409 either explain where the
+  // image is still used or (admins) offer to delete it anyway. The grid reloads afterwards.
+  const removeMedia = async (m: MediaItem) => {
+    if (!deleteMedia || !listMedia) return;
+    if (!confirm(`حذف الصورة نهائياً؟\n${m.name}`)) return;
+    setLibMsg(null); setLibDeleting(m.url);
+    try {
+      try {
+        await deleteMedia(m.url);
+      } catch (e) {
+        if (!(e instanceof MediaInUseError)) throw e;
+        if (!canForceDelete || !confirm(`${e.message}\n\nحذفها رغم ذلك؟ ستظهر مكسورة في تلك الصفحات.`)) { setLibMsg({ text: e.message, err: true }); return; }
+        await deleteMedia(m.url, true);
+      }
+      setLib(await listMedia());
+      setLibMsg({ text: `تم حذف ${m.name}.`, err: false });
+    } catch (e: any) {
+      setLibMsg({ text: e?.message || 'تعذّر حذف الصورة', err: true });
+    } finally { setLibDeleting(null); }
   };
 
   const toggleSrc = () => {
@@ -263,9 +290,19 @@ export default function RichEditor({ value, onChange, upload, listMedia, placeho
         <div className="rte-modal" onClick={() => setLib(null)} role="dialog" aria-label="مكتبة الصور">
           <div className="rte-lib" onClick={(e) => e.stopPropagation()}>
             <header><b>مكتبة الصور</b><button type="button" onClick={() => setLib(null)} aria-label="إغلاق">✕</button></header>
+            {libMsg && <p className={`msg${libMsg.err ? ' err' : ''}`} role="status">{libMsg.text}</p>}
             {libBusy ? <p className="adm-loading">جاري التحميل…</p>
               : lib.length === 0 ? <p className="adm-empty">لا توجد صور مرفوعة بعد.</p>
-              : <div className="grid">{lib.map((m) => <button type="button" key={m.url} onClick={() => pick(m)} title={m.name}><img src={imgAt(m.url, 320)} alt="" loading="lazy" /></button>)}</div>}
+              : <div className="grid">{lib.map((m) => (
+                  <div className="item" key={m.url}>
+                    <button type="button" className="pick" onClick={() => pick(m)} title={m.name}><img src={imgAt(m.url, 320)} alt="" loading="lazy" /></button>
+                    {deleteMedia && (
+                      <button type="button" className="del" title="حذف الصورة نهائياً" aria-label={`حذف ${m.name}`} disabled={libDeleting === m.url} onClick={() => removeMedia(m)}>
+                        {libDeleting === m.url ? '…' : '🗑'}
+                      </button>
+                    )}
+                  </div>
+                ))}</div>}
           </div>
         </div>
       )}

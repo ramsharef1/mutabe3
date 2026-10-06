@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import RichEditor, { textToHtml } from '../../components/RichEditor';
-import { uploadImage, listMedia } from '../../components/upload';
+import { uploadImage, listMedia, deleteMedia } from '../../components/upload';
 import { adminFetch, jsonInit, useStaff, isEditorRole, ROLE_AR, refreshHomepage } from '../../components/staff';
 import { isHtml, plain } from '../../../components/util';
 import { imgAt } from '../../../components/img';
@@ -138,7 +138,7 @@ export default function Editor() {
 
         <div className="adm-field">
           <span className="adm-lbl">المحتوى</span>
-          <RichEditor value={content} onChange={setContent} upload={uploadImage} listMedia={listMedia} />
+          <RichEditor value={content} onChange={setContent} upload={uploadImage} listMedia={listMedia} deleteMedia={editor ? deleteMedia : undefined} canForceDelete={me?.role === 'ADMIN'} />
         </div>
 
         <div className="adm-row">

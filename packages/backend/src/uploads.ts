@@ -90,3 +90,44 @@ export async function serveDerivative(req: Request, res: Response) {
 }
 
 export const cacheDir = () => path.join(UPLOAD_DIR, CACHE_DIRNAME);
+
+/**
+ * `YYYY/MM/name.ext`, `/api/uploads/YYYY/MM/name.ext` or that URL on any origin →
+ * the relative path of a stored upload, or null for anything storeUpload() could
+ * not have produced (traversal, dotfiles, the cache dir, other routes).
+ */
+export function uploadRel(input: string): string | null {
+  let s = String(input || '').trim();
+  if (/^https?:\/\//i.test(s)) { try { s = new URL(s).pathname; } catch { return null; } }
+  s = s.split(/[?#]/)[0];
+  if (s.startsWith(`${UPLOAD_URL}/`)) s = s.slice(UPLOAD_URL.length + 1);
+  return REL_RE.test(s) ? s : null;
+}
+
+const masterPath = (rel: string) => {
+  const abs = path.join(UPLOAD_DIR, rel);
+  return abs.startsWith(UPLOAD_DIR + path.sep) ? abs : null;
+};
+
+export const uploadExists = (rel: string) => { const abs = masterPath(rel); return !!abs && fs.existsSync(abs); };
+
+/**
+ * Remove a master and every cached derivative of it (.cache/w<width>/YYYY/MM/name.webp).
+ * Returns the number of files unlinked, or null when the master does not exist —
+ * the caller answers 404. Derivatives are best-effort: a missing one is fine.
+ */
+export function deleteUpload(rel: string): { removed: number } | null {
+  const abs = REL_RE.test(rel) ? masterPath(rel) : null;
+  if (!abs || !fs.existsSync(abs)) return null;
+  fs.unlinkSync(abs);
+  let removed = 1;
+  const cache = cacheDir();
+  if (fs.existsSync(cache)) {
+    for (const e of fs.readdirSync(cache, { withFileTypes: true })) {
+      if (!e.isDirectory() || !/^w\d+$/.test(e.name)) continue;
+      try { fs.unlinkSync(derivativePath(UPLOAD_DIR, rel, Number(e.name.slice(1)))); removed++; }
+      catch (err) { if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err; }
+    }
+  }
+  return { removed };
+}
