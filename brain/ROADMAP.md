@@ -1,5 +1,7 @@
 # mutabe3 Features Roadmap
 
+> **Order of work is set by `brain/BIBLE.md` § Roadmap (plan v2 "content first", D-050, 2026-10-06):** weeks 1–2 make it real · 3–4 sell · 5–8 brand · 9–12 grow; advertiser portal, packaging, Next 16, AI and English edition deferred. This file stays the feature-level checklist.
+
 Living list. ⚙️ = a model/UI already partly exists (wiring, not from zero).
 Status: ☐ todo · ◐ in progress · ☑ done. Grounded in the live stack as of 2026-10-05.
 

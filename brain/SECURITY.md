@@ -1,0 +1,45 @@
+# SECURITY — mutabe3
+Status: findings accepted into plan v2 (D-050). **This repository is public:** findings are listed by ID, area and severity; reproduction details for anything still open are held in the session record and added here only once fixed. Not legal advice — compliance items are **review by counsel**.
+
+## Verified good (code read 2026-10-06)
+Secrets out of the repo (D-040), DB password rotated (D-042), unprivileged service user + backups with restore drill (D-048), compiled backend (D-049), default-deny RBAC with the role re-read from the DB per request, sanitize-html allowlist on write, comment pre-moderation + honeypot, uploads re-encoded to WebP with SVG refused (D-045), media delete with in-use checks (D-046), drain-before-reject and published-only reads (D-042).
+
+## Findings
+| ID | Area | Severity | Status | Plan |
+|---|---|---|---|---|
+| S-01 | Dependencies: Next 14.2.35 on npm-audit's critical list (fix only in 16.x), nodemailer, proxy-addr (spoofable client IP defeats rate limits), qs; no tracked lockfile | Critical | open | weeks 1–2: `npm audit fix`, `images.unoptimized`, lockfile + `npm ci`, Dependabot; Next 16 deferred |
+| S-02 | No HSTS/CSP/frame-ancestors/nosniff/Referrer/Permissions-Policy; server banners leaked; tokens in localStorage make one XSS a 7-day takeover | Critical | open | weeks 1–2: nginx headers, CSP report-only first |
+| S-03 | Auth: no throttling on login/signup/verify/refresh/change-password; weak password policy; enumeration; open signup creates idle VIEWER accounts and sends mail | High | open | weeks 1–2: `limit_req` + app limits, close open signup, uniform errors |
+| S-04 | Two auth routes accept non-string filter values in request bodies | High | open — **details withheld until fixed** | weeks 1–2: string guards |
+| S-05 | Refresh token never rotated and survives password change; sessions never purged; dev fallback secrets apply if env is missing; one JWT_SECRET keys JWTs, SMTP seal and IP hashes | High | open | weeks 1–2: fail-fast on missing secrets, rotate on refresh, revoke on password change; HKDF sub-keys later |
+| S-06 | Rate limits only on comments/votes/newsletter; none on search, `/view`, auth; in-memory (reset per deploy); nginx XFF handling unverified | High | open | weeks 1–2: nginx `limit_req`, pass real IP |
+| S-07 | Root SSH deploy to a shared VPS; `npm install` on `^` ranges; host-key TOFU; no CI tests/audit; public repo | High | partly mitigated (D-048 service user) | lockfile now; non-root deploy user + pinned host key deferred |
+| S-08 | No audit log (media delete only `console.log`) | High | open | weeks 1–2: append-only `AuditLog` (publish/unpublish, roles, media delete, campaign activation, newsletter send, settings) |
+| S-09 | Demo articles, bylines, poll personas and demo ads are live | High (integrity) | open | weeks 1–2: hide blocks; demo articles stay until real content (owner) |
+| S-10 | Newsletter single opt-in re-activates unsubscribed emails; no SPF/DKIM/DMARC | High | open | weeks 1–2: double opt-in; DNS by Rami |
+| S-11 | Upload MIME is client-declared; a decode failure or GIF stores original bytes under an image extension without nosniff (happy path re-encodes; SVG refused) | Medium | open | `sharp.metadata().format` allowlist, reject on failure, nosniff |
+| S-12 | `String(e)` in ~40 error responses leaks ORM text | Medium | open | generic errors |
+| S-13 | Poll stuffing via fresh voter ids; no comment URL filter; `/view` inflatable | Medium | open | hashed voter + IP ceiling exists; add URL stripping, bot filter |
+| S-14 | Sanitizer runs on write only | Medium | accepted | re-sanitize on render if editor HTML sources change |
+| S-15 | Ads config accepts any https image host and `//host` hrefs | Medium | open | weeks 3–4 with the ads model: local creatives only, https click URLs |
+| S-16 | Editors can mass-mail and backdate without audit | Medium | open | audit log + confirm step |
+| S-17 | CORS allows `http://72.62.132.138:9100` | Low | open | drop; `CORS_ORIGINS` env |
+| S-18 | SMTP verify dials admin-chosen hosts; dumps unencrypted; weekly copy stored abroad | Low | accepted/open | note in data map |
+| S-19 | Unused `redis`; ageing Prisma 5 / tsx 3 | Low | open | remove with lockfile work |
+
+## Advertiser work — threat model (ads model in weeks 3–4; portal deferred)
+Creatives: static jpeg/png/webp only (no SVG/HTML5/zip/GIF), magic-byte check + re-encode, size caps, PENDING until approved, no remote URLs. Click URLs https only, no userinfo/IP literals, re-approval on edit, `/api/ads/c/<id>` 302 with server-side count, `rel="sponsored noopener"`. Stats server-side only, hashed IP+UA dedupe, bot filter, append-only. Activation admin-only and audited. When the portal comes: ADVERTISER role isolation (every query scoped by `advertiserId`, 404 on foreign ids), invite-only, TOTP, single-use hashed reset tokens, SPF/DKIM first.
+
+## Compliance map (review by counsel)
+- **PDPL 24/2023:** in force 2024-03-17, grace ended 2025-03-17; consent-based (no legitimate-interest basis); eight subject rights; breach notice 24 h to individuals / 72 h to the authority (verify Arabic text); DPO in listed cases; transfers need equal protection; fines JOD 1,000–10,000, doubled on repeat ([Clyde & Co](https://www.clydeco.com/en/insights/2023/10/jordan-issues-first-personal-data-protection-law)). Enforcement readiness of the Unit unknown.
+- **Data inventory & retention proposals:** staff accounts (while employed) · comments (approved kept; pending/rejected emails 90 d; IP hash 6 m) · subscribers (until unsubscribe; suppression hash kept) · poll hashes (poll life + 12 m) · advertiser contacts (per counsel) · nginx logs (30–90 d; current unknown) · backups (14 daily + 6 weekly → erasure lag ~6 weeks). DPIA: not required by sources read; keep a one-page data map, revisit with GA4 and reader accounts. GDPR only if targeting EEA; consent mode there.
+- **Press & Publications Law (as reported — verify):** registration + licence for news sites on Jordanian affairs; owner, editor-in-chief and director share liability for comments; sites can be blocked without a court order; editor-in-chief Jordanian, full-time, 4+ years JPA; right of reply/correction free within 2 months; comments kept 6 months ([HRW](https://www.hrw.org/news/2012/09/10/jordan-move-censor-online-expression), [CPJ 2025](https://cpj.org/2025/05/jordan-bans-12-news-sites-for-spreading-media-poison-following-corruption-report/), [summary](https://jordan-lawyer.com/2021/10/06/press-and-publication-law/)). Pre-licence publishing risk: ISP blocking; Cybercrimes Law 17/2023 Arts. 15–20 ([overview](https://en.wikipedia.org/wiki/2023_cybercrime_law_in_Jordan)). Owner accepted a soft launch — mitigations: named responsible editor, corrections/right-of-reply page, takedown contact, licence prioritised.
+
+## Incident response (one page)
+Roles: lead (Rami), editor-in-chief (content calls), counsel, Hostinger. Clocks: triage 1 h, contain 4 h, PDPL 24 h / 72 h notices. Defacement: stop frontend, `git reset`, rebuild, rotate secrets. Leak: rotate DB/JWT/SMTP, preserve logs, notify. Takedown: log, counsel verifies within 24 h, editor decides, archive not delete. DDoS: Hostinger edge, `limit_req`.
+
+## Audit log requirement
+Append-only `AuditLog` (no delete route), 24-month retention: logins/failures, password/role changes, publish/unpublish/edit/delete, comment moderation, media delete, homepage/breaking, newsletter send, SMTP/ads edits, campaign approve/activate, creative approval, erasure requests.
+
+## Pentest checklist (≤25)
+Covered by code read: role matrix, journalist IDOR, drafts hidden, SQLi via ORM, article/comment XSS via sanitizer, token entropy, newsletter double-send guard. Open: filter-object injection, brute force, XFF spoof, upload polyglots/bombs, CSP/headers, Next advisories, view/poll abuse, backdating, campaign state bypass, click redirects, creative swap, reset flow, CI/lockfile, error leakage, SMTP SSRF, audit completeness.
