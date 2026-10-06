@@ -2,6 +2,17 @@
 
 ## 2026-10-06
 
+**D-044: Mail account (SMTP) settings in the dashboard**
+- **Decided by:** Rami ("add admin option to add newsletter credentials there")
+- **What:** `/dashboard/newsletter` gains an admin-only "إعدادات البريد المرسِل (SMTP)" card: provider presets (Brevo, Amazon SES, Mailgun, Google Workspace, Microsoft 365, Zoho, Hostinger mail, this server) that fill host/port/TLS with a short hint, host, port, STARTTLS vs SSL, username, password/SMTP key, sender name and address, an "use for all site mail" switch, **"اختبار الاتصال"** (logs in and out, sends nothing) and save. Every editor sees which route mail currently takes. API (ADMIN only): `GET/PUT /api/admin/newsletter/smtp`, `POST …/smtp/verify`.
+- **Security:** the password is write-only — sealed with AES-256-GCM (`src/secretbox.ts`, key = SHA-256 of a domain-separated `JWT_SECRET`) into `SiteSetting["mail.smtp"]`, never returned (`hasPassword` / `passwordReadable` flags only), and an empty field keeps the stored one. Changing server or username without a new password drops the old one, so an old secret is never sent to a new host. Remote servers require TLS (`requireTLS` on STARTTLS); certificate checks are relaxed for localhost only. The password input uses `autocomplete="new-password"` so browsers don't drop the dashboard login password into it. If `JWT_SECRET` is ever rotated, the stored password stops decrypting and the card asks for it again.
+- **Transport precedence:** `MAIL_DRY_RUN=1` → dashboard settings (if switched on) → `SMTP_HOST` env → VPS Postfix `localhost:25`. Settings are re-read at most every 30 s or immediately on save; the pooled connection is rebuilt only when the effective config changes, and the old pool closes after 60 s so in-flight sends finish. Signup/verification emails use the same route.
+- **Verified locally** against a throwaway in-process SMTP server on 127.0.0.1:2525 with generated credentials (nothing left the machine): editor 403 on read/save; wrong password → `ok:false` with the server's 535; right password → `ok:true`; save without password while a username is set → 400; bad port/host → 400; saved response carries no password field and the DB row holds only the `v1.` sealed value; verify with the stored password works; issue test-send + send delivered 2 messages through the saved account with `From: المتابع للاختبار <news@mutabe3.news>`, `List-Unsubscribe` + `List-Unsubscribe-Post`; changing host without a new password → 400; disabling falls back to `localhost:25`. UI: card renders at 461px, presets fill the fields, the test button reports success. All test rows, accounts and credentials removed afterwards.
+- **Still needed for inbox delivery:** the provider's SPF/DKIM records (or the SPF/DMARC records from D-043 Stage 4 for the server route) in DNS at ns1/ns2.webhubteam.com.
+- **Status:** 🔧 pushed, deploy + prod check pending · 2026-10-06
+
+---
+
 **D-043: "Finish the site" — staged plan, Stage 2 (real-content foundation) starts now**
 - **Decided by:** Rami ("lets finish the site first")
 - **Why staged:** the roadmap's remaining items are large; the established pattern (D-036/D-038/D-039) is one verified, deployed stage at a time. Stage 2 is foundation that every later stage depends on, so it goes first without a separate approval; stages 3–5 are proposed and will be confirmed one by one.

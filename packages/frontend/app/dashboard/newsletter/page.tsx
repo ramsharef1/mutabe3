@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS } from '../components/staff';
+import SmtpSettings from './SmtpSettings';
 
 interface Issue { id: string; subject: string; status: string; auto: boolean; edition: string | null; recipients: number; sent: number; failed: number; lastError: string | null; createdAt: string; sentAt: string | null; articleIds: string[] }
-interface Mail { mode: string; host: string | null; from: string; domain: string; spf: boolean; dmarc: boolean }
+interface Mail { mode: string; source: string; host: string | null; user: string | null; from: string; domain: string; spf: boolean; dmarc: boolean; error: string | null }
+
+const SOURCE_AR: Record<string, string> = { 'dry-run': 'وضع التجربة (لا يُرسل شيء)', dashboard: 'حساب البريد المحدد هنا', env: 'إعدادات ملف الخادم', local: 'خادم الموقع نفسه' };
 interface Info { stats: Record<string, number>; issues: Issue[]; mail: Mail; auto: { enabled: boolean; hour: number; lastDate?: string } }
 interface A { id: string; title: string; status: string; publishedAt?: string | null }
 interface Sub { email: string; status: string; categories: string[]; source: string | null; subscribedAt: string }
@@ -110,6 +113,15 @@ export default function Newsletter() {
             <div><b>{info.issues.filter((i) => i.status === 'sent').length}</b><small>عدد مُرسل</small></div>
           </div>
 
+          {mail && (
+            <p className="adm-note">
+              الإرسال الحالي عبر: <b>{SOURCE_AR[mail.source] || mail.source}</b>
+              {mail.host && <> · <span dir="ltr">{mail.host}</span></>}
+              {mail.user && <> · <span dir="ltr">{mail.user}</span></>}
+              {' '}· المرسِل: <span dir="ltr">{mail.from}</span>
+            </p>
+          )}
+          {mail?.error && <div className="adm-err">{mail.error}</div>}
           {!deliverable && (
             <div className="adm-err">
               {mail?.mode === 'dry-run' ? 'وضع التجربة مفعّل: الرسائل لا تُرسل فعلياً.' : <>
@@ -118,6 +130,8 @@ export default function Newsletter() {
               </>}
             </div>
           )}
+
+          {me?.role === 'ADMIN' && <SmtpSettings onSaved={load} />}
 
           <section className="adm-card">
             <h2>عدد جديد</h2>

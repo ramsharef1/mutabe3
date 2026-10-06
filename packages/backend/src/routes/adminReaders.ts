@@ -2,7 +2,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { drainRequest } from '../middleware';
 import { pollDto } from '../polls';
-import { sendMail, mailStatus } from '../email';
+import { sendMail, mailStatus, readSmtp, writeSmtp, verifySmtp, sealPassword, passwordReadable, SmtpSettings } from '../email';
+import { open } from '../secretbox';
 import { sendIssue, renderIssue, issueArticles, recipientWhere, readAuto, writeAuto, newToken } from '../newsletter';
 
 // Reader-facing admin (D-043 Stage 4): comment moderation, polls, newsletter.
@@ -142,6 +143,73 @@ router.put('/newsletter/auto', only('ADMIN'), async (req: Request, res: Response
     const hour = req.body?.hour !== undefined ? Number(req.body.hour) : cur.hour;
     if (!Number.isFinite(hour) || hour < 0 || hour > 23) return res.status(400).json({ error: 'الساعة بين 0 و23' });
     res.json({ success: true, data: await writeAuto(prisma, { ...cur, enabled: !!req.body?.enabled, hour }) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+/* ── SMTP settings (admins only, D-044). The password is write-only: sealed with
+      AES-GCM on save and never returned; omit it on save to keep the stored one. ── */
+
+const HOST_RE = /^[A-Za-z0-9.-]{1,253}$/;
+const MAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+const publicSmtp = (s: SmtpSettings | null) => ({
+  enabled: !!s?.enabled,
+  host: s?.host || '',
+  port: s?.port || 587,
+  secure: !!s?.secure,
+  user: s?.user || '',
+  fromName: s?.fromName || 'المتابع',
+  fromEmail: s?.fromEmail || 'noreply@mutabe3.news',
+  hasPassword: !!s?.passEnc,
+  passwordReadable: passwordReadable(s),
+  updatedAt: s?.updatedAt || null,
+});
+
+/** Validates a settings payload; returns an error string or the normalised fields. */
+function cleanSmtp(b: any): string | { enabled: boolean; host: string; port: number; secure: boolean; user: string; fromName: string; fromEmail: string } {
+  const host = String(b?.host || '').trim().toLowerCase();
+  const port = Number(b?.port);
+  const fromEmail = String(b?.fromEmail || '').trim().toLowerCase();
+  const fromName = String(b?.fromName || '').trim().slice(0, 80);
+  const user = String(b?.user || '').trim().slice(0, 200);
+  if (!HOST_RE.test(host)) return 'اسم خادم البريد غير صالح';
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return 'المنفذ غير صالح';
+  if (!MAIL_RE.test(fromEmail)) return 'عنوان المرسِل غير صالح';
+  return { enabled: !!b?.enabled, host, port, secure: !!b?.secure, user, fromName: fromName || 'المتابع', fromEmail };
+}
+
+router.get('/newsletter/smtp', only('ADMIN'), async (_req: Request, res: Response) => {
+  try { res.json({ success: true, data: publicSmtp(await readSmtp()) }); }
+  catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// PUT { enabled, host, port, secure, user, password?, fromName, fromEmail }
+router.put('/newsletter/smtp', only('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const c = cleanSmtp(req.body);
+    if (typeof c === 'string') return res.status(400).json({ error: c });
+    const cur = await readSmtp();
+    const pw = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (pw.length > 500) return res.status(400).json({ error: 'كلمة المرور طويلة جداً' });
+    // A different server or username without a new password would pair old secrets with new settings.
+    const changedAccount = !!cur && (cur.host !== c.host || cur.user !== c.user);
+    const passEnc = pw ? sealPassword(pw) : changedAccount ? null : cur?.passEnc ?? null;
+    if (c.enabled && c.user && !passEnc) return res.status(400).json({ error: 'أدخل كلمة مرور حساب البريد' });
+    const next: SmtpSettings = { ...c, passEnc, updatedAt: new Date().toISOString(), updatedBy: who(req).id };
+    await writeSmtp(next);
+    res.json({ success: true, data: publicSmtp(next), status: await mailStatus() });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// POST …/smtp/verify — logs in with the given settings (or the stored password) and logs out; sends nothing
+router.post('/newsletter/smtp/verify', only('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const c = cleanSmtp(req.body);
+    if (typeof c === 'string') return res.status(400).json({ error: c });
+    const cur = await readSmtp();
+    const pw = typeof req.body?.password === 'string' && req.body.password ? req.body.password : (cur && cur.host === c.host && cur.user === c.user ? open(cur.passEnc) ?? '' : '');
+    if (c.user && !pw) return res.status(400).json({ error: 'أدخل كلمة المرور لاختبار الاتصال' });
+    res.json({ success: true, data: await verifySmtp({ host: c.host, port: c.port, secure: c.secure, user: c.user || undefined, pass: pw || undefined }) });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
