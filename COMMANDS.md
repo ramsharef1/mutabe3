@@ -11,7 +11,9 @@
 | VPS | `72.62.132.138` · `srv1772644.hstgr.cloud` (Hostinger, root) |
 | Site | https://mutabe3.news — nginx → Next on `:9100`; `/api/*` → Express on `:9080` |
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` (git, branch `main`, hard-synced by CI) |
-| Services | systemd `mutabe3-frontend` (`next start`, :9100) · `mutabe3-backend` (Express API, :9080; currently runs as root — D-041) |
+| Services | systemd `mutabe3-frontend` (`npm run start`, :9100) · `mutabe3-backend` (`npx tsx watch src/index.ts`, :9080) — both run as system user `mutabe3` via drop-ins `…service.d/10-service-user.conf` (D-048) |
+| Backups | `/var/backups/mutabe3` (root-only): nightly DB dump 00:30 UTC + Sunday uploads archive, 14/6 kept — timer `mutabe3-backup.timer` (D-048) |
+| Server ops | `gh workflow run ops-vps.yml -f action=inspect|status|setup-service-user|setup-backups|backup-now` → runs `ops/vps/<action>.sh` on the VPS (D-048) |
 | Backend env | `/etc/mutabe3/backend.env` — the backend unit's `EnvironmentFile` and the **only** real env on the VPS (D-037/D-040) |
 | Database | Postgres on the VPS, database `mutabe3`, role `mutabe3_user`; `DATABASE_URL` lives in backend.env (password rotated 2026-10-06, D-042) |
 | Uploads | `/var/www/mutabe3/uploads` (`UPLOAD_DIR`), served at `/api/uploads/*`; WebP derivatives at `/api/img/<w>/*` cached in `.cache/` (D-045) |
@@ -64,8 +66,31 @@ pg_dump "$DATABASE_URL" > /var/backups/mutabe3-$(date +%F).sql
 ```
 
 - Schema changes ship as additive `prisma db push` inside the deploy; nothing runs migrations by hand.
-- No backup job is recorded in DECISIONS yet — the `pg_dump` line above is manual.
 - Password rotation procedure: D-040/D-042 (`ALTER ROLE` in the console, update backend.env, `systemctl restart mutabe3-backend`).
+
+---
+
+## Backups (D-048)
+
+- **What runs:** `/usr/local/bin/mutabe3-backup` via `mutabe3-backup.timer` every night at 00:30 UTC (03:30 Amman): `pg_dump --format=custom` of the live DB (validated with `pg_restore --list`), plus a tar of `UPLOAD_DIR` (without `.cache`) on Sundays. Keeps 14 daily dumps and 6 weekly archives in `/var/backups/mutabe3` (0700 root). On this VPS only — no off-site copy yet.
+- **Check:** `gh workflow run ops-vps.yml -f action=status` (lists the newest files, timer, last log line) · **take one now:** `-f action=backup-now`.
+- **Restore the database** (web console, as root):
+  ```bash
+  set -a; . /etc/mutabe3/backend.env; set +a
+  pg_restore --clean --if-exists --no-owner --no-privileges -d "$DATABASE_URL" /var/backups/mutabe3/db-<timestamp>.dump
+  systemctl restart mutabe3-backend
+  ```
+- **Restore uploads:** `tar -xzf /var/backups/mutabe3/uploads-<timestamp>.tgz -C /var/www/mutabe3/uploads && chown -R mutabe3: /var/www/mutabe3/uploads`
+- **Drill:** `setup-backups` is idempotent and ends with a restore into a scratch database (`mutabe3_restore_drill`, dropped afterwards); re-run it any time to prove the newest dump restores.
+- A separate, generic `/etc/cron.d/vps-backup` (03:30, `/root/backup/vps-backup.sh`) exists at VPS level and is not managed by this repo.
+
+---
+
+## Service user (D-048)
+
+- Both units run as system user `mutabe3` (uid 789, `/sbin/nologin`, HOME `/var/lib/mutabe3`), set by `/etc/systemd/system/mutabe3-{backend,frontend}.service.d/10-service-user.conf` (`User/Group`, `UMask=0022`, `NoNewPrivileges`, `PrivateTmp`, cache/HOME env). `/etc/mutabe3/backend.env` stays root-only; systemd injects it.
+- Writable by the service: `/var/www/mutabe3/uploads` (+ `.cache`) and `packages/frontend/.next` (the deploy chowns `.next` after each build). Everything else in the checkout is root-owned and world-readable.
+- If a future change needs root again, remove the drop-ins and `systemctl daemon-reload && systemctl restart …` — or re-run `setup-service-user`, which rolls itself back if health checks fail.
 
 ---
 

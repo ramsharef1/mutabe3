@@ -66,6 +66,7 @@ ls -lh --time-style=long-iso "$BK" | awk 'NR>1{print $1, $3, $5, $6, $7, $8}'
 echo "== 4. restore drill into a scratch database (proves the dump restores; dropped afterwards) =="
 newest=$(ls -t "$BK"/db-*.dump | sed -n 1p)
 DRILL=mutabe3_restore_drill
+cd /   # runuser -u postgres would otherwise warn "could not change directory to /root"
 if runuser -u postgres -- psql -Atc 'select 1' >/dev/null 2>&1; then
   # local superuser via peer auth; the dump is root-only, so stream it in
   runuser -u postgres -- psql -q -c "drop database if exists $DRILL" -c "create database $DRILL"

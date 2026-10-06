@@ -41,9 +41,14 @@
 - [x] `curl localhost:9100` → 200 and `curl localhost:9080/api/articles` → 200
 - [ ] Mail inbox delivery — waiting on SPF/DKIM (or provider) DNS records (D-043/D-044)
 
+## Hardening in place (D-048)
+- Both services run as the unprivileged system user `mutabe3` (systemd drop-ins; `backend.env` stays root-only, injected by systemd); the deploy hands `.next` to that user after each build.
+- Nightly backups at 00:30 UTC (`mutabe3-backup.timer`): custom-format `pg_dump` + Sunday uploads archive, 14 daily / 6 weekly kept in `/var/backups/mutabe3`; first dump and a restore drill verified 2026-10-06.
+- Server operations run as reviewable scripts through `ops-vps.yml` (`inspect`, `status`, `setup-service-user`, `setup-backups`, `backup-now`).
+
 ## Known gaps
-- Backend service runs as root (D-041) — a dedicated service user is still to do.
-- No automated database backup job recorded yet (see COMMANDS.md for the manual `pg_dump`).
+- Backups are on the same VPS only. Off-site copies need a destination Rami picks (Hostinger hPanel snapshots, or object storage via rclone).
+- The backend starts with `tsx watch` in production; a compiled `node dist/` start would avoid restarts on file changes during deploys.
 
 ---
 
