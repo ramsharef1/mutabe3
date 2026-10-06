@@ -11,7 +11,7 @@
 | Branch | `main` → auto-deploy on push touching `packages/**` | ✅ |
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` | ✅ |
 | Frontend | systemd `mutabe3-frontend` · `next start` · `:9100` | ✅ |
-| Backend | systemd `mutabe3-backend` · Express · `:9080` · env `/etc/mutabe3/backend.env` | ✅ |
+| Backend | systemd `mutabe3-backend` · Express from the compiled `dist/` (`node dist/index.js`, D-049) · `:9080` · env `/etc/mutabe3/backend.env` | ✅ |
 | Database | Postgres on the VPS · db `mutabe3` · role `mutabe3_user` | ✅ |
 | Uploads | `/var/www/mutabe3/uploads` → `/api/uploads/*`, derivatives `/api/img/<w>/*` | ✅ (D-045) |
 | nginx | server blocks in `/etc/nginx/conf.d/all-domains.conf`, body limit 25m | ✅ (D-041) |
@@ -50,7 +50,6 @@
 
 ## Known gaps
 - VPS-level recovery point is weekly by decision (Rami, 2026-10-06: daily add-on declined); nightly app-level dumps cover the days in between. A VPS restore replaces every site on the box.
-- The backend starts with `tsx watch` in production; a compiled `node dist/` start would avoid restarts on file changes during deploys.
 
 ---
 

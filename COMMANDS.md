@@ -11,7 +11,7 @@
 | VPS | `72.62.132.138` · `srv1772644.hstgr.cloud` (Hostinger, root) |
 | Site | https://mutabe3.news — nginx → Next on `:9100`; `/api/*` → Express on `:9080` |
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` (git, branch `main`, hard-synced by CI) |
-| Services | systemd `mutabe3-frontend` (`npm run start`, :9100) · `mutabe3-backend` (`npx tsx watch src/index.ts`, :9080) — both run as system user `mutabe3` via drop-ins `…service.d/10-service-user.conf` (D-048) |
+| Services | systemd `mutabe3-frontend` (`npm run start`, :9100) · `mutabe3-backend` (`node dist/index.js`, compiled by the deploy — drop-in `20-exec-dist.conf`, D-049; :9080) — both run as system user `mutabe3` via drop-ins `…service.d/10-service-user.conf` (D-048) |
 | Backups | app-level: `/var/backups/mutabe3` (root-only), nightly DB dump 00:30 UTC + Sunday uploads archive, 14/6 kept — timer `mutabe3-backup.timer` · VPS-level: hPanel weekly off-site backups (2 kept) + 1-day snapshots (D-048) |
 | Server ops | `gh workflow run ops-vps.yml -f action=inspect|status|setup-service-user|setup-backups|backup-now` → runs `ops/vps/<action>.sh` on the VPS (D-048) |
 | Backend env | `/etc/mutabe3/backend.env` — the backend unit's `EnvironmentFile` and the **only** real env on the VPS (D-037/D-040) |
@@ -29,7 +29,7 @@
 - **Manual re-deploy:** `gh workflow run deploy-vps.yml`
 - **With the image backfill (D-045):** `gh workflow run deploy-vps.yml -f images_backfill=dry` (then `apply`, then `apply-delete-original` once the dry run looks right).
 - **Watch:** `gh run list --workflow=deploy-vps.yml -L 3` · `gh run watch <id>` · `gh run view <id> --log`
-- **What a run does:** fast-forward the checkout to `origin/main` (refuses if prod has commits of its own) → idempotent server config (`UPLOAD_DIR`, uploads dir, nginx body limit) → `npm install` → prints `node -v` and loads `sharp` (fails here, before any restart, if the platform binary is missing) → `prisma db push` + `prisma generate` with backend.env sourced (a destructive schema change fails the deploy instead of losing data) → optional backfill → `next build` → restart both units → health checks must return 200/200.
+- **What a run does:** fast-forward the checkout to `origin/main` (refuses if prod has commits of its own) → idempotent server config (`UPLOAD_DIR`, uploads dir, nginx body limit) → `npm install` → prints `node -v` and loads `sharp` (fails here, before any restart, if the platform binary is missing) → `prisma db push` + `prisma generate` with backend.env sourced (a destructive schema change fails the deploy instead of losing data) → optional backfill → backend `tsc` build to `packages/backend/dist` (a type error fails the deploy) → `next build` (then `.next` handed to the service user) → restart both units → health checks polled until 200/200.
 - **Rollback:** `git revert <bad commit>` on `main` and push; CI redeploys. Never reset the prod checkout by hand.
 
 ---
@@ -105,7 +105,8 @@ pg_dump "$DATABASE_URL" > /var/backups/mutabe3-$(date +%F).sql
 - `.claude/launch.json` has `backend-dev` (:9080, sources `packages/backend/.env.local`) and `frontend-dev` (:3100). Start them with the Browser pane's preview tools, not with Bash.
 - Local Postgres 15 (brew), database `mutabe3_dev`; test admin `admin@mutabe3.test` — its password is a comment in the gitignored `packages/backend/.env.local`, never paste it in chat.
 - `packages/frontend/.env.local`: `VPS_API=http://127.0.0.1:9080` to test against the local API, `https://mutabe3.news` to preview against prod data; restore to prod afterwards.
-- Checks: `npm run lint` (frontend `next lint`, backend `eslint src`), `npx tsc --noEmit` in `packages/frontend`, `npm test` (no suites yet; exits 0).
+- Checks: `npm run lint` (frontend `next lint`, backend `eslint src`), `npx tsc --noEmit` in `packages/frontend`, `npm run typecheck -w packages/backend` (strict), `npm test` (no suites yet; exits 0).
+- Run the compiled backend the way prod does: `npm run build -w packages/backend` then (env sourced) `PORT=9081 node packages/backend/dist/index.js`.
 
 ---
 
