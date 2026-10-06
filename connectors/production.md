@@ -46,8 +46,10 @@
 - Nightly backups at 00:30 UTC (`mutabe3-backup.timer`): custom-format `pg_dump` + Sunday uploads archive, 14 daily / 6 weekly kept in `/var/backups/mutabe3`; first dump and a restore drill verified 2026-10-06.
 - Server operations run as reviewable scripts through `ops-vps.yml` (`inspect`, `status`, `setup-service-user`, `setup-backups`, `backup-now`).
 
+- Off-site: Hostinger's **weekly automatic VPS backups** are active (stored in France, two copies kept, ≈1 h restore) and include `/var/backups/mutabe3`; a whole-VPS **snapshot** (1-day lifetime) was taken after the 2026-10-06 hardening. hPanel → VPS → Backups & Monitoring → Snapshots & Backups.
+
 ## Known gaps
-- Backups are on the same VPS only. Off-site copies need a destination Rami picks (Hostinger hPanel snapshots, or object storage via rclone).
+- VPS-level recovery point is weekly; the $3.00/mo daily add-on (two daily + two weekly kept) is Rami's call. A VPS restore replaces every site on the box.
 - The backend starts with `tsx watch` in production; a compiled `node dist/` start would avoid restarts on file changes during deploys.
 
 ---

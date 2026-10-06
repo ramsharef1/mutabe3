@@ -12,7 +12,7 @@
 | Site | https://mutabe3.news — nginx → Next on `:9100`; `/api/*` → Express on `:9080` |
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` (git, branch `main`, hard-synced by CI) |
 | Services | systemd `mutabe3-frontend` (`npm run start`, :9100) · `mutabe3-backend` (`npx tsx watch src/index.ts`, :9080) — both run as system user `mutabe3` via drop-ins `…service.d/10-service-user.conf` (D-048) |
-| Backups | `/var/backups/mutabe3` (root-only): nightly DB dump 00:30 UTC + Sunday uploads archive, 14/6 kept — timer `mutabe3-backup.timer` (D-048) |
+| Backups | app-level: `/var/backups/mutabe3` (root-only), nightly DB dump 00:30 UTC + Sunday uploads archive, 14/6 kept — timer `mutabe3-backup.timer` · VPS-level: hPanel weekly off-site backups (2 kept) + 1-day snapshots (D-048) |
 | Server ops | `gh workflow run ops-vps.yml -f action=inspect|status|setup-service-user|setup-backups|backup-now` → runs `ops/vps/<action>.sh` on the VPS (D-048) |
 | Backend env | `/etc/mutabe3/backend.env` — the backend unit's `EnvironmentFile` and the **only** real env on the VPS (D-037/D-040) |
 | Database | Postgres on the VPS, database `mutabe3`, role `mutabe3_user`; `DATABASE_URL` lives in backend.env (password rotated 2026-10-06, D-042) |
@@ -83,6 +83,12 @@ pg_dump "$DATABASE_URL" > /var/backups/mutabe3-$(date +%F).sql
 - **Restore uploads:** `tar -xzf /var/backups/mutabe3/uploads-<timestamp>.tgz -C /var/www/mutabe3/uploads && chown -R mutabe3: /var/www/mutabe3/uploads`
 - **Drill:** `setup-backups` is idempotent and ends with a restore into a scratch database (`mutabe3_restore_drill`, dropped afterwards); re-run it any time to prove the newest dump restores.
 - A separate, generic `/etc/cron.d/vps-backup` (03:30, `/root/backup/vps-backup.sh`) exists at VPS level and is not managed by this repo.
+
+### VPS-level (off-site) — hPanel Snapshots & Backups
+- **Where:** hPanel → VPS → `srv1772644.hstgr.cloud` → Backups & Monitoring → **Snapshots & Backups** (`https://hpanel.hostinger.com/vps/1772644/backups`). hPanel sessions expire; Rami signs in inside the Browser pane, then Claude can drive the page.
+- **Weekly automatic backups** of the whole VPS, stored off-server (France), two copies kept, ≈1 h to restore. Each copy contains `/var/backups/mutabe3`, so it carries up to 14 nightly dumps too. Daily backups are a $3.00/mo add-on (two daily + two weekly kept) — Rami's decision.
+- **Snapshot** = manual whole-VPS image: one at a time, replaced by the next, **expires after 1 day**, deleted by an OS reinstall or a restore. Take one *before* risky server changes (`Create snapshot` on that page); do not count on it as retention.
+- **Restore from a VPS backup/snapshot replaces the entire server** — every site on this box (okath, telescope, jugate, boltweb, …), 10 min to a few hours, cannot be stopped. Use only for server loss. For a mutabe3-only problem use the database/uploads restore above.
 
 ---
 
