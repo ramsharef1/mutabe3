@@ -62,17 +62,20 @@ echo "== 3. first backup now (with uploads) =="
 ls -lh --time-style=long-iso "$BK" | awk 'NR>1{print $1, $3, $5, $6, $7, $8}'
 
 echo "== 4. restore drill into a scratch database (proves the dump restores; dropped afterwards) =="
-( set -a; . /etc/mutabe3/backend.env; set +a
-  newest=$(ls -t "$BK"/db-*.dump | head -1)
-  admin_url=$(printf '%s' "$DATABASE_URL" | sed -E 's#/[^/?]+(\?.*)?$#/postgres\1#')
-  if psql "$admin_url" -Atc 'select 1' >/dev/null 2>&1; then
-    psql "$admin_url" -q -c 'drop database if exists mutabe3_restore_drill' -c 'create database mutabe3_restore_drill'
-    drill_url=$(printf '%s' "$DATABASE_URL" | sed -E 's#/[^/?]+(\?.*)?$#/mutabe3_restore_drill\1#')
-    pg_restore --no-owner --no-privileges -d "$drill_url" "$newest"
-    echo "restored: $(psql "$drill_url" -Atc "select count(*) from \"Article\"") articles, $(psql "$drill_url" -Atc "select count(*) from \"User\"") users, $(psql "$drill_url" -Atc "select count(*) from information_schema.tables where table_schema='public'") tables"
-    psql "$admin_url" -q -c 'drop database mutabe3_restore_drill'
-    echo "scratch database dropped ✓"
-  else
-    echo "⚠️  mutabe3_user cannot connect to the postgres maintenance DB — skipped the restore drill (pg_restore --list already validated the archive)"
-  fi )
+newest=$(ls -t "$BK"/db-*.dump | head -1)
+DRILL=mutabe3_restore_drill
+if runuser -u postgres -- psql -Atc 'select 1' >/dev/null 2>&1; then
+  # local superuser via peer auth; the dump is root-only, so stream it in
+  runuser -u postgres -- psql -q -c "drop database if exists $DRILL" -c "create database $DRILL"
+  runuser -u postgres -- pg_restore --no-owner --no-privileges -d "$DRILL" < "$newest"
+  q() { runuser -u postgres -- psql -d "$DRILL" -Atc "$1"; }
+  echo "restored: $(q 'select count(*) from "Article"') articles, $(q 'select count(*) from "User"') users, $(q "select count(*) from information_schema.tables where table_schema='public'") tables"
+  runuser -u postgres -- psql -q -c "drop database $DRILL"
+  echo "scratch database dropped ✓"
+else
+  echo "⚠️  no local postgres superuser via peer auth — skipped the restore drill (pg_restore --list already validated the archive)"
+fi
+
+echo "== 5. other backup jobs on this VPS (for the record) =="
+for f in /etc/cron.d/vps-backup; do [ -f "$f" ] && { echo "--- $f ---"; grep -v '^#' "$f" | grep -v '^\s*$' | sed -E 's/((PASSWORD|SECRET|TOKEN|KEY)[A-Z_]*=)[^ ]*/\1***/Ig'; }; done
 echo "✅ backups installed: nightly 00:30 UTC, 14 daily dumps + 6 weekly uploads archives kept in $BK (on this VPS only)"
