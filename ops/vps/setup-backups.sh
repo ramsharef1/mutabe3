@@ -28,7 +28,8 @@ fi
 find "$BK" -name 'db-*.dump' -mtime +"$KEEP_DB_DAYS" -delete
 find "$BK" -name 'uploads-*.tgz' -mtime +$((KEEP_UP_WEEKS * 7)) -delete
 find "$BK" -name '*.tmp' -mmin +120 -delete
-echo "mutabe3-backup ok · newest: $(ls -t "$BK" | head -1) ($(du -h "$BK/$(ls -t "$BK" | head -1)" | cut -f1)) · $(ls -1 "$BK" | wc -l) files, $(du -sh "$BK" | cut -f1) total"
+newest=$(ls -t "$BK" | sed -n 1p)
+echo "mutabe3-backup ok · newest: $newest ($(du -h "$BK/$newest" | cut -f1)) · $(ls -1 "$BK" | wc -l) files, $(du -sh "$BK" | cut -f1) total"
 EOF
 chmod 0755 /usr/local/bin/mutabe3-backup
 
@@ -55,14 +56,15 @@ WantedBy=timers.target
 EOF
 systemctl daemon-reload
 systemctl enable --now mutabe3-backup.timer
-systemctl list-timers mutabe3-backup.timer --no-pager | head -2
+# (no `| head` anywhere in this script: with pipefail an early-closing reader turns into exit 141)
+systemctl list-timers mutabe3-backup.timer --no-pager | sed -n '1,2p'
 
 echo "== 3. first backup now (with uploads) =="
 /usr/local/bin/mutabe3-backup --with-uploads
 ls -lh --time-style=long-iso "$BK" | awk 'NR>1{print $1, $3, $5, $6, $7, $8}'
 
 echo "== 4. restore drill into a scratch database (proves the dump restores; dropped afterwards) =="
-newest=$(ls -t "$BK"/db-*.dump | head -1)
+newest=$(ls -t "$BK"/db-*.dump | sed -n 1p)
 DRILL=mutabe3_restore_drill
 if runuser -u postgres -- psql -Atc 'select 1' >/dev/null 2>&1; then
   # local superuser via peer auth; the dump is root-only, so stream it in

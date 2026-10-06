@@ -10,7 +10,7 @@ echo; echo "== backups (/var/backups/mutabe3) =="
 if [ -d /var/backups/mutabe3 ]; then
   ls -lh --time-style=long-iso /var/backups/mutabe3 2>/dev/null | awk 'NR>1{print $5, $6, $7, $8}' | tail -8
   echo "total: $(du -sh /var/backups/mutabe3 | cut -f1) · files: $(ls -1 /var/backups/mutabe3 | wc -l)"
-  systemctl list-timers mutabe3-backup.timer --no-pager 2>/dev/null | head -2
+  systemctl list-timers mutabe3-backup.timer --no-pager 2>/dev/null | sed -n '1,2p'
   journalctl -u mutabe3-backup -n 3 --no-pager -o cat 2>/dev/null
 else
   echo "none — run ops action setup-backups"
