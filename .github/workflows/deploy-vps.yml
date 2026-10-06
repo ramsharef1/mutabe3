@@ -108,6 +108,10 @@ jobs:
 
           echo "== Building frontend =="
           npm run build --workspace=packages/frontend
+          # The build runs as root; when the units run as the service user (D-048) hand .next back
+          # to it so `next start` can write its ISR / revalidate cache.
+          FE_USER=$(systemctl show -p User --value mutabe3-frontend)
+          [ -n "$FE_USER" ] && chown -R "$FE_USER:" packages/frontend/.next && echo ".next owned by $FE_USER"
 
           echo "== Restarting services =="
           systemctl restart mutabe3-frontend

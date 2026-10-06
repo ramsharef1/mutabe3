@@ -1,0 +1,42 @@
+name: VPS ops
+
+# One-off, reviewable server operations (D-048). Each choice runs ops/vps/<action>.sh on the VPS
+# as the deploy user over the same SSH credentials deploy-vps.yml uses. Rami's Mac is edge-banned
+# from SSH, so this is how server work happens without pasting commands anywhere.
+#
+#   gh workflow run ops-vps.yml -f action=inspect
+#
+# Logs of this public repo are public: the scripts print no secrets (env values are masked).
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Script under ops/vps/ to run on the VPS'
+        type: choice
+        required: true
+        default: status
+        options: [inspect, status, setup-service-user, setup-backups, backup-now]
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ops/vps/${{ inputs.action }}.sh on the VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          ACTION: ${{ inputs.action }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          test -f "ops/vps/$ACTION.sh" || { echo "no script ops/vps/$ACTION.sh"; exit 1; }
+          echo "== ops/vps/$ACTION.sh @ $(git rev-parse --short HEAD) =="
+          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' < "ops/vps/$ACTION.sh"
