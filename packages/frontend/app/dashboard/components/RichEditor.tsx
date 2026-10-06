@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { plain } from '../../components/util';
+import { imgAt } from '../../components/img';
 import type { MediaItem } from './upload';
 
 // Dependency-free rich text editor: a contentEditable body driven by execCommand,
@@ -264,7 +265,7 @@ export default function RichEditor({ value, onChange, upload, listMedia, placeho
             <header><b>مكتبة الصور</b><button type="button" onClick={() => setLib(null)} aria-label="إغلاق">✕</button></header>
             {libBusy ? <p className="adm-loading">جاري التحميل…</p>
               : lib.length === 0 ? <p className="adm-empty">لا توجد صور مرفوعة بعد.</p>
-              : <div className="grid">{lib.map((m) => <button type="button" key={m.url} onClick={() => pick(m)} title={m.name}><img src={m.url} alt="" loading="lazy" /></button>)}</div>}
+              : <div className="grid">{lib.map((m) => <button type="button" key={m.url} onClick={() => pick(m)} title={m.name}><img src={imgAt(m.url, 320)} alt="" loading="lazy" /></button>)}</div>}
           </div>
         </div>
       )}

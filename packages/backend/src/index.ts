@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
-import { UPLOAD_DIR, UPLOAD_URL } from './uploads';
+import { UPLOAD_DIR, UPLOAD_URL, IMG_URL, serveDerivative } from './uploads';
 import { ensureCategories } from './categories';
 import { startScheduler } from './scheduler';
 import { resolveHomepage } from './homepage';
@@ -25,7 +25,9 @@ app.set('trust proxy', 'loopback');
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 // Editor uploads (images). Filenames are random, so long immutable caching is safe.
-app.use(UPLOAD_URL, express.static(UPLOAD_DIR, { maxAge: '30d', immutable: true, index: false }));
+app.use(UPLOAD_URL, express.static(UPLOAD_DIR, { maxAge: '30d', immutable: true, index: false, dotfiles: 'ignore' }));
+// Resized WebP derivatives of those masters, e.g. /api/img/640/2026/10/abc.webp (D-045).
+app.get(`${IMG_URL}/:w(\\d+)/*`, (req, res) => { serveDerivative(req, res).catch(() => res.status(500).end()); });
 app.use((req, res, next) => {
   const allowedOrigins = ['https://mutabe3.news', 'https://www.mutabe3.news', 'http://localhost:9100', 'http://72.62.132.138:9100'];
   const origin = req.headers.origin;

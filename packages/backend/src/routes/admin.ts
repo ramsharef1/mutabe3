@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, drainRequest } from '../middleware';
 import { sanitizeArticleHtml } from '../sanitize';
-import { imageUpload, uploadedFileUrl, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
+import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES } from '../uploads';
 import { hashPassword } from '../auth';
 import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
 import readerAdmin from './adminReaders';
@@ -191,7 +191,13 @@ router.post('/upload', (req: Request, res: Response) => {
     }
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) return res.status(400).json({ error: 'No file received' });
-    res.status(201).json({ success: true, url: uploadedFileUrl(file), name: file.originalname, size: file.size });
+    // D-045: stored as a WebP master (q82, ≤2048px) unless the ingest kept the original (gif/animated/failure)
+    storeUpload(file)
+      .then((s) => res.status(201).json({
+        success: true, url: s.url, name: file.originalname, size: s.size, originalSize: file.size,
+        format: s.mime, converted: s.converted, width: s.width, height: s.height,
+      }))
+      .catch((e) => { console.error('[upload] store failed:', e); res.status(500).json({ error: 'تعذّر حفظ الصورة' }); });
   });
 });
 

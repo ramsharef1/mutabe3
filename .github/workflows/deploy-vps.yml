@@ -6,7 +6,13 @@ on:
     paths:
       - 'packages/**'
       - '.github/workflows/deploy-vps.yml'
-  workflow_dispatch: {}   # manual re-deploy: gh workflow run deploy-vps.yml
+  workflow_dispatch:      # manual re-deploy: gh workflow run deploy-vps.yml [-f images_backfill=dry]
+    inputs:
+      images_backfill:
+        description: 'Re-encode stored JPEG/PNG uploads to WebP masters and repoint the DB (D-045)'
+        type: choice
+        default: none
+        options: [none, dry, apply, apply-delete-original]
 
 # The production app is a git checkout at
 # /var/www/mutabe3/current/projects/mutabe3 run by the systemd units
@@ -24,13 +30,15 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
+          IMAGES_BACKFILL: ${{ inputs.images_backfill || 'none' }}
         run: |
           mkdir -p ~/.ssh
           echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          # IMAGES_BACKFILL is a fixed-choice input, so it is safe to splice into the remote command.
+          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "IMAGES_BACKFILL=$IMAGES_BACKFILL bash -s" <<'REMOTE'
           set -euo pipefail
           cd /var/www/mutabe3/current/projects/mutabe3
 
@@ -69,6 +77,10 @@ jobs:
 
           echo "== Installing dependencies =="
           npm install --no-audit --no-fund
+          # The image pipeline (D-045) needs sharp's prebuilt libvips for this platform; fail here,
+          # before anything restarts, rather than at the first upload.
+          node -v
+          node -e "const s=require('sharp'); console.log('sharp', s.versions.sharp, '· libvips', s.versions.vips, '· webp', !!s.format.webp.output.buffer)"
 
           echo "== Database schema (additive push + client generate) =="
           # Prisma reads DATABASE_URL from the service's env file (D-037/D-040). `db push`
@@ -80,6 +92,19 @@ jobs:
             npx prisma db push --schema=packages/backend/prisma/schema.prisma --skip-generate
             npx prisma generate --schema=packages/backend/prisma/schema.prisma
           )
+
+          if [ "${IMAGES_BACKFILL:-none}" != "none" ]; then
+            echo "== Image backfill: $IMAGES_BACKFILL (D-045) =="
+            UP=$(grep '^UPLOAD_DIR=' /etc/mutabe3/backend.env | cut -d= -f2- || echo /var/www/mutabe3/uploads)
+            echo "media before: $(du -sh "$UP" 2>/dev/null | cut -f1) ($(find "$UP" -type f -not -path '*/.cache/*' 2>/dev/null | wc -l) files)"
+            case "$IMAGES_BACKFILL" in
+              dry) ARGS="--dry" ;;
+              apply-delete-original) ARGS="--delete-original" ;;
+              *) ARGS="" ;;
+            esac
+            ( set -a; . /etc/mutabe3/backend.env; set +a; npx tsx packages/backend/src/scripts/images-to-webp.ts $ARGS )
+            echo "media after:  $(du -sh "$UP" 2>/dev/null | cut -f1) ($(find "$UP" -type f -not -path '*/.cache/*' 2>/dev/null | wc -l) files)"
+          fi
 
           echo "== Building frontend =="
           npm run build --workspace=packages/frontend

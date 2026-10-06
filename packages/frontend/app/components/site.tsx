@@ -9,6 +9,7 @@ import { InstallApp } from './pwa';
 
 export * from './util';
 import { Article, NAV, WRITERS, face, ago, catColor } from './util';
+import { imgAt, srcSetFor } from './img';
 
 /* ---------- navigation from the DB (D-043 Stage 3) ---------- */
 export interface NavItem { label: string; slug: string; description?: string | null }
@@ -37,10 +38,26 @@ export function useNav(): NavItem[] {
   return items;
 }
 
-export function Img({ src, alt = '', priority = false }: { src?: string; alt?: string; priority?: boolean }) {
-  const [err, setErr] = useState(false);
-  if (!src || err) return <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#c9c9c9,#8f8f8f)' }} />;
-  return <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} onError={() => setErr(true)} />;
+/**
+ * Site image. Editor uploads get resized WebP derivatives with a 640/960 srcset (1280 too for
+ * the hero/lead) from /api/img (D-045); other sources render untouched. Errors step down:
+ * derivative → untouched master → grey placeholder, so a converter hiccup never blanks a card.
+ */
+export function Img({ src, alt = '', priority = false, sizes }: { src?: string; alt?: string; priority?: boolean; sizes?: string }) {
+  const [fallback, setFallback] = useState(0);
+  if (!src || fallback > 1) return <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#c9c9c9,#8f8f8f)' }} />;
+  const set = fallback === 0 ? srcSetFor(src, priority ? [640, 960, 1280] : [640, 960]) : undefined;
+  return (
+    <img
+      src={set ? imgAt(src, priority ? 960 : 640) : src}
+      srcSet={set}
+      sizes={set ? sizes || (priority ? '(max-width: 1024px) 100vw, 960px' : '(max-width: 768px) 100vw, 640px') : undefined}
+      alt={alt}
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
+      onError={() => setFallback((f) => f + 1)}
+    />
+  );
 }
 
 export const Chip = ({ a }: { a: Article }) =>

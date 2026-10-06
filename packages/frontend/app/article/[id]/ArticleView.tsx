@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Amiri } from 'next/font/google';
 import { Article, Img, useArticles, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner, isHtml, plain } from '../../components/site';
 import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
+import { decorateRichImages } from '../../components/img';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
 import { LiveBlog, LiveBadge } from '../../components/live';
 import { Comments } from '../../components/comments';
@@ -127,8 +128,8 @@ export default function ArticleView({ article: a, preview = false }: { article: 
             <div className={`artbody fs${size}`}>
               {html ? (
                 <>
-                  {/* sanitized on write by the backend (sanitize-html allowlist) */}
-                  <div className="rich" dangerouslySetInnerHTML={{ __html: a.content }} />
+                  {/* sanitized on write by the backend (sanitize-html allowlist); uploaded images get a WebP srcset (D-045) */}
+                  <div className="rich" dangerouslySetInnerHTML={{ __html: decorateRichImages(a.content) }} />
                   {alsoRead.length > 0 && (
                     <aside className="also">
                       <b>اقرأ أيضاً</b>

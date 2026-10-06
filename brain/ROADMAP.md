@@ -19,6 +19,7 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 ### Now — makes the CMS truly usable
 - ☑ **Rich-text editor** — headings, bold/italic, lists, quotes, links, YouTube, paste-cleaning, HTML view (D-039, verified in prod D-041)
 - ☑ **Image upload + media library** — `POST /api/admin/upload` + `GET /api/admin/media`, featured-image upload; nginx limit 25MB (D-039, D-041)
+- ☑ **WebP image pipeline** — uploads stored as one WebP master (q82, ≤2048px, EXIF-rotated); resized WebP derivatives at `/api/img/<w>/…` with 640/960 srcset on cards, lead and body images; gif/animated untouched; backfill script + `images_backfill` deploy input (D-045, adopted from okath)
 - ☑ **Category management** — 13 nav categories seeded into the DB; `/dashboard/categories` rename/describe/reorder/show-in-nav/add/delete-empty; header, footer, category pages and sitemap read the DB (D-043 Stage 3)
 - ☑ **Draft preview** — `/dashboard/preview/[id]` renders the article view from the admin API; dashboard "معاينة" links drafts there (D-043 Stage 2)
 

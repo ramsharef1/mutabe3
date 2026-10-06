@@ -6,6 +6,11 @@
 
 ## Open
 
+*(RELAY-WEBP moved to Done — 2026-10-06)*
+
+
+
+
 ### Task: Complete Forge Structure Setup
 **From:** FORGE  
 **To:** mutabe3 Code session  
@@ -93,7 +98,20 @@
 
 ## Done
 
-*(None yet — project just started)*
+### RELAY-WEBP · from FORGE · 2026-10-06 · ✅ built, verified locally, deploying (D-045)
+**From:** FORGE (relayed from Okath Master Control) · **To:** mutabe3 Code session · **Priority:** 🟠 High
+**Result:** sharp 0.35 installed; Layer 1 (WebP masters on upload, gif/animated passthrough, never-lose fallback) + Layer 2 (`/api/img/<w>/…` derivatives 160–1280, 640/960 srcset on cards/lead/body) + backfill script with dry-run/apply/--delete-original and a CI `images_backfill` switch. Local proof: 4000px JPEG 2.07 MB → 0.12 MB master; legacy masters 2.86 MB → 0.13 MB; sample article images 3.33 MB → 0.17 MB. Prod media had 0 jpg/png masters (nothing to backfill). Full record: brain/DECISIONS.md D-045.
+
+**Task (Rami, verbatim):** Adopt okath's WebP image pipeline, adapted to THIS repo's Node/TypeScript stack (not Laravel — do NOT copy the PHP verbatim). Reference: WEBP-IMAGES-HANDOFF.md now in the repo root (okath's exact approach + backfill flow). Implement the same two layers: (1) CONVERT ON UPLOAD — in packages/backend, transcode every uploaded image to a single WebP master (use `sharp`: quality ~82, auto-rotate from EXIF, cap width ~2048, flatten alpha onto white), store only the WebP, with a safe fallback so an upload is never lost; wire it into the image-upload handler(s). (2) SERVE RESIZED WEBP — generate/caches derivatives at a width whitelist (160/320/480/640/960/1280) via sharp, served on demand (route/CDN/loader) or at build time; render images with a 640/960 srcset; pass SVG/GIF through untouched (keep animation). For EXISTING images: write a one-off backfill script (dry-run first) that re-encodes stored JPEG/PNG masters to WebP and repoints the DB/record paths, with an opt-in delete-original to reclaim disk; also handle any <img src> inside stored HTML/content fields. Confirm the image lib is present first (sharp installed). Keep advertiser/animated creatives in original format. Report media-size and a sample page weight before/after. This is image-infra only — do not touch the in-flight packages/backend/.env untracking task.
+
+**Here this means (mutabe3 = Next.js + Strapi + Postgres, VPS Docker):** Layer 1 lands in the Strapi backend — process uploads with sharp (Strapi upload provider / lifecycle) so the stored master is WebP (q82, EXIF auto-rotate, max width 2048, alpha flattened), keeping a fallback. Layer 2 = WebP responsive sizes (160–1280) served to the Next.js frontend with a 640/960 `srcset` (via the Next image loader, a sharp-backed route, or Strapi responsive formats emitting WebP). Backfill = a one-off script over existing Strapi media in Postgres (+ `<img src>` inside rich-text/body fields), dry-run first, `--delete-original` opt-in. The full reference code + backfill command pattern is in `WEBP-IMAGES-HANDOFF.md` at the repo root.
+
+**Done means:** new uploads are WebP masters; article/list pages serve WebP derivatives with srcset; existing media + inline body images backfilled (dry-run then applied); SVG/GIF and animated creatives untouched; before/after media-folder size and a sample page weight reported.
+
+**Gates:** image-infra ONLY — do **not** touch the in-flight `packages/backend/.env` untracking task; confirm `sharp` is installed before coding; no destructive delete of originals without the explicit `--delete-original` run.
+
+**Report to:** `~/Projects/forge/INBOX.md` — `mutabe3 · RELAY-WEBP · <result> · before/after sizes`.
+
 
 ---
 

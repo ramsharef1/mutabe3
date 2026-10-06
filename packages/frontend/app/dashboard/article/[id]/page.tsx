@@ -6,6 +6,7 @@ import RichEditor, { textToHtml } from '../../components/RichEditor';
 import { uploadImage, listMedia } from '../../components/upload';
 import { adminFetch, jsonInit, useStaff, isEditorRole, ROLE_AR, refreshHomepage } from '../../components/staff';
 import { isHtml, plain } from '../../../components/util';
+import { imgAt } from '../../../components/img';
 
 interface Cat { id: string; name: string }
 
@@ -166,7 +167,7 @@ export default function Editor() {
         <div className="adm-field">
           <span className="adm-lbl">صورة الغلاف</span>
           <div className="adm-cover">
-            {featuredImageUrl ? <img src={featuredImageUrl} alt="" /> : <div className="ph">لا توجد صورة</div>}
+            {featuredImageUrl ? <img src={imgAt(featuredImageUrl, 640)} alt="" /> : <div className="ph">لا توجد صورة</div>}
             <div className="ops">
               <button type="button" className="adm-logout" onClick={() => coverRef.current?.click()} disabled={imgBusy}>{imgBusy ? 'جاري الرفع…' : 'رفع صورة'}</button>
               {featuredImageUrl && <button type="button" className="adm-logout" onClick={() => setImage('')}>إزالة</button>}
