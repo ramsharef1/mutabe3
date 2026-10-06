@@ -134,8 +134,9 @@ jobs:
 
           ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
           set -e
-          curl -fsS -o /dev/null -w "frontend (:9100) HTTP %{http_code}\n" http://localhost:9100 \
-            || { echo "❌ frontend health check failed"; exit 1; }
-          curl -fsS -o /dev/null -w "backend (:9080) HTTP %{http_code}\n" http://localhost:9080/api/articles \
-            || echo "⚠️  backend health check inconclusive"
+          # Both units restart as the unprivileged service user (D-048); the backend's `tsx watch`
+          # cold start can take 10–20 s, so poll instead of sampling once.
+          wait_for() { for i in $(seq 1 15); do code=$(curl -s -o /dev/null -w '%{http_code}' "$2" || true); [ "$code" = 200 ] && { echo "$1 HTTP 200 (after ${i} tries)"; return 0; }; sleep 3; done; echo "$1 HTTP ${code:-000} after 45s"; return 1; }
+          wait_for "frontend (:9100)" http://localhost:9100 || { echo "❌ frontend health check failed"; exit 1; }
+          wait_for "backend (:9080)"  http://localhost:9080/api/health || { echo "❌ backend health check failed"; systemctl status mutabe3-backend --no-pager -l | tail -15; exit 1; }
           REMOTE
