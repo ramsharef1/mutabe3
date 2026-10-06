@@ -49,7 +49,7 @@
 - Off-site: Hostinger's **weekly automatic VPS backups** are active (stored in France, two copies kept, ≈1 h restore) and include `/var/backups/mutabe3`; a whole-VPS **snapshot** (1-day lifetime) was taken after the 2026-10-06 hardening. hPanel → VPS → Backups & Monitoring → Snapshots & Backups.
 
 ## Known gaps
-- VPS-level recovery point is weekly; the $3.00/mo daily add-on (two daily + two weekly kept) is Rami's call. A VPS restore replaces every site on the box.
+- VPS-level recovery point is weekly by decision (Rami, 2026-10-06: daily add-on declined); nightly app-level dumps cover the days in between. A VPS restore replaces every site on the box.
 - The backend starts with `tsx watch` in production; a compiled `node dist/` start would avoid restarts on file changes during deploys.
 
 ---
