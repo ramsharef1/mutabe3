@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchArticle } from '../../lib/api';
+import { fetchArticle, SITE_URL } from '../../lib/api';
 import { excerpt } from '../../components/util';
+import { newsArticleLd, breadcrumbLd, articleImage } from '../../lib/seo';
+import JsonLd from '../../components/JsonLd';
 import ArticleView from './ArticleView';
 
 // Server-rendered shell: the article itself is fetched here by id or slug (so it
@@ -17,11 +19,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!a) return { title: 'المقال غير موجود | المتابع', robots: { index: false } };
   const description = a.summary || excerpt(a, 160);
   const url = `/article/${a.id}`;
-  const images = a.featuredImageUrl ? [a.featuredImageUrl] : undefined; // metadataBase (layout) makes these absolute
+  const images = [articleImage(a)]; // large photo, or the branded card when the article has none
   return {
     title: `${a.title} | المتابع`,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, types: { 'application/rss+xml': '/feed.xml' } },
     openGraph: {
       type: 'article',
       url,
@@ -35,12 +37,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       section: a.category?.name,
       tags: a.seoKeywords,
     },
-    twitter: { card: images ? 'summary_large_image' : 'summary', title: a.title, description, images },
+    twitter: { card: 'summary_large_image', title: a.title, description, images },
   };
 }
 
 export default async function ArticlePage({ params }: Props) {
   const article = await fetchArticle(params.id);
   if (!article) notFound();
-  return <ArticleView article={article} />;
+  const crumbs = [
+    { name: 'الرئيسية', url: SITE_URL },
+    ...(article.category ? [{ name: article.category.name, url: `${SITE_URL}/category/${article.category.slug}` }] : []),
+    { name: article.title },
+  ];
+  return (
+    <>
+      {/* NewsArticle + breadcrumbs for Google (D-043 Stage 5) */}
+      <JsonLd data={[newsArticleLd(article), breadcrumbLd(crumbs)]} />
+      <ArticleView article={article} />
+    </>
+  );
 }

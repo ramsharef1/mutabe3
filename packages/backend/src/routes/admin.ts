@@ -6,6 +6,7 @@ import { imageUpload, uploadedFileUrl, listMedia, MAX_UPLOAD_BYTES } from '../up
 import { hashPassword } from '../auth';
 import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
 import readerAdmin from './adminReaders';
+import { readAds, parseAds, writeAds } from '../ads';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -361,6 +362,24 @@ router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: 
     } else next.breaking = null;
     const setting = await writeHomepageSetting(prisma, next);
     res.json({ success: true, data: { setting, resolved: await resolveHomepage(prisma, setting) } });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+/* ───────────────────────────── ads (admin) ───────────────────────────── */
+
+// Ad zones, AdSense ids and ads.txt (D-043 Stage 5). Admin only: this is the site's revenue setup.
+router.get('/ads', requireRole('ADMIN'), async (_req: Request, res: Response) => {
+  try {
+    res.json({ success: true, data: await readAds(prisma) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// PUT /api/admin/ads { adsense: { client, auto }, zones: { header|inline|article|sidebar: { mode, unit, banners[] } }, adsTxt }
+router.put('/ads', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const parsed = parseAds(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    res.json({ success: true, data: await writeAds(prisma, parsed.value) });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 

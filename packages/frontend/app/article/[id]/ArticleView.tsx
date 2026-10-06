@@ -180,7 +180,7 @@ export default function ArticleView({ article: a, preview = false }: { article: 
               </div>
             )}
 
-            <AdBanner variant={3} className="adrow ad90" />
+            <AdBanner variant={3} className="adrow ad90" zone="article" />
 
             {related.length > 0 && (
               <div className="sec">

@@ -15,6 +15,8 @@ import { CommunityBand } from './components/blocks/community';
 import { NewsletterCTA } from './components/blocks/newsletter';
 import { MostDiscussed } from './components/blocks/discussed';
 import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText, BreakingItem } from './components/feeds';
+import JsonLd from './components/JsonLd';
+import { websiteLd } from './lib/seo';
 
 export const revalidate = 60;
 
@@ -125,6 +127,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
   return (
     <div className="am home">
+      <JsonLd data={websiteLd()} />
       <SiteHeader articles={articles} temp={amman?.t} wxLabel={amman ? wxText(amman.code) : undefined} />
 
       <div className="wrap">

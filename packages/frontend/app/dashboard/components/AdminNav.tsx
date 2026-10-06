@@ -21,6 +21,7 @@ export default function AdminNav({ me }: { me: Me | null }) {
     { href: '/dashboard/newsletter', label: 'النشرة', show: editor },
     { href: '/dashboard/categories', label: 'الأقسام', show: editor },
     { href: '/dashboard/users', label: 'المستخدمون', show: me?.role === 'ADMIN' },
+    { href: '/dashboard/ads', label: 'الإعلانات', show: me?.role === 'ADMIN' },
     { href: '/dashboard/account', label: 'كلمة المرور', show: !!me },
   ].filter((l) => l.show);
   return (

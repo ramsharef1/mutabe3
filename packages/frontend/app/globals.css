@@ -2026,3 +2026,52 @@ button[type="submit"]:active, .btn-primary:active {
 .preview-bar a{color:#fff;text-decoration:underline}
 .au-init{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#990000;color:#fff;font:700 14px/1 var(--font-kufi,sans-serif);flex:none;border:2px solid var(--line3)}
 .aubox .au-init{width:64px;height:64px;font-size:24px;border:3px solid var(--bg);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+/* ---------- Stage 5: ad zones, offline reading, install (D-043) ---------- */
+.adslot{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.adslot .tag{position:absolute;top:0;left:0;background:rgba(0,0,0,.45);color:#fff;font:10px/14px Arial;padding:0 5px;border-radius:0 0 3px 0;z-index:1}
+.adslot.house{display:block;text-align:center;line-height:0}
+.adslot.house a{position:relative;display:inline-block;max-width:100%;vertical-align:top}
+.adslot.house img{display:block;max-width:100%;height:auto}
+.adslot.house.ad90,.adslot.house.adbillboard{height:auto;min-height:0}
+.adslot.house.ad728 img{max-height:90px;width:auto}
+.adslot.gads.ad90{height:auto;min-height:90px}
+.adslot.gads.adbillboard{min-height:120px}
+.adslot.gads{overflow:visible} /* full-width responsive units extend to the screen edges on phones */
+.adslot.gads ins.adsbygoogle{max-width:none}
+.adslot-box{margin:12px 0}
+.adslot-box.gads{min-height:250px}
+.adslot:has(ins.adsbygoogle[data-ad-status="unfilled"]){display:none}
+.gads-ph{display:flex;align-items:center;justify-content:center;width:100%;min-height:inherit;height:100%;background:var(--bg2);color:var(--muted);font:12px Arial;border:1px dashed var(--line)}
+@media print{.adslot{display:none !important}}
+@media(max-width:767px){.brand .adslot.ad728{display:none}} /* like the demo leaderboard: no header ad on phones */
+
+.offline{max-width:560px;margin:0 auto;padding:48px 20px;text-align:center;font-family:var(--naskh);color:var(--fg)}
+.offline .logo img{width:200px;height:auto}
+.offline h1{font:700 22px/1.4 var(--kufi);margin:22px 0 8px}
+.offline p{margin:0 0 18px;line-height:1.8;color:var(--fg2)}
+.offline .muted{color:var(--muted)}
+.offline .saved{list-style:none;margin:0 0 20px;padding:0;text-align:start;border-top:1px solid var(--line2)}
+.offline .saved li{border-bottom:1px solid var(--line2)}
+.offline .saved a{display:block;padding:12px 4px;color:var(--fg);font:700 15px/1.6 var(--kufi);text-decoration:none}
+.offline .saved a:hover{color:var(--red)}
+.offline .retry{background:var(--red);color:#fff;border:0;border-radius:4px;padding:10px 22px;font:700 14px var(--kufi);cursor:pointer}
+
+.ficon.install{background:none;border:0;padding:0;cursor:pointer;font-family:inherit;position:relative;flex-wrap:wrap}
+.ficon .ihint{flex-basis:100%;font-weight:400;color:#ccc;font-size:11px;margin-top:4px;max-width:260px;text-align:start}
+
+.adm-steps{margin:0 0 14px;padding-inline-start:20px;font-size:13px;line-height:1.9;color:#444}
+.adm-steps a{color:#990000}
+.adm-editor label.adm-logout{display:inline-block;margin:0;font-weight:400;color:#333;cursor:pointer}
+.adm-inline.wrap{flex-wrap:wrap}
+.adm-logout.danger{color:#a01829;border-color:#f5c6cb}
+.adm-warn{display:block;color:#b45309;font-weight:400;margin-top:4px}
+.adm-banners{margin-top:4px}
+.adm-banner{border:1px solid #e6e6e6;border-radius:6px;padding:12px;margin:0 0 12px;background:#fcfcfc}
+.adm-banner .im{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;background:repeating-conic-gradient(#f2f2f2 0 25%,#fff 0 50%) 0 0/16px 16px;padding:8px;border-radius:4px;overflow:hidden}
+.adm-banner .im img{display:block;max-width:100%;max-height:120px;height:auto}
+.adm-banner .im img.mob{max-width:30%;max-height:90px;outline:2px solid #fff}
+.adm-add{margin-bottom:10px}
+.adm-editor label.adm-check{display:flex;align-items:flex-start;gap:8px;font-weight:400;line-height:1.6}
+.adm-editor .adm-check input{display:inline-block;width:auto;margin:4px 0 0;flex:none}
+.adm-pre{background:#f6f6f6;border:1px solid #e6e6e6;border-radius:6px;padding:10px 12px;margin:10px 0 0;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all;color:#333;text-align:left}

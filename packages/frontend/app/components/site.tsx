@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { isLive } from './content';
 import { AudioPill } from './blocks/jordan';
+import { AdBanner, AdBox } from './ads';
+import { InstallApp } from './pwa';
 
 export * from './util';
 import { Article, NAV, WRITERS, face, ago, catColor } from './util';
@@ -78,40 +80,8 @@ export function useArticles() {
 
 export const Loading = () => <div className="am loading">جاري تحميل الأخبار...</div>;
 
-/* ---------- ads (dummy creatives, composed to look like real placements) ---------- */
-const ADS = [
-  { bg: 'linear-gradient(100deg,#3b0d63,#8e44ad)', mark: '5G', markBg: '#fff', markFg: '#5e2a9a', t: 'شبكة الجيل الخامس وصلت', s: 'اشترك الآن واحصل على 100GB إضافية مجاناً', cta: 'اشترك' },
-  { bg: 'linear-gradient(100deg,#8e0e0e,#e53935)', mark: 'GO', markBg: '#fff', markFg: '#b71c1c', t: 'تأجير سيارات', s: 'ابتداءً من 15 دينار / يوم — تأمين شامل', cta: 'احجز الآن' },
-  { bg: 'linear-gradient(100deg,#0f4d18,#43a047)', mark: 'ب', markBg: '#fff', markFg: '#1b5e20', t: 'بنك المستقبل', s: 'حساب توفير بفائدة 5.25% سنوياً', cta: 'افتح حسابك' },
-  { bg: 'linear-gradient(100deg,#c84b00,#ffb300)', mark: '%', markBg: '#fff', markFg: '#e65100', t: 'عروض الموسم', s: 'خصومات تصل إلى 50% على كل شيء', cta: 'تسوّق' },
-  { bg: 'linear-gradient(100deg,#0a3d91,#1e88e5)', mark: 'ج', markBg: '#fff', markFg: '#0d47a1', t: 'الجامعة الأهلية', s: 'التسجيل مفتوح للفصل الأول 2026/2027', cta: 'سجّل الآن' },
-];
-
-export function AdBanner({ variant, className = '', style }: { variant: number; className?: string; style?: React.CSSProperties }) {
-  const a = ADS[variant % ADS.length];
-  return (
-    <div className={`adb ${className}`} style={{ background: a.bg, ...style }}>
-      <span className="tag">إعلان</span>
-      <span className="mark" style={{ background: a.markBg, color: a.markFg }}>{a.mark}</span>
-      <span className="txt"><b>{a.t}</b><small>{a.s}</small></span>
-      <span className="cta">{a.cta}</span>
-    </div>
-  );
-}
-
-/** 300×250 medium rectangle for sidebars. */
-export function AdBox({ variant }: { variant: number }) {
-  const a = ADS[variant % ADS.length];
-  return (
-    <div className="adbox" style={{ background: a.bg }}>
-      <span className="tag">إعلان</span>
-      <span className="mark" style={{ background: a.markBg, color: a.markFg }}>{a.mark}</span>
-      <b>{a.t}</b>
-      <small>{a.s}</small>
-      <span className="cta">{a.cta}</span>
-    </div>
-  );
-}
+/* ---------- ads: zones configured in /dashboard/ads (D-043 Stage 5) ---------- */
+export { AdBanner, AdBox };
 
 /* ---------- icons ---------- */
 const P = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden><path d={d} /></svg>;
@@ -200,7 +170,7 @@ export function SiteHeader({ articles = [], temp, wxLabel }: { articles?: Articl
         <div className="brand">
           <a className="logo" href="/"><img src="/logo.svg" alt="المتابع" width="338" height="134" /><small>الاخباري</small></a>
           <form className="msq" action="/search" role="search"><input name="q" placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
-          <AdBanner variant={0} className="ad728" />
+          <AdBanner variant={0} className="ad728" zone="header" />
         </div>
       </div>
     </>
@@ -228,9 +198,11 @@ export function SiteFooter() {
         <div className="fbrands">
           <a className="flogo" href="/"><img src="/logo-white.svg" alt="المتابع" /></a>
           <div className="ficons">
-            {['المتابع الرياضي', 'المتابع الصحي', 'المتابع الصورة', 'المتابع العلمي', 'نسخة الموبايل', 'Almutabe3 English'].map((t) => (
+            {['المتابع الرياضي', 'المتابع الصحي', 'المتابع الصورة', 'المتابع العلمي'].map((t) => (
               <a href="#" className="ficon" key={t}><i /><span>{t}</span></a>
             ))}
+            <InstallApp />
+            <a href="#" className="ficon"><i /><span>Almutabe3 English</span></a>
           </div>
         </div>
         <div className="fcols">

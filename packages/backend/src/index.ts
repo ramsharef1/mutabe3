@@ -9,6 +9,7 @@ import { startScheduler } from './scheduler';
 import { resolveHomepage } from './homepage';
 import readerRoutes from './routes/readers';
 import { ensurePolls } from './polls';
+import { readAds } from './ads';
 
 // Approved reader comments only (D-043 Stage 4) — pending/rejected rows and emails never leave the API
 const APPROVED_COMMENTS = { _count: { select: { comments: { where: { status: 'APPROVED' as const } } } } };
@@ -195,6 +196,15 @@ app.get('/api/homepage', async (_req: Request, res: Response) => {
   }
 });
 
+// Ad zones (off / demo / house banners / AdSense) — read by the Next layout and /ads.txt (D-043 Stage 5)
+app.get('/api/ads', async (_req: Request, res: Response) => {
+  try {
+    res.json({ success: true, data: await readAds(prisma) });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 // Auth routes
 app.use('/api/auth', authRoutes);
 
@@ -216,6 +226,7 @@ app.get('/', (req: Request, res: Response) => {
       article: '/api/articles/:id',
       view: 'POST /api/articles/:id/view',
       categories: '/api/categories',
+      ads: '/api/ads',
       uploads: '/api/uploads/*',
       admin: '/api/admin/* (editor token)',
       auth: {
