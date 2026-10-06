@@ -70,4 +70,5 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 ## Operational
 - ☑ **One-click deploys** — deploy key installed, every push to `main` touching `packages/**` deploys itself; `gh workflow run deploy-vps.yml` on demand (D-039, D-041)
 - ☑ `packages/backend/.env` untracked, `.env` ignored, `packages/backend/.env.example` complete (D-040); `mutabe3_user` password rotated (D-042)
-- ☐ Run `mutabe3-backend` under a dedicated service user instead of root; add `@types/jsonwebtoken` + `@types/nodemailer` (D-041/D-042 notes)
+- ☑ Both services run as the dedicated `mutabe3` user; nightly dumps + weekly off-site VPS backups (D-048)
+- ☐ Add `@types/jsonwebtoken` + `@types/nodemailer` so a strict backend `tsc` run is clean (D-041/D-042 notes) · start the backend from compiled `node dist/` instead of `tsx watch` (D-048 note)
