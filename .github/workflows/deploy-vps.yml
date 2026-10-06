@@ -106,6 +106,9 @@ jobs:
             echo "media after:  $(du -sh "$UP" 2>/dev/null | cut -f1) ($(find "$UP" -type f -not -path '*/.cache/*' 2>/dev/null | wc -l) files)"
           fi
 
+          echo "== Building backend (tsc → packages/backend/dist, D-049) =="
+          npm run build --workspace=packages/backend
+
           echo "== Building frontend =="
           npm run build --workspace=packages/frontend
           # The build runs as root; when the units run as the service user (D-048) hand .next back
