@@ -82,7 +82,7 @@ export async function getMe(token: string): Promise<User | null> {
   return res.json();
 }
 
-export async function refreshToken(refreshToken: string): Promise<{ accessToken?: string; error?: string }> {
+export async function refreshToken(refreshToken: string): Promise<{ accessToken?: string; refreshToken?: string; error?: string }> {
   const res = await fetch(`${API_URL}/api/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

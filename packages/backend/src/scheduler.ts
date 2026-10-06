@@ -19,10 +19,21 @@ export async function publishDue(prisma: PrismaClient) {
   return due.length;
 }
 
+// Expired refresh sessions used to accumulate forever (SECURITY S-05 / D-051): sweep them hourly.
+let lastSessionSweep = 0;
+export async function purgeExpiredSessions(prisma: PrismaClient) {
+  if (Date.now() - lastSessionSweep < 60 * 60_000) return 0;
+  lastSessionSweep = Date.now();
+  const { count } = await prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+  if (count) console.log(`🧹 purged ${count} expired session(s)`);
+  return count;
+}
+
 export function startScheduler(prisma: PrismaClient, everyMs = 60_000) {
   const tick = () => {
     publishDue(prisma).catch((e) => console.error('scheduler:', e));
     autoDigestTick(prisma).catch((e) => console.error('auto digest:', e)); // D-043 Stage 4, off unless enabled
+    purgeExpiredSessions(prisma).catch((e) => console.error('session sweep:', e));
   };
   tick();
   const handle = setInterval(tick, everyMs);

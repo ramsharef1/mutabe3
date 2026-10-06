@@ -33,6 +33,7 @@ export function refreshAccess(): Promise<boolean> {
       const j = await r.json().catch(() => ({}));
       if (!j.accessToken) return false;
       set('accessToken', j.accessToken);
+      if (j.refreshToken) set('refreshToken', j.refreshToken); // the server rotates refresh tokens (D-051)
       return true;
     } catch {
       return false;

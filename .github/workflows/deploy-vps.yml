@@ -75,8 +75,8 @@ jobs:
             fi
           fi
 
-          echo "== Installing dependencies =="
-          npm install --no-audit --no-fund
+          echo "== Installing dependencies (lockfile, D-051) =="
+          npm ci --no-audit --no-fund
           # The image pipeline (D-045) needs sharp's prebuilt libvips for this platform; fail here,
           # before anything restarts, rather than at the first upload.
           node -v

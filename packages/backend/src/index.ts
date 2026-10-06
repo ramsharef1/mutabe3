@@ -20,6 +20,14 @@ const prisma = new PrismaClient();
 
 // nginx sits in front on the same host; honour X-Forwarded-For so req.ip is the reader's IP.
 app.set('trust proxy', 'loopback');
+app.disable('x-powered-by');
+// Baseline security headers on every API response (D-051 / SECURITY S-02). nginx adds HSTS for the whole host.
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
 
 // Middleware
 app.use(express.json({ limit: '2mb' }));

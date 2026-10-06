@@ -3,13 +3,27 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { Response } from 'express';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production';
+// Secrets: never fall back to a known default in production (SECURITY S-05 / D-051).
+// The process refuses to start rather than sign tokens anyone could forge.
+const IS_PROD = process.env.NODE_ENV === 'production';
+function requireSecret(name: 'JWT_SECRET' | 'JWT_REFRESH_SECRET', devFallback: string): string {
+  const v = process.env[name];
+  if (IS_PROD) {
+    if (!v || v === devFallback) throw new Error(`${name} is missing (or the dev default) — refusing to start in production`);
+    if (v.length < 32) console.warn(`[auth] ${name} is shorter than 32 characters — rotate it to a longer random value`);
+    return v;
+  }
+  return v || devFallback;
+}
+const JWT_SECRET = requireSecret('JWT_SECRET', 'dev-secret-change-in-production');
+const JWT_REFRESH_SECRET = requireSecret('JWT_REFRESH_SECRET', 'dev-refresh-secret-change-in-production');
 const JWT_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
+export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const BCRYPT_COST = 12;
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, BCRYPT_COST);
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {

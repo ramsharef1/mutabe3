@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const result = await refreshTokenFn(refreshTokenStored);
             if (result.accessToken) {
               localStorage.setItem('accessToken', result.accessToken);
+              if (result.refreshToken) localStorage.setItem('refreshToken', result.refreshToken); // rotated by the server (D-051)
               const userData = await getMe(result.accessToken);
               if (userData) {
                 setUser(userData);
