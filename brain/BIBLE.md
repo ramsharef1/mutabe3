@@ -42,10 +42,10 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 | F-03 | No photo credit field; every cover captioned «تصوير: المتابع» | High | **done (D-054)** — credit/caption fields, credit shown only when set, JSON-LD ImageObject |
 | F-04 | `dateModified` = `updatedAt`, bumped by every view → fake freshness signal | Medium | **done (D-052)** — raw increment, `updatedAt` moves only on edits |
 | F-05 | Category pages repeat articles and inflate counts; unknown slugs show other categories | Medium | **done (D-054)** for honesty; F-05b open: server-side title/canonical for category, tag and search pages |
-| F-06 | No analytics, no consent layer; PDPL requires explicit consent | High | proposed |
+| F-06 | No analytics, no consent layer; PDPL requires explicit consent | High | **in-progress (D-055)** — consent bar + GTM loader + first events shipped, dormant until `NEXT_PUBLIC_GTM_ID` is set from Rami's Google account |
 | F-07 | Newsletter single opt-in re-activates unsubscribed emails; inbox delivery blocked on DNS | Medium | **done (D-054)** — double opt-in with confirmation mail; DNS (SPF/DKIM) still Rami's |
 | F-08 | Banners have no dates or counts; no `/advertise`; no sponsored label | High (revenue) | proposed |
-| F-09 | Production Node 20 past EOL; Next 14 unsupported; no lockfile | High | proposed (Node 22 + lockfile now; Next 16 deferred) |
+| F-09 | Production Node 20 past EOL; Next 14 unsupported; no lockfile | High | in-progress — lockfile + `npm ci` done (D-051); **Node 22 switch script ready, run waits for Rami's go (D-055)**; Next 16 deferred |
 | F-10 | Security S-01…S-10 (see SECURITY.md) | Critical/High | proposed (launch-critical subset in weeks 1–2) |
 | F-11 | Newsletter send stuck in `sending` if the backend restarts mid-send | Medium | **done (D-054)** — per-recipient delivery log, resumable re-send, 30-minute reaper |
 | F-12 | Every red on the site is Ammon legacy; logo has no red; dark-mode logo via CSS filter; OG card bakes the red bar | Medium | proposed (re-theme weeks 5–8) |

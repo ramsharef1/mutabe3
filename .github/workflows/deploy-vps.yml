@@ -110,7 +110,10 @@ jobs:
           npm run build --workspace=packages/backend
 
           echo "== Building frontend =="
-          npm run build --workspace=packages/frontend
+          # Optional build-time frontend env (NEXT_PUBLIC_* such as the GTM id, D-055): /etc/mutabe3/frontend.env.
+          # Subshell so nothing leaks into the restart below.
+          ( [ -f /etc/mutabe3/frontend.env ] && { set -a; . /etc/mutabe3/frontend.env; set +a; echo "frontend env: $(grep -c '^[A-Z]' /etc/mutabe3/frontend.env) vars"; }
+            npm run build --workspace=packages/frontend )
           # The build runs as root; when the units run as the service user (D-048) hand .next back
           # to it so `next start` can write its ISR / revalidate cache.
           FE_USER=$(systemctl show -p User --value mutabe3-frontend)

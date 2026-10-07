@@ -5,6 +5,7 @@ import { Article, Ico, ago, face, Img } from '../site';
 import { CROSSINGS, ROADS, SERVICES, ROYAL, DECISIONS, VOTE, TAWJIHI, ELECTIONS, MATCH, LEAGUE, FX, CLOCKS, GULF_TZ, UGC, GREETINGS, MEMORY, JOBS, FACTS, prayerTimes, Season } from '../feeds';
 import { LIVE, fmtTime } from '../content';
 import { subscribe, CONFIRM_MSG } from '../newsletter';
+import { track } from '../../lib/track';
 
 /* ---------- J3 / J4 / J5 ---------- */
 export function Crossings() {
@@ -260,7 +261,7 @@ export function Capture() {
     setErr('');
     setState('busy');
     const r = await subscribe(email, { source: 'capture', website: hp });
-    if (r.ok) setState('done'); else { setState('idle'); setErr(r.error || ''); }
+    if (r.ok) { setState('done'); track('newsletter_signup', { source: 'capture', editions_count: 0 }); } else { setState('idle'); setErr(r.error || ''); }
   };
   return (
     <div className="cap-card">

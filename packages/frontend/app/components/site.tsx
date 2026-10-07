@@ -10,6 +10,7 @@ import { InstallApp } from './pwa';
 export * from './util';
 import { Article, NAV, WRITERS, face, ago, catColor } from './util';
 import { imgAt, srcSetFor } from './img';
+import { PrivacySettingsLink } from './analytics';
 
 /* ---------- navigation from the DB (D-043 Stage 3) ---------- */
 export interface NavItem { label: string; slug: string; description?: string | null }
@@ -244,6 +245,7 @@ export function SiteFooter() {
               <li><a href="/about">حول المتابع</a></li><li><a href="/contact">اتصل بنا</a></li><li><a href="/advertise">أعلن معنا</a></li>
               <li><a href="/privacy">سياسة الخصوصية</a></li><li><a href="/terms">شروط الاستخدام</a></li>
               <li><a href="/corrections">التصحيح وحق الرد</a></li><li><a href="/editorial-policy">السياسة التحريرية</a></li>
+              <PrivacySettingsLink />
             </ul>
             <div className="social">
               <a href="#" title="فيسبوك" className="fb">{Ico.fb}</a>

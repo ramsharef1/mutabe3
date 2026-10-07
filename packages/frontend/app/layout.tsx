@@ -3,6 +3,7 @@ import { Noto_Kufi_Arabic, Noto_Naskh_Arabic } from 'next/font/google';
 import { fetchAds } from './lib/ads';
 import { AdsProvider } from './components/ads';
 import { PwaRegister } from './components/pwa';
+import { Analytics, GTM_ID } from './components/analytics';
 import './globals.css';
 
 // Self-hosted via next/font (B11). Amiri is loaded only by the article page.
@@ -43,17 +44,23 @@ export const viewport: Viewport = {
 const BOOT = "try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}"
   + "addEventListener('beforeinstallprompt',function(e){window.__bip=e;dispatchEvent(new Event('mutabe3:bip'))});"
   + "addEventListener('appinstalled',function(){window.__bip=null;dispatchEvent(new Event('mutabe3:bip'))});";
+// Consent Mode v2 defaults must run before the GTM container (D-055): every storage type denied until the bar grants analytics.
+const CONSENT_DEFAULT = GTM_ID
+  ? "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;"
+    + "gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});"
+  : '';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const ads = await fetchAds();
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning className={`${kufi.variable} ${naskh.variable}`}>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULT + BOOT }} />
       </head>
       <body>
         <AdsProvider config={ads}>{children}</AdsProvider>
         <PwaRegister />
+        <Analytics />
       </body>
     </html>
   );

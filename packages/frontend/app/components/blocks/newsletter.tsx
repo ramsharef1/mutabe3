@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { subscribe, CONFIRM_MSG } from '../newsletter';
+import { track } from '../../lib/track';
 
 const EDITIONS = ['سياسة', 'اقتصاد', 'رياضة', 'فلسطين'];
 
@@ -35,7 +36,7 @@ export function NewsletterCTA() {
     setErr('');
     setState('busy');
     const r = await subscribe(email, { categories: picks, source: 'homepage', website: hp });
-    if (r.ok) { setState('done'); setEmail(''); } else { setState('idle'); setErr(r.error || ''); }
+    if (r.ok) { setState('done'); setEmail(''); track('newsletter_signup', { source: 'homepage', editions_count: picks.length }); } else { setState('idle'); setErr(r.error || ''); }
   }
 
   return (

@@ -15,7 +15,7 @@ on:
         type: choice
         required: true
         default: status
-        options: [inspect, status, setup-service-user, setup-backups, backup-now, switch-backend-to-dist]
+        options: [inspect, status, setup-service-user, setup-backups, backup-now, switch-backend-to-dist, switch-node-22]
 
 jobs:
   ops:

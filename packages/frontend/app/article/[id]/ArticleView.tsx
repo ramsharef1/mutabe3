@@ -5,6 +5,7 @@ import { Amiri } from 'next/font/google';
 import { Article, Img, useArticles, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner, isHtml, plain } from '../../components/site';
 import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
 import { decorateRichImages } from '../../components/img';
+import { track } from '../../lib/track';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
 import { LiveBlog, LiveBadge } from '../../components/live';
 import { Comments } from '../../components/comments';
@@ -62,7 +63,9 @@ export default function ArticleView({ article: a, preview = false }: { article: 
         fetch(`/api/articles/${a.id}/view`, { method: 'POST', keepalive: true }).catch(() => {});
       }
     } catch {}
-  }, [a?.id, preview]);
+    // GA4 side of the same read (ANALYTICS-PLAN §2); the server count above stays the "views" figure.
+    track('article_view', { article_id: a.id, content_category: a.category?.slug || '', content_author: a.author?.name || '', is_sponsored: false });
+  }, [a?.id, a?.category?.slug, a?.author?.name, preview]);
 
   const catSlug = a.category?.slug || 'politics';
   const catName = a.category?.name || 'أخبار';

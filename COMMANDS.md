@@ -13,7 +13,8 @@
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` (git, branch `main`, hard-synced by CI) |
 | Services | systemd `mutabe3-frontend` (`npm run start`, :9100) · `mutabe3-backend` (`node dist/index.js`, compiled by the deploy — drop-in `20-exec-dist.conf`, D-049; :9080) — both run as system user `mutabe3` via drop-ins `…service.d/10-service-user.conf` (D-048) |
 | Backups | app-level: `/var/backups/mutabe3` (root-only), nightly DB dump 00:30 UTC + Sunday uploads archive, 14/6 kept — timer `mutabe3-backup.timer` · VPS-level: hPanel weekly off-site backups (2 kept) + 1-day snapshots (D-048) |
-| Server ops | `gh workflow run ops-vps.yml -f action=inspect|status|setup-service-user|setup-backups|backup-now` → runs `ops/vps/<action>.sh` on the VPS (D-048) |
+| Server ops | `gh workflow run ops-vps.yml -f action=inspect|status|setup-service-user|setup-backups|backup-now|switch-backend-to-dist|switch-node-22` → runs `ops/vps/<action>.sh` on the VPS (D-048/D-049/D-055) |
+| Frontend build env | `/etc/mutabe3/frontend.env` (optional, sourced by the deploy before `next build`): `NEXT_PUBLIC_GTM_ID=GTM-…` turns on GTM + the consent bar (D-055). Empty/missing = no analytics, no banner |
 | Backend env | `/etc/mutabe3/backend.env` — the backend unit's `EnvironmentFile` and the **only** real env on the VPS (D-037/D-040) |
 | Database | Postgres on the VPS, database `mutabe3`, role `mutabe3_user`; `DATABASE_URL` lives in backend.env (password rotated 2026-10-06, D-042) |
 | Uploads | `/var/www/mutabe3/uploads` (`UPLOAD_DIR`), served at `/api/uploads/*`; WebP derivatives at `/api/img/<w>/*` cached in `.cache/` (D-045) |
