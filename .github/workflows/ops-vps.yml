@@ -15,7 +15,7 @@ on:
         type: choice
         required: true
         default: status
-        options: [inspect, status, healthcheck, failed-units, failed-units-diagnose, failed-units-diagnose-2, cleanup-failed-units, security-updates-survey, security-updates-apply, dnf-automatic-hold-apache, reboot, post-reboot-check, boot-starters, restrict-postgres, xff-check, host-keys, nginx-tokens-survey, setup-service-user, setup-backups, backup-now, switch-backend-to-dist, switch-node-22]
+        options: [inspect, status, healthcheck, failed-units, failed-units-diagnose, failed-units-diagnose-2, cleanup-failed-units, security-updates-survey, security-updates-apply, dnf-automatic-hold-apache, reboot, post-reboot-check, boot-starters, restrict-postgres, xff-check, host-keys, nginx-tokens-survey, nginx-server-tokens-off, setup-service-user, setup-backups, backup-now, switch-backend-to-dist, switch-node-22]
 
 jobs:
   ops:
@@ -36,7 +36,13 @@ jobs:
           mkdir -p ~/.ssh
           echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Pinned SSH host keys (D-073, SECURITY S-07) — printed by `gh workflow run ops-vps.yml -f action=host-keys`.
+          # Any other key is refused. If the server is rebuilt, run that action and update these lines in
+          # deploy-vps.yml, ops-vps.yml and monitor.yml.
+          printf '%s\n' \
+            'mutabe3-vps ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGG2Sri3vi9/vqAC5HoKTm3nXUjNBuGlwHacrxmaZtTy' \
+            'mutabe3-vps ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAfJ7KoLJYJH0FvDD0C5ifccXWAryWK0ppWOLVfxS/fhq9LvZNp41JzJNNcyg2jNMNCsJlrN5GT2XMrbnL3LnSQ=' > ~/.ssh/known_hosts_pinned
+          SSH_PIN="-o HostKeyAlias=mutabe3-vps -o UserKnownHostsFile=$HOME/.ssh/known_hosts_pinned -o StrictHostKeyChecking=yes"
           test -f "ops/vps/$ACTION.sh" || { echo "no script ops/vps/$ACTION.sh"; exit 1; }
           echo "== ops/vps/$ACTION.sh @ $(git rev-parse --short HEAD) =="
-          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' < "ops/vps/$ACTION.sh"
+          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' < "ops/vps/$ACTION.sh"

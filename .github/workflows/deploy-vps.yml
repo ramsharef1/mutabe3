@@ -35,10 +35,16 @@ jobs:
           mkdir -p ~/.ssh
           echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Pinned SSH host keys (D-073, SECURITY S-07) — printed by `gh workflow run ops-vps.yml -f action=host-keys`.
+          # Any other key is refused. If the server is rebuilt, run that action and update these lines in
+          # deploy-vps.yml, ops-vps.yml and monitor.yml.
+          printf '%s\n' \
+            'mutabe3-vps ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGG2Sri3vi9/vqAC5HoKTm3nXUjNBuGlwHacrxmaZtTy' \
+            'mutabe3-vps ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAfJ7KoLJYJH0FvDD0C5ifccXWAryWK0ppWOLVfxS/fhq9LvZNp41JzJNNcyg2jNMNCsJlrN5GT2XMrbnL3LnSQ=' > ~/.ssh/known_hosts_pinned
+          SSH_PIN="-o HostKeyAlias=mutabe3-vps -o UserKnownHostsFile=$HOME/.ssh/known_hosts_pinned -o StrictHostKeyChecking=yes"
 
           # IMAGES_BACKFILL is a fixed-choice input, so it is safe to splice into the remote command.
-          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "IMAGES_BACKFILL=$IMAGES_BACKFILL bash -s" <<'REMOTE'
+          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "IMAGES_BACKFILL=$IMAGES_BACKFILL bash -s" <<'REMOTE'
           set -euo pipefail
           cd /var/www/mutabe3/current/projects/mutabe3
           # Build with the same runtime the units run on (D-055: Node 22 under /opt/node22; the shared global node is left alone).
@@ -138,9 +144,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Pinned SSH host keys (D-073, SECURITY S-07) — printed by `gh workflow run ops-vps.yml -f action=host-keys`.
+          # Any other key is refused. If the server is rebuilt, run that action and update these lines in
+          # deploy-vps.yml, ops-vps.yml and monitor.yml.
+          printf '%s\n' \
+            'mutabe3-vps ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGG2Sri3vi9/vqAC5HoKTm3nXUjNBuGlwHacrxmaZtTy' \
+            'mutabe3-vps ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAfJ7KoLJYJH0FvDD0C5ifccXWAryWK0ppWOLVfxS/fhq9LvZNp41JzJNNcyg2jNMNCsJlrN5GT2XMrbnL3LnSQ=' > ~/.ssh/known_hosts_pinned
+          SSH_PIN="-o HostKeyAlias=mutabe3-vps -o UserKnownHostsFile=$HOME/.ssh/known_hosts_pinned -o StrictHostKeyChecking=yes"
 
-          ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
           set -e
           # Both units restart as the unprivileged service user (D-048); the backend's `tsx watch`
           # cold start can take 10–20 s, so poll instead of sampling once.
