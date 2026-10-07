@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { allow, fingerprint } from '../ratelimit';
 import { activePolls, pollDto } from '../polls';
-import { newToken } from '../newsletter';
+import { newToken, SITE_URL } from '../newsletter';
+import { sendMail } from '../email';
 
 // Public reader endpoints (D-043 Stage 4), mounted at /api.
 const router = Router();
@@ -92,25 +93,70 @@ router.post('/polls/:id/vote', async (req: Request, res: Response) => {
 
 // POST /api/newsletter/subscribe { email, categories?, source?, website } — single opt-in;
 // every issue carries a one-click unsubscribe link.
+// Confirmation mail for double opt-in (D-054, S-10): plain, one button, one-click unsubscribe not needed yet.
+async function sendConfirmMail(email: string, token: string) {
+  const link = `${SITE_URL}/newsletter/confirm?token=${encodeURIComponent(token)}`;
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  const html = `<!doctype html><html lang="ar" dir="rtl"><body style="margin:0;background:#f6f6f6;font-family:Tahoma,Arial,sans-serif">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="560" style="max-width:560px;background:#fff;border-radius:8px;overflow:hidden">
+<tr><td style="background:#101033;color:#fff;padding:14px 20px;font-weight:bold;font-size:18px">موقع المتابع الاخباري</td></tr>
+<tr><td style="padding:22px 20px;color:#222;font-size:15px;line-height:1.8">
+<p style="margin:0 0 12px">طلبت الاشتراك في نشرة المتابع البريدية باستخدام هذا العنوان: <b dir="ltr">${esc(email)}</b>.</p>
+<p style="margin:0 0 18px">اضغط الزر لتأكيد الاشتراك. إن لم تكن أنت من طلب ذلك فتجاهل هذه الرسالة ولن تصلك أي رسائل.</p>
+<p style="margin:0 0 18px;text-align:center"><a href="${link}" style="display:inline-block;background:#990000;color:#fff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold">تأكيد الاشتراك</a></p>
+<p style="margin:0;color:#666;font-size:12.5px">أو انسخ الرابط: <span dir="ltr">${esc(link)}</span><br>الرابط صالح لمدة 48 ساعة.</p>
+</td></tr></table></td></tr></table></body></html>`;
+  const text = `طلبت الاشتراك في نشرة المتابع البريدية (${email}).\nلتأكيد الاشتراك افتح الرابط التالي خلال 48 ساعة:\n${link}\n\nإن لم تكن أنت من طلب ذلك فتجاهل هذه الرسالة.`;
+  await sendMail({ to: email, subject: 'أكّد اشتراكك في نشرة المتابع', html, text });
+}
+
+// POST /api/newsletter/subscribe — double opt-in: the address is `pending` until the mailed link is used.
+// Same neutral answer for new, pending and unsubscribed addresses; an already-active address is told so.
 router.post('/newsletter/subscribe', async (req: Request, res: Response) => {
   try {
     const { email, categories, source, website } = req.body || {};
-    if (website) return res.json({ success: true, status: 'active' });
+    if (website) return res.json({ success: true, status: 'pending' }); // honeypot
     if (!allow(`n:${ip(req)}`, 6, 60 * 60_000)) return tooMany(res);
     const em = String(email || '').trim().toLowerCase();
     if (!EMAIL_RE.test(em) || em.length > 200) return res.status(400).json({ error: 'البريد الإلكتروني غير صالح' });
+    if (!allow(`n:${em}`, 3, 24 * 60 * 60_000)) return tooMany(res); // at most 3 confirmation mails per address per day
     const cats = Array.isArray(categories) ? categories.map((c) => String(c).trim().slice(0, 40)).filter(Boolean).slice(0, 12) : [];
     const src = source ? String(source).slice(0, 40) : null;
     const existing = await prisma.subscription.findUnique({ where: { email: em } });
+    if (existing?.status === 'active') return res.json({ success: true, status: 'active' });
+
+    const confirmToken = newToken();
     if (existing) {
+      // pending (resend) or unsubscribed (must confirm again — never silently re-activated)
       await prisma.subscription.update({
         where: { id: existing.id },
-        data: { status: 'active', unsubscribedAt: null, categories: cats.length ? cats : existing.categories, unsubToken: existing.unsubToken || newToken() },
+        data: { status: 'pending', confirmToken, confirmedAt: null, categories: cats.length ? cats : existing.categories, unsubToken: existing.unsubToken || newToken(), updatedAt: new Date() },
       });
     } else {
-      await prisma.subscription.create({ data: { email: em, categories: cats, source: src, unsubToken: newToken() } });
+      await prisma.subscription.create({ data: { email: em, categories: cats, source: src, status: 'pending', confirmToken, unsubToken: newToken() } });
     }
-    res.json({ success: true, status: 'active' });
+    try {
+      await sendConfirmMail(em, confirmToken);
+    } catch (e) {
+      console.error('confirm mail failed:', e);
+      return res.status(502).json({ error: 'تعذّر إرسال رسالة التأكيد الآن — حاول بعد قليل' });
+    }
+    res.json({ success: true, status: 'pending' });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// POST /api/newsletter/confirm { token } — activates a pending subscription (link valid 48h).
+router.post('/newsletter/confirm', async (req: Request, res: Response) => {
+  try {
+    if (!allow(`nc:${ip(req)}`, 20, 60 * 60_000)) return tooMany(res);
+    const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+    if (!token || token.length > 64) return res.status(400).json({ error: 'رابط التأكيد غير صالح' });
+    const sub = await prisma.subscription.findFirst({ where: { confirmToken: token } });
+    if (!sub) return res.status(404).json({ error: 'رابط التأكيد غير صالح أو استُخدم من قبل' });
+    if (Date.now() - new Date(sub.updatedAt).getTime() > 48 * 60 * 60_000) return res.status(410).json({ error: 'انتهت صلاحية رابط التأكيد — اشترك من جديد لتصلك رسالة أخرى' });
+    await prisma.subscription.update({ where: { id: sub.id }, data: { status: 'active', confirmedAt: new Date(), confirmToken: null, unsubscribedAt: null } });
+    res.json({ success: true, email: sub.email.replace(/^(.).*(@.*)$/, '$1***$2') });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 

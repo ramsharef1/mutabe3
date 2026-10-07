@@ -13,6 +13,8 @@ export interface Article {
   updatedAt?: string;
   viewsCount?: number;
   featuredImageUrl?: string;
+  coverCredit?: string | null;  // «الصورة: …» shown only when set (D-054)
+  coverCaption?: string | null; // lead-image caption; falls back to the title
   seoKeywords?: string[];
   _count?: { comments?: number }; // approved reader comments (D-043 Stage 4)
 }

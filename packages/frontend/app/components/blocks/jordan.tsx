@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Article, Ico, ago, face, Img } from '../site';
 import { CROSSINGS, ROADS, SERVICES, ROYAL, DECISIONS, VOTE, TAWJIHI, ELECTIONS, MATCH, LEAGUE, FX, CLOCKS, GULF_TZ, UGC, GREETINGS, MEMORY, JOBS, FACTS, prayerTimes, Season } from '../feeds';
 import { LIVE, fmtTime } from '../content';
-import { subscribe } from '../newsletter';
+import { subscribe, CONFIRM_MSG } from '../newsletter';
 
 /* ---------- J3 / J4 / J5 ---------- */
 export function Crossings() {
@@ -267,7 +267,7 @@ export function Capture() {
       <b>تابع المتابع أينما كنت</b>
       <p>الأخبار العاجلة على هاتفك لحظة وقوعها — بلا إعلانات وبلا خوارزميات.</p>
       <div className="btns"><a className="wa" href="https://whatsapp.com/channel/mutabe3" target="_blank" rel="noopener">{Ico.wa}قناة واتساب</a><a className="tg" href="https://t.me/mutabe3" target="_blank" rel="noopener">{Ico.tg}تيليغرام</a></div>
-      {state === 'done' ? <div className="ok" role="status">تم اشتراكك في نشرة المتابع.</div> : (
+      {state === 'done' ? <div className="ok" role="status">{CONFIRM_MSG}</div> : (
         <form className="em" onSubmit={submit}>
           <input type="email" required placeholder="بريدك الإلكتروني للنشرة" aria-label="البريد الإلكتروني" value={email} onChange={(e) => setEmail(e.target.value)} disabled={state === 'busy'} />
           <input className="hp" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} aria-hidden="true" name="website" />

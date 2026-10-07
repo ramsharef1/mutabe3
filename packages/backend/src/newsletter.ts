@@ -53,9 +53,13 @@ export async function issueArticles(prisma: PrismaClient, ids: string[]) {
 export const recipientWhere = (edition?: string | null) =>
   edition ? { status: 'active', OR: [{ categories: { has: edition } }, { categories: { isEmpty: true } }] } : { status: 'active' };
 
-/** Send one issue to its recipients. Safe against double clicks: only a draft/failed issue can start. */
+/**
+ * Send one issue to its recipients. Safe against double clicks: only a draft/failed issue can start.
+ * Every delivery is logged per recipient (D-054), so a run cut off by a restart is resumed by
+ * re-sending the issue: addresses with a `sent` row are skipped, nobody gets the issue twice.
+ */
 export async function sendIssue(prisma: PrismaClient, issueId: string) {
-  const claimed = await prisma.newsletterIssue.updateMany({ where: { id: issueId, status: { in: ['draft', 'failed'] } }, data: { status: 'sending', sent: 0, failed: 0, lastError: null } });
+  const claimed = await prisma.newsletterIssue.updateMany({ where: { id: issueId, status: { in: ['draft', 'failed'] } }, data: { status: 'sending', lastError: null, startedAt: new Date() } });
   if (!claimed.count) return { started: false };
   const issue = await prisma.newsletterIssue.findUniqueOrThrow({ where: { id: issueId } });
   const articles = await issueArticles(prisma, issue.articleIds);
@@ -64,18 +68,22 @@ export async function sendIssue(prisma: PrismaClient, issueId: string) {
     return { started: false };
   }
   const subs = await prisma.subscription.findMany({ where: recipientWhere(issue.edition), select: { id: true, email: true, unsubToken: true } });
-  await prisma.newsletterIssue.update({ where: { id: issueId }, data: { recipients: subs.length } });
-  let sent = 0, failed = 0, lastError: string | null = null;
+  const already = new Set((await prisma.newsletterDelivery.findMany({ where: { issueId, status: 'sent' }, select: { subscriptionId: true } })).map((d) => d.subscriptionId));
+  await prisma.newsletterIssue.update({ where: { id: issueId }, data: { recipients: subs.length, sent: already.size, failed: 0 } });
+  let sent = already.size, failed = 0, lastError: string | null = null;
   for (const [i, s] of subs.entries()) {
+    if (already.has(s.id)) continue;
     try {
       let token = s.unsubToken;
       if (!token) { token = newToken(); await prisma.subscription.update({ where: { id: s.id }, data: { unsubToken: token } }); }
       const { html, text, headers } = renderIssue(issue, articles, token);
       await sendMail({ to: s.email, subject: issue.subject, html, text, headers });
       sent++;
+      await prisma.newsletterDelivery.upsert({ where: { issueId_subscriptionId: { issueId, subscriptionId: s.id } }, update: { status: 'sent', error: null, at: new Date() }, create: { issueId, subscriptionId: s.id, email: s.email, status: 'sent' } });
     } catch (e: any) {
       failed++;
       lastError = String(e?.message || e).slice(0, 300);
+      await prisma.newsletterDelivery.upsert({ where: { issueId_subscriptionId: { issueId, subscriptionId: s.id } }, update: { status: 'failed', error: lastError, at: new Date() }, create: { issueId, subscriptionId: s.id, email: s.email, status: 'failed', error: lastError } }).catch(() => {});
     }
     if ((i + 1) % 20 === 0) await prisma.newsletterIssue.update({ where: { id: issueId }, data: { sent, failed, lastError } });
   }
@@ -83,8 +91,19 @@ export async function sendIssue(prisma: PrismaClient, issueId: string) {
     where: { id: issueId },
     data: { sent, failed, lastError, status: sent === 0 && failed > 0 ? 'failed' : 'sent', sentAt: new Date() },
   });
-  console.log(`📰 newsletter ${issueId}: ${sent} sent, ${failed} failed of ${subs.length}`);
+  console.log(`📰 newsletter ${issueId}: ${sent} sent (${already.size} from an earlier run), ${failed} failed of ${subs.length}`);
   return { started: true, sent, failed };
+}
+
+/** A send that was interrupted (deploy restart) stays `sending` forever; after 30 min mark it failed so it can be resumed (D-054). */
+export async function reapStuckSends(prisma: PrismaClient) {
+  const cutoff = new Date(Date.now() - 30 * 60_000);
+  const { count } = await prisma.newsletterIssue.updateMany({
+    where: { status: 'sending', OR: [{ startedAt: { lt: cutoff } }, { startedAt: null, createdAt: { lt: cutoff } }] },
+    data: { status: 'failed', lastError: 'انقطع الإرسال (إعادة تشغيل الخادم) — اضغط «إرسال» مجدداً لاستكمال المتبقي؛ لن تتكرر الرسائل' },
+  });
+  if (count) console.log(`📰 reaped ${count} stuck newsletter send(s)`);
+  return count;
 }
 
 /* ───────────── automatic morning digest (off by default) ───────────── */

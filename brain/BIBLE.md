@@ -39,15 +39,15 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 |---|---|---|---|
 | F-01 | Footer links to about/contact/advertise/privacy/terms are dead (`#`); no imprint, corrections or privacy page | High | **in-progress (D-053)** — seven pages live as counsel drafts with a visible banner; footer wired; needs names, mailboxes and counsel sign-off |
 | F-02 | ~20 homepage blocks, live strip, video, columnists and 19 articles are demo/invented data | High | in-progress — **switch built (D-052):** editors turn the illustrative blocks off from `/dashboard/homepage` once real content exists; demo articles stay by decision |
-| F-03 | No photo credit field; every cover captioned «تصوير: المتابع» | High | proposed |
+| F-03 | No photo credit field; every cover captioned «تصوير: المتابع» | High | **done (D-054)** — credit/caption fields, credit shown only when set, JSON-LD ImageObject |
 | F-04 | `dateModified` = `updatedAt`, bumped by every view → fake freshness signal | Medium | **done (D-052)** — raw increment, `updatedAt` moves only on edits |
-| F-05 | Category pages repeat articles and inflate counts; unknown slugs show other categories | Medium | proposed |
+| F-05 | Category pages repeat articles and inflate counts; unknown slugs show other categories | Medium | **done (D-054)** for honesty; F-05b open: server-side title/canonical for category, tag and search pages |
 | F-06 | No analytics, no consent layer; PDPL requires explicit consent | High | proposed |
-| F-07 | Newsletter single opt-in re-activates unsubscribed emails; inbox delivery blocked on DNS | Medium | proposed (double opt-in) |
+| F-07 | Newsletter single opt-in re-activates unsubscribed emails; inbox delivery blocked on DNS | Medium | **done (D-054)** — double opt-in with confirmation mail; DNS (SPF/DKIM) still Rami's |
 | F-08 | Banners have no dates or counts; no `/advertise`; no sponsored label | High (revenue) | proposed |
 | F-09 | Production Node 20 past EOL; Next 14 unsupported; no lockfile | High | proposed (Node 22 + lockfile now; Next 16 deferred) |
 | F-10 | Security S-01…S-10 (see SECURITY.md) | Critical/High | proposed (launch-critical subset in weeks 1–2) |
-| F-11 | Newsletter send stuck in `sending` if the backend restarts mid-send | Medium | proposed |
+| F-11 | Newsletter send stuck in `sending` if the backend restarts mid-send | Medium | **done (D-054)** — per-recipient delivery log, resumable re-send, 30-minute reaper |
 | F-12 | Every red on the site is Ammon legacy; logo has no red; dark-mode logo via CSS filter; OG card bakes the red bar | Medium | proposed (re-theme weeks 5–8) |
 | F-13 | 10+ articles/day target vs 1–3 editors | Risk | proposed (faster editor UX + templates) |
 

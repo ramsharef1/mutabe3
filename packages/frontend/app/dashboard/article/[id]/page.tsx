@@ -34,6 +34,8 @@ export default function Editor() {
   const [content, setContent] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [featuredImageUrl, setImage] = useState('');
+  const [coverCredit, setCoverCredit] = useState('');
+  const [coverCaption, setCoverCaption] = useState('');
   const [status, setStatus] = useState('DRAFT');
   const [loadedStatus, setLoadedStatus] = useState('DRAFT');
   const [when, setWhen] = useState(''); // datetime-local value for SCHEDULED
@@ -59,6 +61,7 @@ export default function Editor() {
         setTitle(a.title || ''); setSummary(a.summary || '');
         setContent(isHtml(c) ? c : textToHtml(c)); // seeded articles are plain text
         setCategoryId(a.categoryId || cl[0]?.id || ''); setImage(a.featuredImageUrl || '');
+        setCoverCredit(a.coverCredit || ''); setCoverCaption(a.coverCaption || '');
         setStatus(a.status || 'DRAFT'); setLoadedStatus(a.status || 'DRAFT');
         setWhen(toLocalInput(a.scheduledPublishAt));
         setKeywords((a.seoKeywords || []).join('، '));
@@ -85,6 +88,8 @@ export default function Editor() {
     const body = {
       title: title.trim(), summary: summary.trim(), content, categoryId,
       featuredImageUrl: featuredImageUrl.trim() || null,
+      coverCredit: coverCredit.trim() || null,
+      coverCaption: coverCaption.trim() || null,
       status: st,
       scheduledPublishAt,
       seoKeywords: keywords.split(/[,،]/).map((s) => s.trim()).filter(Boolean),
@@ -174,6 +179,12 @@ export default function Editor() {
               <input value={featuredImageUrl} onChange={(e) => setImage(e.target.value)} placeholder="أو الصق رابط صورة https://…" dir="ltr" />
             </div>
           </div>
+          {featuredImageUrl && (
+            <div className="adm-inline">
+              <input value={coverCredit} onChange={(e) => setCoverCredit(e.target.value)} maxLength={120} placeholder="مصدر الصورة — مثال: بترا، رويترز، تصوير: اسم المصوّر" aria-label="مصدر الصورة" />
+              <input value={coverCaption} onChange={(e) => setCoverCaption(e.target.value)} maxLength={300} placeholder="تعليق الصورة (اختياري — يظهر العنوان إن تُرك فارغاً)" aria-label="تعليق الصورة" />
+            </div>
+          )}
           <input ref={coverRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => { pickCover(e.target.files?.[0]); e.target.value = ''; }} />
         </div>
 

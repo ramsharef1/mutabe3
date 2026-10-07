@@ -16,7 +16,7 @@ Secrets out of the repo (D-040), DB password rotated (D-042), unprivileged servi
 | S-07 | Root SSH deploy to a shared VPS; `npm install` on `^` ranges; host-key TOFU; no CI tests/audit; public repo | High | partly mitigated (D-048 service user) | lockfile now; non-root deploy user + pinned host key deferred |
 | S-08 | No audit log (media delete only `console.log`) | High | open | weeks 1–2: append-only `AuditLog` (publish/unpublish, roles, media delete, campaign activation, newsletter send, settings) |
 | S-09 | Demo articles, bylines, poll personas and demo ads are live | High (integrity) | open | weeks 1–2: hide blocks; demo articles stay until real content (owner) |
-| S-10 | Newsletter single opt-in re-activates unsubscribed emails; no SPF/DKIM/DMARC | High | open | weeks 1–2: double opt-in; DNS by Rami |
+| S-10 | Newsletter single opt-in re-activates unsubscribed emails; no SPF/DKIM/DMARC | High | **done in code (D-054)** — double opt-in, unsubscribed addresses must re-confirm, 3 confirmation mails/address/day; **DNS (SPF/DKIM/DMARC) still open — Rami** | DNS |
 | S-11 | Upload MIME is client-declared; a decode failure or GIF stores original bytes under an image extension without nosniff (happy path re-encodes; SVG refused) | Medium | open | `sharp.metadata().format` allowlist, reject on failure, nosniff |
 | S-12 | `String(e)` in ~40 error responses leaks ORM text | Medium | open | generic errors |
 | S-13 | Poll stuffing via fresh voter ids; no comment URL filter; `/view` inflatable | Medium | open | hashed voter + IP ceiling exists; add URL stripping, bot filter |

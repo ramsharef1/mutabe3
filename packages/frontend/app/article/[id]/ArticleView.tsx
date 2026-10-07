@@ -119,7 +119,8 @@ export default function ArticleView({ article: a, preview = false }: { article: 
             {a.featuredImageUrl && (
               <figure className="artlead">
                 <button type="button" className="im" onClick={() => lb.open(0)} title="عرض الصورة"><Img src={a.featuredImageUrl} priority /><span className="zoom">{Ico.search}</span></button>
-                <figcaption>{a.title} <em>— تصوير: المتابع</em></figcaption>
+                {/* no invented credit: the credit line appears only when the desk filled it in (D-054, F-03) */}
+                <figcaption>{a.coverCaption || a.title}{a.coverCredit && <em> — الصورة: {a.coverCredit}</em>}</figcaption>
               </figure>
             )}
 

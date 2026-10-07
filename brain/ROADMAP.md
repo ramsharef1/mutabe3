@@ -54,7 +54,7 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 - ☑ **Related articles** — `relatedByTag` surfaced on article pages ("أخبار ذات صلة" + "اقرأ أيضاً")
 
 ### Next — engagement & retention
-- ◐ **Newsletter delivery** — both signup forms store subscriptions; sending works from the dashboard via the VPS Postfix. **Blocked on DNS for inbox delivery:** mutabe3.news has no SPF/DKIM/DMARC (D-043 Stage 4)
+- ◐ **Newsletter delivery** — both signup forms store subscriptions; sending works from the dashboard via the VPS Postfix; **double opt-in** with a confirmation mail, per-recipient delivery log and resumable sends (D-054). **Blocked on DNS for inbox delivery:** mutabe3.news has no SPF/DKIM/DMARC (D-043 Stage 4)
 - ☑ **Reader comments** — post (held for moderation) + approved list on articles; "الأكثر نقاشاً" uses real counts (D-043 Stage 4)
 - ☐ **Reader accounts** — save articles / follow topics ⚙️ (SavedArticle model exists)
 - ☑ **Server-side polls** — votes persist for everyone, one per browser, IP ceiling (D-043 Stage 4)

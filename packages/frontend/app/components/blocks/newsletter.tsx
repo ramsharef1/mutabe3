@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { subscribe } from '../newsletter';
+import { subscribe, CONFIRM_MSG } from '../newsletter';
 
 const EDITIONS = ['سياسة', 'اقتصاد', 'رياضة', 'فلسطين'];
 
@@ -54,7 +54,7 @@ export function NewsletterCTA() {
       </div>
 
       {state === 'done' ? (
-        <p className="nl-ok" role="status">✓ تم اشتراكك. يمكنك إلغاؤه في أي وقت من رابط أسفل كل رسالة.</p>
+        <p className="nl-ok" role="status">✓ {CONFIRM_MSG} يمكنك إلغاء الاشتراك في أي وقت من رابط أسفل كل رسالة.</p>
       ) : (
         <form onSubmit={handleSubmit}>
           <input

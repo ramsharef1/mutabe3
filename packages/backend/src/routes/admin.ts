@@ -99,7 +99,7 @@ router.get('/articles/:id', async (req: Request, res: Response) => {
 router.post('/articles', async (req: Request, res: Response) => {
   try {
     const u = who(req);
-    const { title, summary, content, categoryId, featuredImageUrl, status, seoKeywords, slug, scheduledPublishAt } = req.body || {};
+    const { title, summary, content, categoryId, featuredImageUrl, coverCredit, coverCaption, status, seoKeywords, slug, scheduledPublishAt } = req.body || {};
     if (!title || !content || !categoryId) {
       return res.status(400).json({ error: 'title, content and categoryId are required' });
     }
@@ -115,6 +115,8 @@ router.post('/articles', async (req: Request, res: Response) => {
         content: sanitizeArticleHtml(String(content)),
         slug: makeSlug(title, slug),
         featuredImageUrl: featuredImageUrl || null,
+        coverCredit: String(coverCredit || '').trim().slice(0, 120) || null,
+        coverCaption: String(coverCaption || '').trim().slice(0, 300) || null,
         categoryId,
         authorId: u.id,
         status: st,
@@ -137,13 +139,15 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
       if (existing.authorId !== u.id) return res.status(403).json({ error: 'ليس لديك صلاحية على هذا المقال' });
       if (existing.status !== 'DRAFT') return res.status(403).json({ error: 'المقال غير المسوّد لا يعدّله إلا محرر' });
     }
-    const { title, summary, content, categoryId, featuredImageUrl, status, seoKeywords, scheduledPublishAt } = req.body || {};
+    const { title, summary, content, categoryId, featuredImageUrl, coverCredit, coverCaption, status, seoKeywords, scheduledPublishAt } = req.body || {};
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (summary !== undefined) data.summary = summary || null;
     if (content !== undefined) data.content = sanitizeArticleHtml(String(content));
     if (categoryId !== undefined) data.categoryId = categoryId;
     if (featuredImageUrl !== undefined) data.featuredImageUrl = featuredImageUrl || null;
+    if (coverCredit !== undefined) data.coverCredit = String(coverCredit || '').trim().slice(0, 120) || null;
+    if (coverCaption !== undefined) data.coverCaption = String(coverCaption || '').trim().slice(0, 300) || null;
     if (Array.isArray(seoKeywords)) data.seoKeywords = seoKeywords;
     const when = parseWhen(scheduledPublishAt);
     if (when === undefined) return res.status(400).json({ error: 'scheduledPublishAt is not a valid date' });

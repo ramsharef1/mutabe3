@@ -78,9 +78,8 @@ export default function CategoryPage() {
 
   const label = navItem?.label || catList[0]?.category?.name || CAT_LABELS[slug] || articles.find((a) => a.category?.slug === slug)?.category?.name || slug;
   const desc = navItem?.description || CAT_DESC[slug] || `آخر أخبار ${label} على موقع المتابع الاخباري`;
-  // Own list first; while a category is still thin (demo content) fall back to the site-wide list so the page stays full.
-  let base = catList.length ? catList : articles.filter((a) => a.category?.slug === slug);
-  if (base.length < 6) base = articles;
+  // Own stories only — a thin section is shown as thin, never padded with other categories (F-05, D-054).
+  const base = catList.length ? catList : articles.filter((a) => a.category?.slug === slug);
   const subs = topTags(base, 6);
   let list = sub ? base.filter((a) => tagsFor(a).includes(sub)) : base;
   if (sort === 'top') list = [...list].sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
@@ -88,7 +87,7 @@ export default function CategoryPage() {
   const feat = list[0];
   const subCards = list.slice(1, 3);
   const bullets = list.slice(3, 8);
-  const cycle = !sub;
+  const cycle = false; // every page lists real items once; no cycling to simulate volume (F-05)
   const rest = cycle ? list : list.slice(8);
   const pages = cycle ? PAGES : Math.max(1, Math.ceil(rest.length / PER));
   const link = (id: string) => `/article/${id}`;
@@ -122,8 +121,10 @@ export default function CategoryPage() {
 
             {list.length === 0 ? (
               <div className="empty">
-                <b>لا توجد أخبار ضمن «{sub}» حالياً</b>
-                <p>جرّب تصنيفاً آخر أو <button type="button" onClick={() => pickSub(null)}>اعرض كل أخبار {label}</button></p>
+                <b>{sub ? `لا توجد أخبار ضمن «${sub}» حالياً` : `لا توجد أخبار في قسم «${label}» بعد`}</b>
+                {sub
+                  ? <p>جرّب تصنيفاً آخر أو <button type="button" onClick={() => pickSub(null)}>اعرض كل أخبار {label}</button></p>
+                  : <p>تابع <a href="/">الصفحة الرئيسية</a> أو أحد الأقسام الأخرى.</p>}
               </div>
             ) : (
               <>

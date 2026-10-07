@@ -98,7 +98,9 @@ model Article {
   content           String   // Rich text JSON
   summary           String?
   featuredImageUrl  String?
-  
+  coverCredit       String?  // «الصورة: …» — photographer/agency; shown only when set (D-054, F-03)
+  coverCaption      String?  // caption under the lead image; falls back to the title
+
   // Relations
   authorId          String
   author            User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -194,6 +196,10 @@ model Subscription {
   // `prisma db push` stop with a data-loss prompt, which fails the deploy. Tokens are
   // 144 random bits, so collisions are not a practical concern.
   unsubToken String?
+  // Double opt-in (D-054, S-10): a new or re-subscribing address is `pending` until the
+  // confirmation link is used; only `active` rows ever receive mail.
+  confirmToken String?
+  confirmedAt  DateTime?
   source     String?
 
   @@index([email])
@@ -216,10 +222,28 @@ model NewsletterIssue {
   lastError   String?
   createdById String?
   createdAt   DateTime  @default(now())
+  startedAt   DateTime? // when the send loop claimed the issue — lets the scheduler reap a run cut off by a restart (D-054)
   sentAt      DateTime?
+  deliveries  NewsletterDelivery[]
 
   @@index([status])
   @@index([createdAt])
+}
+
+// One row per recipient per issue (D-054): a send interrupted by a deploy restart resumes
+// from the first address without a `sent` row instead of starting over or staying stuck.
+model NewsletterDelivery {
+  id             String          @id @default(cuid())
+  issueId        String
+  issue          NewsletterIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  email          String
+  status         String          // sent | failed
+  error          String?
+  at             DateTime        @default(now())
+
+  @@unique([issueId, subscriptionId])
+  @@index([issueId, status])
 }
 
 // Reader polls (D-043 Stage 4). slot "home" = the community poll, "debate" = the two-sided debate.

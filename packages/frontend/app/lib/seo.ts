@@ -34,7 +34,10 @@ export function newsArticleLd(a: Article) {
     url,
     headline: a.title.length > 110 ? `${a.title.slice(0, 109)}…` : a.title,
     description: a.summary || (body.length > 160 ? `${body.slice(0, 159)}…` : body),
-    image: [articleImage(a)],
+    // ImageObject carries the credit/caption when the desk set them (Google image-licensing metadata); plain URL otherwise.
+    image: a.coverCredit || a.coverCaption
+      ? [{ '@type': 'ImageObject', url: articleImage(a), ...(a.coverCredit ? { creditText: a.coverCredit } : {}), ...(a.coverCaption ? { caption: a.coverCaption } : {}) }]
+      : [articleImage(a)],
     datePublished: a.publishedAt,
     dateModified: a.updatedAt || a.publishedAt,
     author: [author],
