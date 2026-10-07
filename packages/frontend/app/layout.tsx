@@ -6,6 +6,7 @@ import { PwaRegister } from './components/pwa';
 import { Analytics } from './components/analytics';
 import { GA_ID, GA_HOSTS } from './lib/ga';
 import './globals.css';
+import './skin-ink.css';
 
 // Read the id here on the server: importing a value from a 'use client' module into a server component
 // yields a client-reference object (always truthy), which would emit the consent snippet unconditionally.
@@ -46,9 +47,14 @@ export const viewport: Viewport = {
   themeColor: '#990000',
 };
 
-// Before first paint: apply the saved theme (no white flash in dark mode) and keep
+// Before first paint: apply the saved theme (no white flash in dark mode) and skin, and keep
 // the browser's install prompt for the footer «تطبيق المتابع» button (components/pwa.tsx).
+// Skin preview: ?skin=ink switches this browser to Ink & Signal and remembers it, ?skin=classic switches
+// back; nobody else sees a change until the skin is made the default after client sign-off.
 const BOOT = "try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}"
+  + "try{var q=/[?&]skin=(ink|classic)(&|$)/.exec(location.search);if(q){if(q[1]==='ink')localStorage.setItem('skin','ink');else localStorage.removeItem('skin')}"
+  + "if(localStorage.getItem('skin')==='ink'){document.documentElement.dataset.skin='ink';"
+  + "addEventListener('DOMContentLoaded',function(){var m=document.querySelector('meta[name=theme-color]');if(m)m.content='#0B0B0F'})}}catch(e){}"
   + "addEventListener('beforeinstallprompt',function(e){window.__bip=e;dispatchEvent(new Event('mutabe3:bip'))});"
   + "addEventListener('appinstalled',function(){window.__bip=null;dispatchEvent(new Event('mutabe3:bip'))});";
 // Consent Mode v2 defaults must run before the GTM container (D-055): every storage type denied until the bar grants analytics.
