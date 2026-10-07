@@ -2,6 +2,11 @@
 
 ## 2026-10-07
 
+**D-062: Reboot of the shared VPS into kernel 687.54.1**
+- **Decided by:** Rami 2026-10-07 ("reboot now"), choosing *now* over the 04:30 Amman window proposed in D-061.
+- **How (ops actions `reboot` then `post-reboot-check`):** pre-flight aborts without rebooting if the boot default is not the newest kernel, a running service is not enabled at boot, a long-lived process lives in a login session (nohup/screen — would not come back), a docker container lacks a restart policy, or dnf/rpm/pg_dump/tar/certbot/a backup unit is mid-run. It saves the running-service list to `/root/ops-backups/D-062-<ts>/running-before.txt` and schedules `systemctl reboot` 20 s out (`systemd-run`) so the SSH session ends cleanly. The previous kernel stays in the boot menu (fallback through the hPanel console). Baseline from outside before the reboot: mutabe3.news, okath.news, convertec.cloud, euroarabs.com, dawoodcenter.com, mafhomhub.com, webhubteam.com, questionnaires/touresim.convertec.cloud 200; wbsjo.org 307.
+- **Status:** in progress · 2026-10-07
+
 **D-061: Security updates on the shared VPS — install the stragglers, report the reboot**
 - **Decided by:** Rami 2026-10-07 ("apply the security updates"), after the D-059 digest showed «تحديثات أمنية معلّقة 19».
 - **Survey (read-only ops run 37658774413):** the 19 were advisory *lines*, not packages — 4 advisories: Apache `httpd*`/`mod_*` (Important + Low; the unit is masked since D-060 and never runs), `vim-minimal` (Important), and the kernel (Moderate) which is **already installed** (687.54.1, this morning) while 687.53.1 runs. `dnf-automatic.timer` is on with `upgrade_type = security`, `apply_updates = yes`, `reboot = never` — security packages are installed every morning around 06:00 UTC (transactions 93–100); only reboots never happen. A security upgrade now = 8 packages, 2.4 MB; no running service is on replaced files.
