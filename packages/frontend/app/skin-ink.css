@@ -1,0 +1,78 @@
+/* ───────────────────────── Direction A «حبر وإشارة» (Ink & Signal) ─────────────────────────
+   Values: brain/tokens.json · rules: brain/DESIGN-SYSTEM.md (D-050). Active only under
+   <html data-skin="ink"> (set before first paint from ?skin=ink, remembered per browser); without
+   it nothing here applies and the classic red skin renders exactly as before — globals.css reads
+   every brand colour as var(--k-<role>, <classic value>) and the --k-* roles exist only here.
+   Roles: bar = ink tabs/bars/chips · btn = filled buttons/active states · text = links and hover ·
+   edge = rules, rails and outlines · live = عاجل/live only · neg/err = negative values and errors. */
+
+:root[data-skin=ink]{
+  --bg:#FFFFFF;--bg2:#F5F6F8;--bg3:#ECEEF1;--fg:#0B0B0F;--fg2:#3A4150;--muted:#5B6472;--muted2:#8A93A1;
+  --line:#CBD0D7;--line2:#DDE1E6;--line3:#E6E9ED;--shadow:rgba(11,11,15,.15);--overlay:rgba(11,11,15,.92);
+  --shadow-sm:0 2px 8px rgba(11,11,15,.05);--shadow-md:0 4px 12px rgba(11,11,15,.10);--shadow-lg:0 8px 24px rgba(11,11,15,.15);
+  --success:#15803D;--warning:#B45309;--error:#B42318;
+  --red:#2E6DB4;--rule:#0B0B0F;
+  --k-bar:#0B0B0F;--k-btn:#2E6DB4;--k-btnh:#1F5496;--k-text:#1F5496;--k-edge:#2E6DB4;--k-rule:#0B0B0F;
+  --k-live:#D7262D;--k-livet:#D7262D;--k-neg:#B42318;--k-negt:#B42318;--k-err:#B42318;
+  --k-topsep:rgba(255,255,255,.16);--k-name:var(--fg);--k-glow:rgba(46,109,180,.35);
+  --k-cta:linear-gradient(135deg,#1F5496,#0B0B0F);
+  --k-adm:#2E6DB4;--k-admh:#1F5496;--k-admerr:#B42318;
+  --k-accent-soft:#E8F0FA;
+  /* Noto only: Kufi for headlines/UI, Naskh for everything else (Amiri and Arial/Tahoma dropped).
+     next/font already declares the Latin range in both families, so Western digits use the brand faces. */
+  --k-sys:var(--naskh);
+}
+:root[data-skin=ink][data-theme=dark]{
+  --bg:#141414;--bg2:#1C1C1C;--bg3:#242424;--fg:#ECECEC;--fg2:#D0D0D0;--muted:#9AA3B2;--muted2:#7A7A7A;
+  --line:#3A3A3A;--line2:#303030;--line3:#2A2A2A;--shadow:rgba(0,0,0,.6);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.4);--shadow-md:0 4px 12px rgba(0,0,0,.5);--shadow-lg:0 8px 24px rgba(0,0,0,.6);
+  --k-text:#5B94DE;--k-rule:#3A3A3A;--k-livet:#FF6B70;--k-negt:#F87171;--k-err:#F87171;--k-admerr:#F87171;
+  --k-accent-soft:#192431;
+}
+
+/* ---- type ---- */
+/* Naskh's own line box ("normal") is ~1.7 vs Arial's ~1.15; an explicit root value keeps the frozen densities */
+:root[data-skin=ink] .am{font-family:var(--naskh);line-height:1.3}
+/* Kufi for chrome and headlines; list/card titles use the tokens' clamp fallback (Naskh 700): Kufi at
+   13px wraps most two-word-longer titles onto a second line and breaks the frozen Ammon densities. */
+:root[data-skin=ink] .am :is(.nav li,.sticky li a,.ticker .lbl,.ticker .track a){font-family:var(--kufi);font-weight:700}
+:root[data-skin=ink] .nav li{font-size:13px;padding:0 8px}
+:root[data-skin=ink] .am :is(.card .t,.item .t,.sm .t,.catlist .ttl,.writer .t,.rail .w .t,.mostread li a,.trend .item,.picks li){font-family:var(--naskh);font-weight:700}
+:root[data-skin=ink] .tm{font-family:var(--naskh)}
+:root[data-skin=ink] .tabular,:root[data-skin=ink] .mkt,:root[data-skin=ink] .pr,:root[data-skin=ink] .weather{font-variant-numeric:tabular-nums}
+/* article body: Naskh 400 17.5/1.85 desktop, 16.5 mobile (tokens.type.scale.articleBody) — replaces Amiri bold 20/35 */
+:root[data-skin=ink] .artbody{font-family:var(--naskh);font-size:17.5px;font-weight:400;line-height:1.85}
+:root[data-skin=ink] .artbody b,:root[data-skin=ink] .artbody strong{font-weight:700}
+@media (max-width:767px){:root[data-skin=ink] .artbody{font-size:16.5px}}
+
+/* ---- chrome ---- */
+/* the category colour is an inline style (util.ts catColor) — ink-only chips, live chips keep red */
+:root[data-skin=ink] .chip:not(.islive){background:var(--k-bar)!important}
+:root[data-skin=ink] .cathead{border-color:var(--k-edge)!important}
+/* hover is a colour change of only 2.6:1 against ink text, so links underline on hover */
+:root[data-skin=ink] .nav li a:hover,:root[data-skin=ink] .sticky li a:hover{text-decoration:underline;text-underline-offset:6px}
+:root[data-skin=ink] .artbody a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+/* quote rails and summary tints sit on accentSoft */
+:root[data-skin=ink] .artbody blockquote,:root[data-skin=ink] .pull{background:var(--k-accent-soft)}
+:root[data-skin=ink] .logo small{color:var(--muted)}
+/* dark mode: the white logo file instead of the CSS filter (which painted the band ~#6EB3FF) */
+:root[data-skin=ink][data-theme=dark] .logo img,:root[data-skin=ink][data-theme=dark] .slogo img{content:url(/logo-white.svg);filter:none}
+
+/* players and progress bars borrowed the live red in classic; they are not live → accent (DESIGN-SYSTEM red migration) */
+:root[data-skin=ink] :is(.mini .pb,.mini .prog i,.video .pl2,.progress,.lb-x:hover,.video .col .th .now){background:var(--k-btn)}
+
+/* «اختيارات المحرر»: classic hard-codes a pink tint and white cards (unreadable in dark mode) */
+:root[data-skin=ink] .prem{background:linear-gradient(135deg,var(--k-accent-soft),var(--bg))}
+:root[data-skin=ink] .prem .card{background:var(--bg)}
+/* motion (tokens.motion.proposal): lift 2px, no zoom */
+:root[data-skin=ink] .prem .card:hover{transform:translateY(-2px)}
+
+/* advertiser creatives are not the site's chrome: their button keeps the colour it was sold with */
+:root[data-skin=ink] .adb .cta{background:#990000}
+
+/* ---- auth pages (styled-jsx) and admin read the same --k-adm roles ---- */
+:root[data-skin=ink] .adm-nav a.on{color:#fff}
+
+@media (prefers-reduced-motion:reduce){
+  :root[data-skin=ink] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

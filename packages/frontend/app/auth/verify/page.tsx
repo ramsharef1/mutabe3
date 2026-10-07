@@ -100,7 +100,7 @@ function VerifyInner() {
 
         .spinner {
           border: 4px solid #f3f3f3;
-          border-top: 4px solid #c41e3a;
+          border-top: 4px solid var(--k-adm,#c41e3a);
           border-radius: 50%;
           width: 40px;
           height: 40px;
@@ -123,7 +123,7 @@ function VerifyInner() {
         }
 
         .icon-error {
-          color: #c41e3a;
+          color: var(--k-adm,#c41e3a);
         }
 
         h1 {
@@ -144,7 +144,7 @@ function VerifyInner() {
         }
 
         .info a {
-          color: #c41e3a;
+          color: var(--k-adm,#c41e3a);
           text-decoration: none;
           font-weight: 600;
         }
@@ -157,7 +157,7 @@ function VerifyInner() {
           display: inline-block;
           margin-top: 20px;
           padding: 12px 24px;
-          background: #c41e3a;
+          background: var(--k-adm,#c41e3a);
           color: white;
           text-decoration: none;
           border-radius: 4px;
@@ -166,7 +166,7 @@ function VerifyInner() {
         }
 
         .btn:hover {
-          background: #a01829;
+          background: var(--k-admh,#a01829);
         }
       `}</style>
     </div>

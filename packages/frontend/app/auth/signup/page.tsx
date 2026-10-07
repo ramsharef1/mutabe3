@@ -164,7 +164,7 @@ export default function SignupPage() {
 
         input:focus {
           outline: none;
-          border-color: #c41e3a;
+          border-color: var(--k-adm,#c41e3a);
           box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
         }
 
@@ -180,12 +180,12 @@ export default function SignupPage() {
         }
 
         .btn-primary {
-          background: #c41e3a;
+          background: var(--k-adm,#c41e3a);
           color: white;
         }
 
         .btn-primary:hover:not(:disabled) {
-          background: #a01829;
+          background: var(--k-admh,#a01829);
         }
 
         .btn-primary:disabled {
@@ -201,7 +201,7 @@ export default function SignupPage() {
         }
 
         .auth-footer a {
-          color: #c41e3a;
+          color: var(--k-adm,#c41e3a);
           text-decoration: none;
           font-weight: 600;
         }
