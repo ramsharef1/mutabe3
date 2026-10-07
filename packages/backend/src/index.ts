@@ -11,6 +11,7 @@ import readerRoutes from './routes/readers';
 import { ensurePolls } from './polls';
 import { readAds, recordAdEvents, flushAdStats } from './ads';
 import { allow, isLoopback } from './ratelimit';
+import { sendError } from './errors';
 
 // Crawlers, link previews and monitors: never counted as reads or ad deliveries.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
@@ -45,11 +46,16 @@ app.use(cookieParser());
 app.use(UPLOAD_URL, express.static(UPLOAD_DIR, { maxAge: '30d', immutable: true, index: false, dotfiles: 'ignore' }));
 // Resized WebP derivatives of those masters, e.g. /api/img/640/2026/10/abc.webp (D-045).
 app.get(`${IMG_URL}/:w(\\d+)/*`, (req, res) => { serveDerivative(req, res).catch(() => res.status(500).end()); });
+// Browser origins allowed to call the API (D-065, SECURITY S-17): CORS_ORIGINS (comma list) when set,
+// otherwise the two production hosts; the local frontend only outside production.
+const allowedOrigins = (process.env.CORS_ORIGINS || 'https://mutabe3.news,https://www.mutabe3.news')
+  .split(',').map((o) => o.trim()).filter(Boolean)
+  .concat(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:9100']);
 app.use((req, res, next) => {
-  const allowedOrigins = ['https://mutabe3.news', 'https://www.mutabe3.news', 'http://localhost:9100', 'http://72.62.132.138:9100'];
   const origin = req.headers.origin;
 
   if (origin && allowedOrigins.includes(origin)) {
+    res.header('Vary', 'Origin');
     res.header('Access-Control-Allow-Origin', origin);
   }
 
@@ -143,10 +149,7 @@ app.get('/api/articles', async (req: Request, res: Response) => {
       q: q || undefined,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: String(error),
-    });
+    sendError(res, error);
   }
 });
 
@@ -198,7 +201,7 @@ app.get('/api/articles/:id', async (req: Request, res: Response) => {
 
     res.json(article);
   } catch (error) {
-    res.status(500).json({ error: String(error) });
+    sendError(res, error);
   }
 });
 
@@ -215,7 +218,7 @@ app.get('/api/categories', async (req: Request, res: Response) => {
       data: categories,
     });
   } catch (error) {
-    res.status(500).json({ error: String(error) });
+    sendError(res, error);
   }
 });
 
@@ -224,7 +227,7 @@ app.get('/api/homepage', async (_req: Request, res: Response) => {
   try {
     res.json({ success: true, data: await resolveHomepage(prisma) });
   } catch (error) {
-    res.status(500).json({ error: String(error) });
+    sendError(res, error);
   }
 });
 
@@ -233,7 +236,7 @@ app.get('/api/ads', async (_req: Request, res: Response) => {
   try {
     res.json({ success: true, data: await readAds(prisma, { activeOnly: true }) }); // scheduled banners only while active (D-057)
   } catch (error) {
-    res.status(500).json({ error: String(error) });
+    sendError(res, error);
   }
 });
 
@@ -312,11 +315,8 @@ app.use((req: Request, res: Response) => {
 
 // Error handling (Express only treats 4-arg functions as error handlers)
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.status === 404 ? 'Not found' : 'Internal Server Error',
-    message: process.env.NODE_ENV === 'production' ? undefined : err.message,
-  });
+  const status = Number(err?.status) >= 400 && Number(err?.status) < 600 ? Number(err.status) : 500;
+  sendError(res, err, { status, code: status === 413 ? 'TOO_LARGE' : status < 500 ? 'BAD_REQUEST' : 'SERVER_ERROR' });
 });
 
 // Start server

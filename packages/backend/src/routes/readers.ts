@@ -4,6 +4,8 @@ import { allow, fingerprint } from '../ratelimit';
 import { activePolls, pollDto } from '../polls';
 import { newToken, SITE_URL } from '../newsletter';
 import { sendMail } from '../email';
+import { sendError } from '../errors';
+import { stripLinks } from '../sanitize';
 
 // Public reader endpoints (D-043 Stage 4), mounted at /api.
 const router = Router();
@@ -30,7 +32,7 @@ router.get('/articles/:id/comments', async (req: Request, res: Response) => {
       take: 300,
     });
     res.json({ success: true, data: rows.map((c) => ({ id: c.id, name: c.authorName || c.user?.name || 'قارئ', content: c.content, createdAt: c.createdAt })) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST /api/articles/:id/comments { name, email?, content, website } → held for moderation
@@ -39,9 +41,11 @@ router.post('/articles/:id/comments', async (req: Request, res: Response) => {
     const { name, email, content, website } = req.body || {};
     if (website) return res.status(201).json({ success: true, status: 'PENDING' }); // honeypot: bots get a fake success
     if (!allow(`c:${ip(req)}`, 5, 10 * 60_000)) return tooMany(res);
-    const n = String(name || '').trim().slice(0, 60);
+    const n = stripLinks(String(name || '')).slice(0, 60);
     const em = String(email || '').trim().toLowerCase();
-    const body = String(content || '').replace(/\r/g, '').trim();
+    const raw = String(content || '').replace(/\r/g, '').trim();
+    const body = stripLinks(raw); // links are cut from the public text, the rest is kept (S-13)
+    if (raw.length >= 3 && body.length < 3) return res.status(400).json({ error: 'الروابط غير مسموحة في التعليقات' });
     if (n.length < 2) return res.status(400).json({ error: 'اكتب اسمك (حرفان على الأقل)' });
     if (body.length < 3) return res.status(400).json({ error: 'التعليق قصير جداً' });
     if (body.length > 2000) return res.status(400).json({ error: 'التعليق أطول من 2000 حرف' });
@@ -51,14 +55,14 @@ router.post('/articles/:id/comments', async (req: Request, res: Response) => {
     if (!allow(`ca:${ip(req)}:${id}`, 3, 60 * 60_000)) return tooMany(res);
     await prisma.comment.create({ data: { articleId: id, content: body, authorName: n, authorEmail: em || null, ipHash: fingerprint('ip', ip(req)), status: 'PENDING' } });
     res.status(201).json({ success: true, status: 'PENDING' });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────── polls ───────────── */
 
 router.get('/polls/active', async (_req: Request, res: Response) => {
   try { res.json({ success: true, data: await activePolls(prisma) }); }
-  catch (e) { res.status(500).json({ error: String(e) }); }
+  catch (e) { sendError(res, e); }
 });
 
 // POST /api/polls/:id/vote { optionId, voter } — `voter` is a random id the browser keeps;
@@ -86,7 +90,7 @@ router.post('/polls/:id/vote', async (req: Request, res: Response) => {
     }
     const fresh = await prisma.poll.findUniqueOrThrow({ where: { id: poll.id }, include: { options: true } });
     res.json({ success: true, data: pollDto(fresh) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────── newsletter ───────────── */
@@ -143,7 +147,7 @@ router.post('/newsletter/subscribe', async (req: Request, res: Response) => {
       return res.status(502).json({ error: 'تعذّر إرسال رسالة التأكيد الآن — حاول بعد قليل' });
     }
     res.json({ success: true, status: 'pending' });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST /api/newsletter/confirm { token } — activates a pending subscription (link valid 48h).
@@ -157,7 +161,7 @@ router.post('/newsletter/confirm', async (req: Request, res: Response) => {
     if (Date.now() - new Date(sub.updatedAt).getTime() > 48 * 60 * 60_000) return res.status(410).json({ error: 'انتهت صلاحية رابط التأكيد — اشترك من جديد لتصلك رسالة أخرى' });
     await prisma.subscription.update({ where: { id: sub.id }, data: { status: 'active', confirmedAt: new Date(), confirmToken: null, unsubscribedAt: null } });
     res.json({ success: true, email: sub.email.replace(/^(.).*(@.*)$/, '$1***$2') });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST /api/newsletter/unsubscribe { token } or ?token= (RFC 8058 one-click POST from mail clients)
@@ -169,7 +173,7 @@ router.post('/newsletter/unsubscribe', async (req: Request, res: Response) => {
     if (!sub) return res.status(404).json({ error: 'رابط إلغاء الاشتراك غير صالح' });
     if (sub.status !== 'unsubscribed') await prisma.subscription.update({ where: { id: sub.id }, data: { status: 'unsubscribed', unsubscribedAt: new Date() } });
     res.json({ success: true, email: sub.email.replace(/^(.).*(@.*)$/, '$1***$2') });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 export default router;

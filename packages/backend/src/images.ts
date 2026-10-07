@@ -1,11 +1,11 @@
 // WebP image pipeline (D-045, adopted from okath's Laravel/GD recipe, rebuilt on sharp).
 //
-//  Layer 1 — ingestImage(): every uploaded JPEG/PNG/WebP becomes ONE WebP master
-//            (quality 82, EXIF auto-rotated, width capped at 2048, alpha flattened
-//            onto white). Only the WebP is stored. GIF and animated WebP pass through
-//            untouched so advertiser/animated creatives keep their frames, and any
-//            decode failure falls back to storing the original bytes — an upload is
-//            never lost because of the converter.
+//  Layer 1 — ingestImage(): the file's real format is read from its bytes by sharp — the
+//            client-declared MIME type is ignored (D-065, SECURITY S-11). Only JPEG, PNG,
+//            WebP and GIF decode; each becomes ONE WebP master (quality 82, EXIF
+//            auto-rotated, width capped at 2048, alpha flattened onto white). Animated GIF
+//            and WebP are re-encoded as animated WebP so creatives keep their frames. Anything
+//            else, or any decode failure, is refused — original bytes are never stored.
 //  Layer 2 — ensureDerivative(): resized WebP derivatives at a width whitelist,
 //            generated on first request and cached under UPLOAD_DIR/.cache/w<width>/…,
 //            regenerated whenever the master changes. Served by GET /api/img/:w/<rel>.
@@ -19,23 +19,26 @@ export const DERIVATIVE_QUALITY = 75;
 export const IMAGE_WIDTHS: readonly number[] = [160, 320, 480, 640, 960, 1280];
 export const CACHE_DIRNAME = '.cache';
 
-/** Raster formats we re-encode. Everything else (gif, svg, …) is stored and served as-is. */
-const TRANSCODABLE = new Set(['image/jpeg', 'image/png', 'image/webp']);
+/** Formats sharp may decode from an upload (by content, never by the declared type). SVG is not among them. */
+const ACCEPTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'gif']);
 const TRANSCODABLE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
+
+/** An upload that is not a decodable JPEG/PNG/WebP/GIF; the message is safe to show the editor. */
+export class RejectedImage extends Error {}
 
 export interface Ingested {
   buffer: Buffer;
   ext: string;
   mime: string;
-  /** true when the stored bytes are the WebP master, false when the original was kept */
+  /** always true since D-065: the stored bytes are a WebP the server encoded itself */
   converted: boolean;
   width?: number;
   height?: number;
 }
 
 /** One sharp pipeline for masters and derivatives: orient → cap width → flatten → WebP. */
-export function toWebp(input: Buffer | string, width: number, quality: number) {
-  return sharp(input, { failOn: 'none' })
+export function toWebp(input: Buffer | string, width: number, quality: number, failOn: 'none' | 'truncated' = 'none') {
+  return sharp(input, { failOn })
     .rotate() // apply EXIF orientation, then drop the tag
     .resize({ width, withoutEnlargement: true })
     .flatten({ background: '#ffffff' })
@@ -45,18 +48,27 @@ export function toWebp(input: Buffer | string, width: number, quality: number) {
 
 const isAnimated = async (input: Buffer | string) => ((await sharp(input).metadata()).pages ?? 1) > 1;
 
-/** Transcode an upload to a WebP master, or hand back the original bytes when that is the right call. */
-export async function ingestImage(input: Buffer, mimetype: string, ext: string): Promise<Ingested> {
-  const original: Ingested = { buffer: input, ext, mime: mimetype, converted: false };
-  if (!TRANSCODABLE.has(mimetype)) return original; // gif (animation) and anything exotic
+/** Re-encode an upload as a WebP master, or throw RejectedImage. */
+export async function ingestImage(input: Buffer): Promise<Ingested> {
+  let format: string | undefined, pages = 1;
   try {
-    if (mimetype === 'image/webp' && (await isAnimated(input))) return original;
-    const { data, info } = await toWebp(input, MASTER_MAX_WIDTH, MASTER_QUALITY);
-    if (data.length < 100) return original;
-    return { buffer: data, ext: 'webp', mime: 'image/webp', converted: true, width: info.width, height: info.height };
+    const meta = await sharp(input).metadata();
+    format = meta.format;
+    pages = meta.pages ?? 1;
+  } catch { /* not an image sharp can read */ }
+  if (!format || !ACCEPTED_FORMATS.has(format)) throw new RejectedImage('الملف ليس صورة مدعومة (JPEG أو PNG أو WebP أو GIF)');
+  try {
+    const { data, info } = pages > 1
+      ? await sharp(input, { animated: true, failOn: 'truncated' })
+        .resize({ width: MASTER_MAX_WIDTH, withoutEnlargement: true })
+        .webp({ quality: MASTER_QUALITY, effort: 4 })
+        .toBuffer({ resolveWithObject: true })
+      : await toWebp(input, MASTER_MAX_WIDTH, MASTER_QUALITY, 'truncated');
+    if (!data.length) throw new Error('empty output');
+    return { buffer: data, ext: 'webp', mime: 'image/webp', converted: true, width: info.width, height: info.pageHeight ?? info.height };
   } catch (e) {
-    console.warn('[images] keeping original upload, WebP transcode failed:', (e as Error).message);
-    return original;
+    console.warn(`[images] upload refused, ${format} decode failed:`, (e as Error).message);
+    throw new RejectedImage('تعذّرت قراءة الصورة، قد يكون الملف تالفاً');
   }
 }
 

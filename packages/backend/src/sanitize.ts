@@ -48,3 +48,11 @@ export const sanitizeArticleHtml = (content: string) => {
   const html = looksLikeHtml(content) ? content : textToHtml(content || '');
   return sanitizeHtml(html, OPTIONS).trim();
 };
+
+// Reader comments are plain text and never carry links (D-065, SECURITY S-13): URLs with a scheme,
+// www.… and bare domains (ASCII host + letter TLD, with any path) are cut out, e-mail addresses with
+// them; the rest of the text is kept. Decimal numbers ("3.14") and Arabic text never match.
+const LINK_RE = /(?:[a-z][a-z0-9+.-]*:\/\/|www\.)\S+|[^\s@]+@[^\s@]+\.[a-z]{2,}\S*|\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,24}\b(?:[/?#:]\S*)?/gi;
+
+export const stripLinks = (text: string) => text.search(LINK_RE) === -1 ? text.trim() :
+  text.replace(LINK_RE, ' ').replace(/[^\S\n]{2,}/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();

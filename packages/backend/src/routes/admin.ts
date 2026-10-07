@@ -8,6 +8,8 @@ import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, 
 import readerAdmin from './adminReaders';
 import { readAds, parseAds, writeAds, adStats, safeHref, AdsSetting, ZONES } from '../ads';
 import { audit, listAudit, q } from '../audit';
+import { sendError } from '../errors';
+import { RejectedImage } from '../images';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -100,7 +102,7 @@ router.get('/articles', async (req: Request, res: Response) => {
       take: 200,
     });
     res.json({ success: true, data: articles });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // GET one (incl. drafts) for the editor and the preview
@@ -114,7 +116,7 @@ router.get('/articles/:id', async (req: Request, res: Response) => {
     if (!a) return res.status(404).json({ error: 'Not found' });
     if (!isEditor(u) && a.authorId !== u.id) return res.status(403).json({ error: 'ليس لديك صلاحية على هذا المقال' });
     res.json({ success: true, data: a });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST create
@@ -157,7 +159,7 @@ router.post('/articles', async (req: Request, res: Response) => {
       meta: { created: true, status: st, kind: article.kind, ...(st === 'SCHEDULED' ? { scheduledPublishAt: when, backdated } : {}) },
     });
     res.status(201).json({ success: true, data: article });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // PUT update
@@ -220,7 +222,7 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
       });
     }
     res.json({ success: true, data: article });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // DELETE — editors anything; journalists their own drafts
@@ -239,7 +241,7 @@ router.delete('/articles/:id', async (req: Request, res: Response) => {
       meta: { title: existing.title, slug: existing.slug, status: existing.status, publishedAt: existing.publishedAt },
     });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────────────────────── media ───────────────────────────── */
@@ -248,25 +250,27 @@ router.delete('/articles/:id', async (req: Request, res: Response) => {
 router.post('/upload', (req: Request, res: Response) => {
   imageUpload.single('file')(req, res, (err: any) => {
     if (err) {
-      const msg = err.code === 'LIMIT_FILE_SIZE' ? `الملف أكبر من ${Math.round(MAX_UPLOAD_BYTES / 1048576)}MB` : err.message || 'Upload failed';
-      return res.status(400).json({ error: msg });
+      if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ success: false, error: `الملف أكبر من ${Math.round(MAX_UPLOAD_BYTES / 1048576)}MB`, code: 'FILE_TOO_LARGE' });
+      return sendError(res, err, { status: 400, code: 'UPLOAD_INVALID', message: 'تعذّر استلام الملف' });
     }
     const file = (req as any).file as Express.Multer.File | undefined;
-    if (!file) return res.status(400).json({ error: 'No file received' });
-    // D-045: stored as a WebP master (q82, ≤2048px) unless the ingest kept the original (gif/animated/failure)
+    if (!file) return res.status(400).json({ success: false, error: 'لم يصل أي ملف', code: 'NO_FILE' });
+    // D-045/D-065: the bytes decide the format (jpeg/png/webp/gif); stored only as a WebP master
     storeUpload(file)
       .then((s) => res.status(201).json({
         success: true, url: s.url, name: file.originalname, size: s.size, originalSize: file.size,
         format: s.mime, converted: s.converted, width: s.width, height: s.height,
       }))
-      .catch((e) => { console.error('[upload] store failed:', e); res.status(500).json({ error: 'تعذّر حفظ الصورة' }); });
+      .catch((e) => e instanceof RejectedImage
+        ? res.status(400).json({ success: false, error: e.message, code: 'UNSUPPORTED_IMAGE' })
+        : sendError(res, e, { code: 'UPLOAD_STORE_FAILED', message: 'تعذّر حفظ الصورة' }));
   });
 });
 
 // GET /api/admin/media — newest uploads first, for the editor's picker
 router.get('/media', (_req: Request, res: Response) => {
   try { res.json({ success: true, data: listMedia() }); }
-  catch (e) { res.status(500).json({ error: String(e) }); }
+  catch (e) { sendError(res, e); }
 });
 
 // Everything in the DB that still points at an upload: article covers and bodies,
@@ -319,7 +323,7 @@ async function deleteMedia(req: Request, res: Response, input: string) {
       meta: { removed: r.removed, forced: used > 0 && force, references: used ? { articles: refs.articles.map((a) => a.id), categories: refs.categories.map((c) => c.id), ads: refs.ads.length } : undefined },
     });
     res.json({ success: true, url: `${UPLOAD_URL}/${rel}`, removed: r.removed, forced: used > 0 && force, ...(used ? { references: refs } : {}) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 }
 router.delete('/media', requireRole(...EDITOR_ROLES), (req: Request, res: Response) => deleteMedia(req, res, String(req.query.url || '')));
 router.delete('/media/:year/:month/:name', requireRole(...EDITOR_ROLES), (req: Request, res: Response) =>
@@ -334,7 +338,7 @@ router.get('/categories', requireRole(...EDITOR_ROLES), async (_req: Request, re
   try {
     const data = await prisma.category.findMany({ select: CATEGORY_SELECT, orderBy: { displayOrder: 'asc' } });
     res.json({ success: true, data });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.post('/categories', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
@@ -352,7 +356,7 @@ router.post('/categories', requireRole(...EDITOR_ROLES), async (req: Request, re
     res.status(201).json({ success: true, data });
   } catch (e) {
     if (isUniqueError(e)) return res.status(409).json({ error: 'الاسم أو المعرّف مستخدم لقسم آخر' });
-    res.status(500).json({ error: String(e) });
+    sendError(res, e);
   }
 });
 
@@ -365,7 +369,7 @@ router.put('/categories/order', requireRole(...EDITOR_ROLES), async (req: Reques
     const data = await prisma.category.findMany({ select: CATEGORY_SELECT, orderBy: { displayOrder: 'asc' } });
     await audit(prisma, who(req), req, { action: 'category.reorder', targetType: 'category', summary: 'أعاد ترتيب الأقسام', meta: { order: data.map((c) => c.slug) } });
     res.json({ success: true, data });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.put('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
@@ -391,7 +395,7 @@ router.put('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Request,
   } catch (e: any) {
     if (isUniqueError(e)) return res.status(409).json({ error: 'الاسم أو المعرّف مستخدم لقسم آخر' });
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
-    res.status(500).json({ error: String(e) });
+    sendError(res, e);
   }
 });
 
@@ -404,7 +408,7 @@ router.delete('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Reque
     res.json({ success: true });
   } catch (e: any) {
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
-    res.status(500).json({ error: String(e) });
+    sendError(res, e);
   }
 });
 
@@ -417,7 +421,7 @@ router.get('/users', requireRole('ADMIN'), async (_req: Request, res: Response) 
   try {
     const data = await prisma.user.findMany({ select: USER_SELECT, orderBy: { createdAt: 'asc' } });
     res.json({ success: true, data });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST /api/admin/users { name, email, role, password } — created verified, ready to log in
@@ -437,7 +441,7 @@ router.post('/users', requireRole('ADMIN'), async (req: Request, res: Response) 
     res.status(201).json({ success: true, data });
   } catch (e) {
     if (isUniqueError(e)) return res.status(409).json({ error: 'هذا البريد مستخدم بالفعل' });
-    res.status(500).json({ error: String(e) });
+    sendError(res, e);
   }
 });
 
@@ -476,7 +480,7 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
     res.json({ success: true, data: row });
   } catch (e: any) {
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
-    res.status(500).json({ error: String(e) });
+    sendError(res, e);
   }
 });
 
@@ -487,7 +491,7 @@ router.get('/homepage', requireRole(...EDITOR_ROLES), async (_req: Request, res:
     const setting = await readHomepageSetting(prisma);
     const resolved = await resolveHomepage(prisma, setting);
     res.json({ success: true, data: { setting, resolved } });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // PUT /api/admin/homepage { heroId?, pickIds?, breaking?: { title, href } | null, demoBlocks?: boolean }
@@ -534,7 +538,7 @@ router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: 
       });
     }
     res.json({ success: true, data: { setting, resolved: await resolveHomepage(prisma, setting) } });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────────────────────── ads (admin) ───────────────────────────── */
@@ -543,14 +547,14 @@ router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: 
 router.get('/ads', requireRole('ADMIN'), async (_req: Request, res: Response) => {
   try {
     res.json({ success: true, data: await readAds(prisma) }); // all banners, scheduled or not
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // GET /api/admin/ads/stats?days=30 — delivery counts per banner (D-057); .csv for advertiser reports.
 const statDays = (q: unknown) => Math.min(365, Math.max(1, parseInt(String(q || '30'), 10) || 30));
 router.get('/ads/stats', requireRole('ADMIN'), async (req: Request, res: Response) => {
   try { res.json({ success: true, data: await adStats(prisma, statDays(req.query.days)) }); }
-  catch (e) { res.status(500).json({ error: String(e) }); }
+  catch (e) { sendError(res, e); }
 });
 router.get('/ads/stats.csv', requireRole('ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -560,7 +564,7 @@ router.get('/ads/stats.csv', requireRole('ADMIN'), async (req: Request, res: Res
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="mutabe3-ads-${s.since}-${s.days}d.csv"`);
     res.send('﻿' + lines.join('\r\n'));
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // PUT /api/admin/ads { adsense: { client, auto }, zones: { header|inline|article|sidebar: { mode, unit, banners[] } }, adsTxt }
@@ -575,7 +579,7 @@ router.put('/ads', requireRole('ADMIN'), async (req: Request, res: Response) => 
       await audit(prisma, who(req), req, { action: 'ads.update', targetType: 'ads', summary: `عدّل الإعلانات: ${diff.lines.join(' · ')}`.slice(0, 300), meta: diff.meta });
     }
     res.json({ success: true, data: saved });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // What an ads save changed, for the audit log: zone modes, banners added/removed/rescheduled, AdSense id, ads.txt.

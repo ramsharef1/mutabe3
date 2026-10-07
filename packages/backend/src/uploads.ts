@@ -13,31 +13,24 @@ export const UPLOAD_URL = '/api/uploads';
 export const IMG_URL = '/api/img';
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
-const MIME_EXT: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-};
-
 const toUrl = (abs: string) => `${UPLOAD_URL}/${path.relative(UPLOAD_DIR, abs).split(path.sep).join('/')}`;
 
 // Files are buffered in memory (≤15MB, one per request) so the WebP master can be
-// written in one go — no original ever touches the disk unless conversion is skipped.
+// written in one go — the original never touches the disk. No type filter here: the
+// declared MIME type is the client's claim, ingestImage() decides by content (S-11).
 export const imageUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
-  fileFilter: (_req, file, cb) => (MIME_EXT[file.mimetype] ? cb(null, true) : cb(new Error('Unsupported file type (jpeg/png/webp/gif only)'))),
 });
 
 export interface StoredUpload { url: string; size: number; mime: string; converted: boolean; width?: number; height?: number }
 
-/** Persist one multer upload under UPLOAD_DIR/YYYY/MM as a WebP master (or untouched when ingest says so). */
+/** Persist one multer upload under UPLOAD_DIR/YYYY/MM as a WebP master; throws RejectedImage for non-images. */
 export async function storeUpload(file: Express.Multer.File): Promise<StoredUpload> {
+  const img = await ingestImage(file.buffer);
   const d = new Date();
   const dir = path.join(UPLOAD_DIR, String(d.getFullYear()), String(d.getMonth() + 1).padStart(2, '0'));
   fs.mkdirSync(dir, { recursive: true });
-  const img = await ingestImage(file.buffer, file.mimetype, MIME_EXT[file.mimetype] || 'bin');
   const abs = path.join(dir, `${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}.${img.ext}`);
   fs.writeFileSync(abs, img.buffer, { flag: 'wx' });
   return { url: toUrl(abs), size: img.buffer.length, mime: img.mime, converted: img.converted, width: img.width, height: img.height };

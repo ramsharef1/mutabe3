@@ -6,6 +6,7 @@ import { sendMail, mailStatus, readSmtp, writeSmtp, verifySmtp, sealPassword, pa
 import { open } from '../secretbox';
 import { sendIssue, renderIssue, issueArticles, recipientWhere, readAuto, writeAuto, newToken } from '../newsletter';
 import { audit, q } from '../audit';
+import { sendError } from '../errors';
 
 // Reader-facing admin (D-043 Stage 4): comment moderation, polls, newsletter.
 // Mounted inside routes/admin.ts AFTER its auth + staff check, so req.user is set.
@@ -30,7 +31,7 @@ router.get('/comments/counts', editors, async (_req: Request, res: Response) => 
     const data: Record<string, number> = { PENDING: 0, APPROVED: 0, REJECTED: 0 };
     g.forEach((x) => { data[x.status] = x._count._all; });
     res.json({ success: true, data });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.get('/comments', editors, async (req: Request, res: Response) => {
@@ -43,7 +44,7 @@ router.get('/comments', editors, async (req: Request, res: Response) => {
       take: 200,
     });
     res.json({ success: true, data: rows.map((r) => ({ ...r, ipHash: r.ipHash ? r.ipHash.slice(0, 8) : null })) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.put('/comments/:id', editors, async (req: Request, res: Response) => {
@@ -63,7 +64,7 @@ router.put('/comments/:id', editors, async (req: Request, res: Response) => {
     res.json({ success: true, data: { id: row.id, status: row.status } });
   } catch (e: any) {
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
-    res.status(500).json({ error: String(e) });
+    sendError(res, e);
   }
 });
 
@@ -77,7 +78,7 @@ router.delete('/comments/:id', editors, async (req: Request, res: Response) => {
     });
     res.json({ success: true });
   }
-  catch (e: any) { if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' }); res.status(500).json({ error: String(e) }); }
+  catch (e: any) { if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' }); sendError(res, e); }
 });
 
 /* ───────────── polls ───────────── */
@@ -88,7 +89,7 @@ router.get('/polls', editors, async (_req: Request, res: Response) => {
   try {
     const rows = await prisma.poll.findMany({ include: { options: true }, orderBy: { createdAt: 'desc' }, take: 100 });
     res.json({ success: true, data: rows.map(pollDto) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST /api/admin/polls { slot, question, options: [{ label, byline?, note? }], active? }
@@ -106,7 +107,7 @@ router.post('/polls', editors, async (req: Request, res: Response) => {
     });
     await audit(prisma, who(req), req, { action: 'poll.create', targetType: 'poll', targetId: created.id, summary: `أنشأ استطلاع «${q.slice(0, 80)}»${created.active ? ' وفعّله' : ''}`, meta: { slot: s, active: created.active, options: opts.map((o) => o.label) } });
     res.status(201).json({ success: true, data: pollDto(created) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // PUT /api/admin/polls/:id { active?, question? } — activating closes the slot's current poll
@@ -128,7 +129,7 @@ router.put('/polls/:id', editors, async (req: Request, res: Response) => {
       await audit(prisma, who(req), req, { action, targetType: 'poll', targetId: p.id, summary: `${verb} استطلاع ${q(updated.question)}`, meta: { activeFrom: p.active, activeTo: updated.active, ...(p.question !== updated.question ? { oldQuestion: p.question } : {}) } });
     }
     res.json({ success: true, data: pollDto(updated) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.delete('/polls/:id', editors, async (req: Request, res: Response) => {
@@ -137,7 +138,7 @@ router.delete('/polls/:id', editors, async (req: Request, res: Response) => {
     await audit(prisma, who(req), req, { action: 'poll.delete', targetType: 'poll', targetId: gone.id, summary: `حذف استطلاع ${q(gone.question)}`, meta: { votes: gone.options.reduce((n, o) => n + o.votes, 0) } });
     res.json({ success: true });
   }
-  catch (e: any) { if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' }); res.status(500).json({ error: String(e) }); }
+  catch (e: any) { if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' }); sendError(res, e); }
 });
 
 /* ───────────── newsletter ───────────── */
@@ -153,7 +154,7 @@ router.get('/newsletter', editors, async (_req: Request, res: Response) => {
     const stats: Record<string, number> = { active: 0, unsubscribed: 0 };
     g.forEach((x) => { stats[x.status] = x._count._all; });
     res.json({ success: true, data: { stats, issues, mail, auto } });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // Subscriber emails are personal data: admins only.
@@ -161,7 +162,7 @@ router.get('/newsletter/subscribers', only('ADMIN'), async (_req: Request, res: 
   try {
     const data = await prisma.subscription.findMany({ select: { email: true, status: true, categories: true, source: true, subscribedAt: true, unsubscribedAt: true }, orderBy: { subscribedAt: 'desc' }, take: 5000 });
     res.json({ success: true, data });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // PUT /api/admin/newsletter/auto { enabled, hour } — automatic morning digest (admins decide mass mail)
@@ -175,7 +176,7 @@ router.put('/newsletter/auto', only('ADMIN'), async (req: Request, res: Response
       await audit(prisma, who(req), req, { action: 'newsletter.auto', targetType: 'newsletter', summary: saved.enabled ? `فعّل النشرة الصباحية التلقائية (الساعة ${saved.hour})` : 'أوقف النشرة الصباحية التلقائية', meta: { from: { enabled: cur.enabled, hour: cur.hour }, to: { enabled: saved.enabled, hour: saved.hour } } });
     }
     res.json({ success: true, data: saved });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 /* ── SMTP settings (admins only, D-044). The password is write-only: sealed with
@@ -212,7 +213,7 @@ function cleanSmtp(b: any): string | { enabled: boolean; host: string; port: num
 
 router.get('/newsletter/smtp', only('ADMIN'), async (_req: Request, res: Response) => {
   try { res.json({ success: true, data: publicSmtp(await readSmtp()) }); }
-  catch (e) { res.status(500).json({ error: String(e) }); }
+  catch (e) { sendError(res, e); }
 });
 
 // PUT { enabled, host, port, secure, user, password?, fromName, fromEmail }
@@ -236,7 +237,7 @@ router.put('/newsletter/smtp', only('ADMIN'), async (req: Request, res: Response
       meta: { host: c.host, port: c.port, user: c.user, fromEmail: c.fromEmail, enabled: c.enabled, passwordChanged: !!pw, accountChanged: changedAccount, previousHost: cur?.host ?? null },
     });
     res.json({ success: true, data: publicSmtp(next), status: await mailStatus() });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST …/smtp/verify — logs in with the given settings (or the stored password) and logs out; sends nothing
@@ -248,7 +249,7 @@ router.post('/newsletter/smtp/verify', only('ADMIN'), async (req: Request, res: 
     const pw = typeof req.body?.password === 'string' && req.body.password ? req.body.password : (cur && cur.host === c.host && cur.user === c.user ? open(cur.passEnc) ?? '' : '');
     if (c.user && !pw) return res.status(400).json({ error: 'أدخل كلمة المرور لاختبار الاتصال' });
     res.json({ success: true, data: await verifySmtp({ host: c.host, port: c.port, secure: c.secure, user: c.user || undefined, pass: pw || undefined }) });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 const cleanIssue = (b: any) => ({
@@ -267,7 +268,7 @@ router.post('/newsletter/issues', editors, async (req: Request, res: Response) =
     const recipients = await prisma.subscription.count({ where: recipientWhere(issue.edition) as any });
     await audit(prisma, who(req), req, { action: 'newsletter.create', targetType: 'newsletter', targetId: issue.id, summary: `أنشأ عدد النشرة ${q(issue.subject)}`, meta: { articleIds: issue.articleIds, edition: issue.edition } });
     res.status(201).json({ success: true, data: issue, recipients });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.get('/newsletter/issues/:id', editors, async (req: Request, res: Response) => {
@@ -276,7 +277,7 @@ router.get('/newsletter/issues/:id', editors, async (req: Request, res: Response
     if (!issue) return res.status(404).json({ error: 'Not found' });
     const recipients = await prisma.subscription.count({ where: recipientWhere(issue.edition) as any });
     res.json({ success: true, data: issue, recipients });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 // POST /api/admin/newsletter/issues/:id/test — sends the issue only to the signed-in staff member
@@ -292,7 +293,7 @@ router.post('/newsletter/issues/:id/test', editors, async (req: Request, res: Re
     await sendMail({ to: me.email, subject: `[تجربة] ${issue.subject}`, html, text, headers });
     await audit(prisma, who(req), req, { action: 'newsletter.test', targetType: 'newsletter', targetId: issue.id, summary: `أرسل نسخة تجريبية من ${q(issue.subject)} إلى بريده` });
     res.json({ success: true, to: me.email });
-  } catch (e: any) { res.status(502).json({ error: `تعذّر الإرسال: ${String(e?.message || e).slice(0, 200)}` }); }
+  } catch (e: any) { sendError(res, e, { status: 502, code: 'MAIL_SEND_FAILED', message: 'تعذّر الإرسال — اختبر إعدادات البريد من صفحة الإعدادات' }); }
 });
 
 // POST /api/admin/newsletter/issues/:id/send — starts the background send; poll GET …/issues/:id for progress
@@ -306,7 +307,7 @@ router.post('/newsletter/issues/:id/send', editors, async (req: Request, res: Re
     sendIssue(prisma, issue.id).catch((e) => console.error('newsletter send:', e));
     await audit(prisma, who(req), req, { action: 'newsletter.send', targetType: 'newsletter', targetId: issue.id, summary: `أرسل النشرة ${q(issue.subject)} إلى ${recipients} مشتركاً`, meta: { recipients, edition: issue.edition, resend: issue.status === 'failed' } });
     res.status(202).json({ success: true, recipients });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 router.delete('/newsletter/issues/:id', editors, async (req: Request, res: Response) => {
@@ -317,7 +318,7 @@ router.delete('/newsletter/issues/:id', editors, async (req: Request, res: Respo
     await prisma.newsletterIssue.delete({ where: { id: issue.id } });
     await audit(prisma, who(req), req, { action: 'newsletter.delete', targetType: 'newsletter', targetId: issue.id, summary: `حذف مسودة النشرة ${q(issue.subject)}` });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: String(e) }); }
+  } catch (e) { sendError(res, e); }
 });
 
 export default router;
