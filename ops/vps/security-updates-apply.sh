@@ -7,8 +7,28 @@ set -u
 last_id() { dnf history list 2>/dev/null | awk -F'|' 'NR>2 {gsub(/ /, "", $1); print $1; exit}'; }
 BEFORE=$(last_id)
 
-echo "== 1. transaction =="
+echo "== 0. is the Apache/bolt-suexec file conflict blocking dnf-automatic? (read-only) =="
+echo "-- conflict lines in /var/log/dnf*.log (by day) --"
+grep -hE 'conflicts with file from package bolt-suexec' /var/log/dnf.log /var/log/dnf.log.* 2>/dev/null | cut -c1-10 | sort | uniq -c | sed -n '1,20p'
+echo "-- dnf-automatic runs in /var/log/messages --"
+grep -hE 'dnf-automatic|dnf\[[0-9]+\]: (Error|Transaction)' /var/log/messages /var/log/messages-* 2>/dev/null | grep -E 'Error|error|Failed|conflict|Complete|Finished|Started' | tail -n 12 | cut -c1-200
+echo "-- what the last automatic transactions changed --"
+for id in $(dnf history list 2>/dev/null | awk -F'|' 'NR>2 && $2 ~ /^ *$/ {gsub(/ /, "", $1); print $1}' | sed -n '1,4p'); do
+  echo "#$id: $(dnf history info "$id" 2>/dev/null | awk '/^Begin time/{sub(/^Begin time *: */, ""); t=$0} /^ +(Upgrade|Install|Upgraded)/{n++} END{print t " · " n " package lines"}') · httpd touched: $(dnf history info "$id" 2>/dev/null | grep -cE '^\s+(Upgrade|Upgraded)\s+httpd')"
+done
+echo "-- bolt-suexec and who needs httpd --"
+rpm -qi bolt-suexec 2>/dev/null | grep -E '^(Name|Version|Release|Install Date|Vendor|Packager|URL|Summary)' | sed 's/^/  /'
+rpm -qf /usr/sbin/suexec 2>/dev/null | sed 's/^/  \/usr\/sbin\/suexec owned by: /'
+rpm -q --whatrequires httpd httpd-core mod_ssl 2>/dev/null | sort -u | sed 's/^/  requires apache: /'
+grep -lsE 'httpd|suexec' /etc/yum.repos.d/*.repo 2>/dev/null | sed 's/^/  repo mentions httpd: /'
+
+echo; echo "== 1. transaction =="
 dnf -y upgrade --security > /tmp/d061-dnf.txt 2>&1; rc=$?
+if [ "$rc" != 0 ] && grep -q 'conflicts with file from package bolt-suexec' /tmp/d061-dnf.txt; then
+  echo "full security upgrade refused: Apache's httpd-core conflicts with AdminBolt's bolt-suexec (/usr/sbin/suexec)."
+  echo "Apache is masked (D-060) and never runs — retrying without the Apache packages."
+  dnf -y upgrade --security --exclude='httpd*,mod_ssl,mod_lua' > /tmp/d061-dnf.txt 2>&1; rc=$?
+fi
 grep -vE '^(Last metadata)' /tmp/d061-dnf.txt | sed -n '1,60p'; rm -f /tmp/d061-dnf.txt
 echo "dnf exit=$rc"
 AFTER=$(last_id)
