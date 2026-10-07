@@ -57,6 +57,17 @@ else
   grep -qE "^\s*su $OWN$" "$LR" || { echo "❌ edit did not apply — restoring"; cp -a "$BK/okath.logrotate" "$LR"; }
   ROLLBACK+=("cp -a $BK/okath.logrotate $LR")
 fi
+# 3b. The stanza's `create 0640` never took effect before (rotation was always skipped), so okath has been running
+# with a group-writable 0664 log. Keep the mode it actually ran with, or a group-nginx writer would lose its log.
+PREV=$(ls -t "$LOGDIR"/laravel.log-* 2>/dev/null | sed -n 1p)
+if [ -n "$PREV" ] && [ "$(stat -c %a "$PREV")" = 664 ] && grep -qE '^\s*create 0640 ' "$LR"; then
+  [ -f "$BK/okath.logrotate" ] || cp -a "$LR" "$BK/okath.logrotate"
+  sed -i -E 's/^(\s*create )0640 /\10664 /' "$LR"
+  echo "create mode 0640 → 0664 (the mode okath ran with: $(basename "$PREV") is $(stat -c %a "$PREV"))"
+  [ "$(stat -c %a "$LOGDIR/laravel.log" 2>/dev/null)" = 640 ] && chmod 0664 "$LOGDIR/laravel.log" && echo "laravel.log chmod 0664"
+fi
+echo "-- writers of okath's log (php-fpm okath pool, artisan workers) --"
+ps -eo user:16,group:10,args 2>/dev/null | grep -E 'php-fpm: pool okath|artisan (queue|horizon|schedule)' | grep -v grep | awk '{print $1, $2, $3, $4, $5}' | sort | uniq -c
 cat "$LR" | sed 's/^/  /'
 logrotate -d /etc/logrotate.conf >"$BK/logrotate-d.txt" 2>&1; rc=$?
 echo "logrotate -d exit=$rc · errors: $(grep -c '^error:' "$BK/logrotate-d.txt")"
