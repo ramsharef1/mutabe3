@@ -136,6 +136,15 @@ pg_dump "$DATABASE_URL" > /var/backups/mutabe3-$(date +%F).sql
 
 ---
 
+## Security controls (D-064)
+
+- **Audit log:** `/dashboard/audit` (admins) or `GET /api/admin/audit?take=&cursor=&action=<area>&actor=<userId|system>&target=<id>`. Append-only; entries older than 24 months are dropped hourly. Every new staff write route must call `audit()` from `packages/backend/src/audit.ts` after it succeeds.
+- **CSP is enforced** (`next.config.js`). Before adding GTM tags, AdSense, a new embed or any third-party script/frame/API, add its hosts there — otherwise the browser blocks it. Violations arrive at `/api/csp-report` and show in the backend log as `[csp] …`; the daily monitor counts them («بلاغات CSP» in the digest).
+- **Limits per reader address:** search 90/min, counted views 120/10 min (+ once per article per 30 min), login/signup/comments/newsletter as D-051/D-054. nginx must keep appending `X-Forwarded-For` (verify with `-f action=xff-check`); requests from 127.0.0.1 (server-side rendering) are never limited.
+- **Banner rules:** creatives only from this site's uploads; click links `https://` with a host name, or an internal path.
+
+---
+
 ## Prod admin testing
 
 Rami keeps the dashboard signed in inside the Browser pane. Drive `/api/admin/*` from `javascript_tool` with `localStorage.accessToken`, then remove test articles and test media through the API (D-041, D-045, D-046).
