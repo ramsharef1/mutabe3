@@ -1,152 +1,50 @@
 # mutabe3 · PLAN
 
-**Bible for this project.** Decisions in force, verified state, priorities, open questions for Rami, resume point.
+**Current plan in five sections** (the Classic bundle reads exactly these). The full plan — identity, revenue map, design direction, findings, roadmap — is `brain/BIBLE.md`; every decision with its verification is in `brain/DECISIONS.md`.
 
 ---
 
-## Decisions in Force
+## Decisions in force
 
-### D-1: Tech Stack Selection (LOCKED)
-**Status:** ✅ Decided 2026-09-12  
-**Decision:** 
-- Frontend: Next.js 14+ (App Router)
-- Backend: Node.js API
-- Database: Vercel Postgres
-- CMS: Strapi (self-hosted)
-- Hosting: Vercel
-- Search: Meilisearch (Arabic support)
+- **D-050 · plan v2 "content first"** (2026-10-06): weeks 1–2 make it real · 3–4 sell · 5–8 brand · 9–12 grow; advertiser portal, packaging, Next 16, AI assist, Cloudflare and the English edition deferred.
+- **Persona:** client newsroom (1–3 editors, target 10+ articles/day); Rami builds and operates. Prices, invoicing and payment for ads stay outside the system; admins activate campaigns.
+- **Revenue:** direct-sold banners with dates and first-party counts (D-057), sponsored articles labelled «إعلان» (D-056). No AdSense, no newsletter sponsorship for now.
+- **Design direction A «حبر وإشارة»** (Ink & Signal) on the frozen Ammon structure — built later as a skin toggle; client sign-off is the gate.
+- **Stack:** Next 14 + Express/Prisma/Postgres on the shared Hostinger VPS, Node 22, CI deploys from `main` (D-039, D-049, D-051, D-056).
+- **Demo articles stay public until real content exists** — removal is asked separately.
+- **Alerts are GitHub Issues that mail Rami** (D-059); no mail server until SPF/DKIM exist.
+- **Security baseline** (D-051, D-054, D-063, D-064): auth guards and throttling, refresh rotation, double opt-in, audit log, local-only ad creatives, per-reader limits, enforced CSP, Postgres local-only.
 
-**Rationale:** Fast to launch, leverages Vercel's Next.js optimization, managed Postgres reduces DevOps burden, Strapi gives full control over editorial workflows.
+## Verified state
 
-**Gate:** None (fully decided)
-
----
-
-### D-2: 6 Parallel Sessions (LOCKED)
-**Status:** ✅ Decided 2026-09-12  
-**Decision:** Break project into 6 sessions with clear dependencies:
-1. Infrastructure & DevOps (Week 1-2)
-2. CMS Implementation (Week 1-3)
-3. Frontend Foundation (Week 2-5)
-4. Homepage & Articles (Week 4-6)
-5. Admin Dashboard (Week 5-8)
-6. Search & Launch (Week 7-11)
-
-**Rationale:** Parallel work reduces total timeline, dependencies are explicit, each session is independently scoped.
-
-**Gate:** None (validated by Plan agent)
-
----
-
-### D-3: Forge Project Structure (IN PROGRESS)
-**Status:** 🔨 Implementing 2026-09-12  
-**Decision:** Use forge governance model:
-- mutabe3.md (front door)
-- FACTS.md (canonical state)
-- PLAN.md (this file)
-- WORKLOG.md (session log)
-- DECISIONS.md (decision log)
-- DISPATCH.md (task dispatch)
-- COMMANDS.md (tier forge, tech procedures)
-- connectors/ (Vercel, GitHub, Sentry, Strapi)
-- tech/ (tech-specific decisions)
-
-**Rationale:** Ensures consistency with other forge projects, established patterns, centralized state tracking.
-
-**Gate:** Rami (verify structure matches forge standards before proceeding)
-
----
-
-## Verified State (as of 2026-09-12)
-
-✅ **Architecture phase complete**
-- Implementation plan drafted (11-week roadmap)
-- 6 sessions defined with dependencies
-- Tech stack locked
-
-✅ **Prompts library created**
-- 21 prompts for journalists, editors, content teams
-- Ready for newsroom use
-
-✅ **Git repository** 
-- Initial commit with all documentation
-- Main branch clean
-
-⏳ **Forge structure**
-- Front door (mutabe3.md) created
-- FACTS.md created
-- PLAN.md (this file) created
-- TBD: WORKLOG.md, DECISIONS.md, DISPATCH.md, COMMANDS.md
-
-⏳ **Credentials & Access**
-- Vercel account needs configuration (TBD)
-- Sentry account needs setup (TBD)
-- GitHub Actions secrets need population (TBD)
-
----
+As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-064):
+- **Weeks 1–2 done:** demo-block switch, honest dates and counts, photo credit/caption, seven legal pages as counsel drafts, Google News readiness, double opt-in newsletter with delivery log, launch-critical security, Node 22 + lockfile, faster editor with templates per article kind, GTM + consent bar (dormant).
+- **Weeks 3–4 done:** banner dates + impression/click counts + CSV (D-057), search-engine titles for list pages (D-058), alerts + weekly digest (D-059).
+- **Ops 2026-10-07:** shared-VPS failed units cleared (D-060), security packages current with dnf-automatic healthy (D-061), rebooted into the patched kernel with nginx now enabled at boot (D-062), Postgres closed to the internet (D-063).
+- **Security slice live (D-064):** audit log at `/dashboard/audit`, banner creatives local-only, search 90/min and counted views capped per reader, CSP enforced with a report endpoint.
 
 ## Priorities
 
-### Critical Path (unblock everything else)
-1. **Session 1 kickoff:** Infrastructure setup (Vercel, Postgres, CI/CD, monitoring)
-   - Blocks Sessions 2-6
-   - Owner: Rami
-   - Start: This week
+1. **Rami's gates** (Open questions Q1–Q6) — they block the imprint, analytics, newsletter delivery and the legal go-ahead.
+2. **Real uptime alerts** (Q7) — an external checker on `/` and `/api/health`.
+3. **Remaining smaller security items** — S-12 error text leaks, S-11 upload type check, S-17 CORS raw IP, S-19 unused redis, comment URL stripping.
+4. **Weeks 5–8 · brand:** Ink & Signal re-theme as a skin toggle in a worktree, screenshots on real content, client sign-off.
+5. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass, paid-notices pilot if wanted.
 
-### High Priority (enable parallel work)
-2. **Session 2 & 3 parallel start:** CMS models + Frontend scaffolding
-   - Both can run once Session 1 lays groundwork
-   - Need early API contract alignment
+## Open questions
 
-3. **Complete forge structure:** WORKLOG.md, DECISIONS.md, DISPATCH.md, COMMANDS.md
-   - Enables proper project tracking
-   - Gate: Rami approval of structure
+- **Q1 · Imprint names** — client legal name and editor-in-chief. *Needed for the about page, imprint and licence records.*
+- **Q2 · GTM container id** — from the Google account that owns GA4. *Analytics and the consent bar switch on with it; nothing else to build.*
+- **Q3 · Mailboxes** — editor@, ads@, corrections@, privacy@ on mutabe3.news. *The legal pages and `/advertise` point to them.*
+- **Q4 · Counsel** — who reviews the seven legal drafts and the soft-launch-before-licence posture. *Recommendation: before real traffic.*
+- **Q5 · SPF/DKIM DNS** at webhubteam's name servers. *Without them newsletter mail does not reach inboxes; alerts already work through GitHub.*
+- **Q6 · Original logo artwork file.** *The current logo is a vector re-creation; the re-theme needs the original.*
+- **Q7 · Uptime checker** — (a) Better Stack free tier, recommended: 3-minute checks, mail, commercial use allowed, Rami creates the account; (b) a VPS-side check with a GitHub token: misses whole-server outages. *GitHub's own schedule fires only every few hours.*
+- **Q8 · Kernel reboots** — dnf-automatic installs kernels but never reboots: (a) reboot on request, as on 2026-10-07; (b) a weekly reboot only when needed, Sundays 04:30 Amman (about one minute down). *Recommendation: (b).*
+- **Q9 · Demo articles** — when to remove the 19 demo articles. *Recommendation: once the desk has published about 20 real ones.*
 
-### Medium Priority (polish)
-4. **Session 4-6 detailed planning:** Flesh out exact deliverables once 1-3 make progress
-5. **Team assignments:** Recruit or assign leads for Sessions 2-6
+## Resume point
 
----
+Last session 2026-10-07 (Claude Code): D-057 … D-064 shipped and verified on production; everything pushed. Nothing is in flight. The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (smaller security fixes) is the next code slice that needs nobody.
 
-## Open Questions for Rami
-
-- [ ] **Team:** Who leads Sessions 2-6? Contractor, internal, hybrid?
-- [ ] **Timeline pressure:** Is 11-week MVP tight? Can we absorb delays?
-- [ ] **Scope:** Are all 6 sessions essential for launch, or can some be post-launch?
-- [ ] **Budget:** Approve monthly infrastructure spend (~$200-300/mo estimated)?
-- [ ] **Forge structure:** Is this the right pattern, or do you prefer different files/layout?
-- [ ] **Domain:** Should we plan for .jo/.com domain migration path?
-
----
-
-## Resume Point (where to pick up next session)
-
-**Current state (end of 2026-09-12 turn):**
-- ✅ All architecture documentation created
-- ✅ Moved mutabe3 to forge project structure
-- ✅ mutabe3.md, FACTS.md, PLAN.md created
-- 🔨 Next: Create WORKLOG.md, DECISIONS.md, DISPATCH.md, connectors/
-- 🔨 Then: Rami confirms forge structure OK
-- 🔨 Then: Start Session 1 infrastructure setup
-
-**Immediate next steps:**
-1. Create remaining forge documents (WORKLOG, DECISIONS, DISPATCH)
-2. Set up connectors/ folder (Vercel, GitHub, Sentry, Strapi templates)
-3. Get Rami approval to proceed with Session 1
-4. Assign Session 1 start date (recommended: this week)
-
----
-
-## Notes
-
-- See `FACTS.md` for current state (URLs, credentials, paths, team)
-- See `DISPATCH.md` for open tasks from FORGE
-- See `DECISIONS.md` for full decision log
-- See `docs/IMPLEMENTATION_PLAN.md` for detailed 11-week roadmap
-- See `.claude/SESSIONS_OVERVIEW.md` for session tracking and dependencies
-
----
-
-**Last updated:** 2026-09-12 by Claude  
-**Locked by:** Rami (pending)  
-**Next:** WORKLOG.md, DECISIONS.md, DISPATCH.md to be created
+**Last updated:** 2026-10-07 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)

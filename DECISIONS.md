@@ -1,5 +1,7 @@
 # mutabe3 · DECISIONS
 
+> **Superseded (2026-10-07).** The live decision log is `brain/DECISIONS.md` (D-027 onward, newest first, each with what was verified and deployed). The table below is the 2026-09-12 plan (Strapi, Vercel, six sessions), replaced by D-050 (plan v2) and the system that actually shipped; it is kept as history (LAW 4).
+
 **Numbered decision log.** Every row: date, number, decision made, rationale, Rami sign-off.
 
 ---

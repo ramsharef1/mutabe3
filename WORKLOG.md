@@ -2,6 +2,17 @@
 
 **Session log.** Newest first. Every turn appends here with turn number, what was done, result/status.
 
+> Between 2026-09-12 and 2026-10-06 the work was logged per decision in `brain/DECISIONS.md` (D-027 … D-055) instead of here.
+
+---
+
+## 2026-10-07 · Claude Code · weeks 3–4, VPS housekeeping, security slice, Classic refresh
+
+- **Shipped and verified on production:** D-057 ad basics · D-058 list-page titles · D-059 alerts as GitHub Issues + Sunday digest · D-060 shared-VPS failed units cleared · D-061 security packages (vim; Apache held) · D-062 reboot into kernel 687.54.1, nginx enabled at boot · D-063 Postgres closed to the internet · D-064 audit log, local-only ad creatives, per-reader search/view limits, CSP enforced. Evidence per item in `brain/DECISIONS.md`.
+- **Found:** GitHub fires the 10-minute uptime schedule only every few hours → external checker needed (PLAN Q7).
+- **FORGE / Classic:** front door, FACTS and PLAN rewritten from the BIBLE and verified facts (September versions archived in `archive/2026-10-07-forge-refresh/`), root DECISIONS marked superseded, REGISTRY row updated, `classic/mutabe3.md` regenerated for the claude.ai Project `forge · mutabe3`.
+- **Status:** ✅ nothing in flight · next: PLAN → Priorities.
+
 ---
 
 ## [Turn 1] 2026-09-12 · Architecture phase → Forge structure
