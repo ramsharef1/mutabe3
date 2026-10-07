@@ -99,12 +99,14 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
 );
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
-  const [latestArticles, wx, curated, writers, videoArts, caricatures, liveNowItem] = await Promise.all([
+  const [latestArticles, wx, curated, writers, videoArts, caricatureArts, liveNowItem] = await Promise.all([
     getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION'),
     fetchArticles({ kind: 'VIDEO', take: '7' }, 60), fetchArticles({ kind: 'CARICATURE', take: '4' }, 60), fetchCurrentLive(),
   ]);
-  // Real video pieces: the first YouTube embed in each VIDEO article's body (D-068).
-  const videos = videoArts.flatMap((a) => { const id = youTubeId(a.content); return id ? [{ id, title: a.title, href: `/article/${encodeURIComponent(a.slug || a.id)}` }] : []; });
+  // Real video pieces: the first YouTube embed in each VIDEO article's body (D-068). The kind is checked here
+  // too: during a deploy the old API ignored ?kind= and its answer stayed in the 60 s cache (seen 2026-10-08).
+  const videos = videoArts.filter((a) => a.kind === 'VIDEO').flatMap((a) => { const id = youTubeId(a.content); return id ? [{ id, title: a.title, href: `/article/${encodeURIComponent(a.slug || a.id)}` }] : []; });
+  const caricatures = caricatureArts.filter((a) => a.kind === 'CARICATURE');
   // A curated lead story goes first (and is removed from its newest-first slot) so the pool hands it to the hero.
   const articles = curated.hero ? [curated.hero, ...latestArticles.filter((a) => a.id !== curated.hero!.id)] : latestArticles;
   if (!articles.length) {
