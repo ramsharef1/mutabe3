@@ -61,7 +61,7 @@ fi
 # with a group-writable 0664 log. Keep the mode it actually ran with, or a group-nginx writer would lose its log.
 PREV=$(ls -t "$LOGDIR"/laravel.log-* 2>/dev/null | sed -n 1p)
 if [ -n "$PREV" ] && [ "$(stat -c %a "$PREV")" = 664 ] && grep -qE '^\s*create 0640 ' "$LR"; then
-  [ -f "$BK/okath.logrotate" ] || cp -a "$LR" "$BK/okath.logrotate"
+  [ -f "$BK/okath.logrotate" ] || { cp -a "$LR" "$BK/okath.logrotate"; ROLLBACK+=("cp -a $BK/okath.logrotate $LR"); }
   sed -i -E 's/^(\s*create )0640 /\10664 /' "$LR"
   echo "create mode 0640 → 0664 (the mode okath ran with: $(basename "$PREV") is $(stat -c %a "$PREV"))"
   [ "$(stat -c %a "$LOGDIR/laravel.log" 2>/dev/null)" = 640 ] && chmod 0664 "$LOGDIR/laravel.log" && echo "laravel.log chmod 0664"

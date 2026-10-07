@@ -131,7 +131,7 @@ const rows = has
       ['أرشيف الرفع', `منذ ${f.uploads_archive_age_d === 'none' ? '— (لا أرشيف)' : days(num('uploads_archive_age_d'))} · الوسائط ${v('uploads_total')}`],
       ['قاعدة البيانات', `${v('db_size_mb')} MB · ${v('articles_published')} مادة منشورة · +${v('articles_7d')} خلال 7 أيام`],
       ['الشهادة', Number.isFinite(tlsDays) ? `تنتهي بعد ${days(tlsDays)}` : '—'],
-      ['النظام', `تحديثات أمنية معلّقة ${v('security_updates')} · إعادة تشغيل مطلوبة ${v('reboot_required')} · وحدات فاشلة ${v('failed_units')}`],
+      ['النظام', `تحديثات أمنية معلّقة ${v('security_updates')} · إعادة تشغيل مطلوبة ${v('reboot_required')} · وحدات فاشلة ${f.failed_units === 'none' ? 'لا يوجد' : v('failed_units')}`],
       ['سجل الخلفية', `${v('backend_err_24h')} سطر خطأ خلال 24 س`],
     ]
   : [['الخادم', sshOk ? 'لا توجد حقائق (ملف فارغ)' : '❌ لم يصل الفحص إلى الخادم (SSH)'], ['الشهادة', Number.isFinite(tlsDays) ? `تنتهي بعد ${days(tlsDays)}` : '—']];
