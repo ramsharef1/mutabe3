@@ -50,6 +50,21 @@ export function newsArticleLd(a: Article) {
   };
 }
 
+/** Category, tag and other list pages (CONTENT-ARCHITECTURE: CollectionPage). `url` is site-relative. */
+export function collectionLd(c: { name: string; description?: string; url: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${SITE_URL}${c.url}`,
+    url: `${SITE_URL}${c.url}`,
+    name: c.name,
+    ...(c.description ? { description: c.description } : {}),
+    inLanguage: 'ar',
+    isPartOf: { '@id': `${SITE_URL}/#website` },
+    publisher: { '@id': `${SITE_URL}/#publisher` },
+  };
+}
+
 export function breadcrumbLd(items: { name: string; url?: string }[]) {
   return {
     '@context': 'https://schema.org',

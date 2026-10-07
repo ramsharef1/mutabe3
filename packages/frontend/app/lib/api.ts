@@ -24,14 +24,28 @@ export async function fetchArticle(idOrSlug: string): Promise<Article | null> {
   }
 }
 
-/** Published list; `params` are passed straight to GET /api/articles (q, take, category). */
-export async function fetchArticles(params: Record<string, string> = {}): Promise<Article[]> {
+/** Published list; `params` are passed straight to GET /api/articles (q, take, category).
+ *  `revalidate` (seconds) opts into the Next data cache for metadata lookups; default is uncached. */
+export async function fetchArticles(params: Record<string, string> = {}, revalidate?: number): Promise<Article[]> {
   try {
     const u = new URL(`${API_BASE}/api/articles`);
     Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, v));
-    const r = await fetch(u, { cache: 'no-store' });
+    const r = await fetch(u, revalidate ? { next: { revalidate } } : { cache: 'no-store' });
     if (!r.ok) return [];
     return ((await r.json()).data || []) as Article[];
+  } catch {
+    return [];
+  }
+}
+
+export interface Category { id: string; name: string; slug: string; description?: string | null; showInNav?: boolean }
+
+/** Categories as managed in /dashboard/categories (name, description, nav flag); [] when the API is down. Cached one minute. */
+export async function fetchCategories(): Promise<Category[]> {
+  try {
+    const r = await fetch(`${API_BASE}/api/categories`, { next: { revalidate: 60 } });
+    if (!r.ok) return [];
+    return ((await r.json()).data || []) as Category[];
   } catch {
     return [];
   }

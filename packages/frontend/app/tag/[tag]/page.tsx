@@ -1,65 +1,53 @@
-'use client';
-
-import { useParams } from 'next/navigation';
-import { Img, useArticles, Loading, SiteHeader, SiteFooter, Sidebar, Crumbs, Chip, ago, Ico, excerpt } from '../../components/site';
+import type { Metadata } from 'next';
+import { fetchArticles, SITE_URL } from '../../lib/api';
 import { tagsFor } from '../../components/content';
+import { collectionLd, breadcrumbLd, SITE_NAME } from '../../lib/seo';
+import JsonLd from '../../components/JsonLd';
+import TagView from './TagView';
 
-export default function TagPage() {
-  const params = useParams<{ tag: string }>();
-  const tag = decodeURIComponent(params.tag || '');
-  const { articles, loading } = useArticles();
-  if (loading || articles.length === 0) return <Loading />;
+// Server shell for a keyword page (F-05b): own <title>/description/canonical and CollectionPage
+// JSON-LD; thin topics (fewer than 3 articles) carry noindex (CONTENT-ARCHITECTURE). The list
+// stays in the client TagView.
+export const dynamic = 'force-dynamic';
 
-  const list = articles.filter((a) => tagsFor(a).includes(tag));
-  // Tags that co-occur with this one, for the "related tags" row.
-  const near = new Map<string, number>();
-  list.forEach((a) => tagsFor(a).forEach((t) => { if (t !== tag) near.set(t, (near.get(t) || 0) + 1); }));
-  const nearTags = Array.from(near.entries()).sort((p, q) => q[1] - p[1]).slice(0, 8).map(([t]) => t);
+type Props = { params: { tag: string } };
 
+/** Route params for Arabic tags may arrive still percent-encoded; normalise whitespace and bound the length. */
+function tagOf(raw: string) {
+  let t = raw || '';
+  try { t = decodeURIComponent(t); } catch {}
+  return t.replace(/\s+/g, ' ').trim().slice(0, 60);
+}
+
+async function countFor(tag: string) {
+  const list = await fetchArticles({ take: '100' }, 60);
+  return list.filter((a) => tagsFor(a).includes(tag)).length;
+}
+
+const describe = (tag: string) => `كل ما نشره المتابع حول «${tag}»`;
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const tag = tagOf(params.tag);
+  if (!tag) return { title: 'كلمة مفتاحية غير موجودة | المتابع', robots: { index: false } };
+  const n = await countFor(tag);
+  const url = `/tag/${encodeURIComponent(tag)}`;
+  return {
+    title: `#${tag} | المتابع`,
+    description: describe(tag),
+    alternates: { canonical: url },
+    ...(n >= 3 ? {} : { robots: { index: false, follow: true } }),
+    openGraph: { type: 'website', url, title: `#${tag}`, description: describe(tag), siteName: SITE_NAME, locale: 'ar_JO' },
+    twitter: { card: 'summary_large_image', title: `#${tag}`, description: describe(tag) },
+  };
+}
+
+export default function TagPage({ params }: Props) {
+  const tag = tagOf(params.tag);
+  const url = `/tag/${encodeURIComponent(tag)}`;
   return (
-    <div className="am">
-      <SiteHeader articles={articles} />
-      <div className="wrap">
-        <div className="inner">
-          <div className="mainc">
-            <Crumbs items={[{ label: 'كلمات مفتاحية' }, { label: tag }]} />
-            <div className="cathead taghead">
-              <div>
-                <small>كلمة مفتاحية</small>
-                <h1>#{tag}</h1>
-                <p>كل ما نشره المتابع حول «{tag}»</p>
-              </div>
-              <div className="catnum"><b>{list.length}</b><small>خبر</small></div>
-            </div>
-
-            {nearTags.length > 0 && (
-              <div className="tags" style={{ marginTop: 0 }}>
-                <span>كلمات ذات صلة:</span>
-                {nearTags.map((t) => <a key={t} href={`/tag/${encodeURIComponent(t)}`}>{t}</a>)}
-              </div>
-            )}
-
-            {list.length === 0 ? (
-              <div className="empty"><b>لا توجد أخبار تحمل هذه الكلمة المفتاحية</b><p><a href="/">العودة إلى الرئيسية</a></p></div>
-            ) : (
-              <div className="catlist">
-                {list.map((a) => (
-                  <a key={a.id} className="ci" href={`/article/${a.id}`}>
-                    <div className="th"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
-                    <div className="t">
-                      <span className="ttl">{a.title}</span>
-                      <span className="ex">{excerpt(a)}</span>
-                      <span className="tm">{Ico.clock}{ago(a.publishedAt)}<em>·</em>{Ico.eye}{a.viewsCount ?? 0}</span>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-          <Sidebar articles={articles} />
-        </div>
-      </div>
-      <SiteFooter />
-    </div>
+    <>
+      {tag && <JsonLd data={[collectionLd({ name: `#${tag}`, description: describe(tag), url }), breadcrumbLd([{ name: 'الرئيسية', url: SITE_URL }, { name: 'كلمات مفتاحية' }, { name: tag }])]} />}
+      <TagView />
+    </>
   );
 }
