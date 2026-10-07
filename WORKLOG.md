@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · Lighthouse pass (D-070)
+
+- **Shipped (fc08f78 … c4ee4a5):** one preloaded font, gzip API, category/article lists server-rendered, eager lead images, live strip server-rendered (CLS 0.112 → 0.006), Amman clock everywhere, accessibility fixes.
+- **Production (real throttling):** home 95/97, article 97/100, category 97/100 (performance/accessibility); LCP 2.2–2.3 s; best practices and SEO 100.
+- **Status:** ✅ nothing in flight · next: Arabic search, web push.
+
+---
+
 ## 2026-10-08 · Claude Code · newsroom statistics (D-069)
 
 - **Q8 changed:** reboots on request when the Sunday digest says so.
