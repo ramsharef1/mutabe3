@@ -19,13 +19,26 @@ df -h /boot | awk 'NR==2{print "/boot free " $4}'
 echo; echo "== running services — will each come back at boot? =="
 systemctl list-units --type=service --state=running --plain --no-legend 2>/dev/null | awk '{print $1}' | sort > "$BK/running-before.txt"
 echo "$(wc -l < "$BK/running-before.txt") running services saved to $BK/running-before.txt"
+ENABLED=()
 while read -r u; do
   e=$(systemctl is-enabled "$u" 2>/dev/null)
   case "$e" in
-    enabled|enabled-runtime|static|indirect|generated|alias|transient) ;;
-    *) case "$u" in user@*|session-*|systemd-*|getty@*|serial-getty@*) ;; *) STOP+=("running but '$e' at boot: $u");; esac ;;
+    enabled|enabled-runtime|static|indirect|generated|alias|transient) continue ;;
   esac
+  case "$u" in user@*|session-*|systemd-*|getty@*|serial-getty@*) continue ;; esac
+  by=$(systemctl show "$u" -p WantedBy -p RequiredBy --value 2>/dev/null | xargs)
+  if [ -n "$by" ]; then
+    echo "$u is '$e' but pulled in at boot by: $by ✓"
+  elif [[ "$u" =~ ^(nginx|postgresql|php-fpm|php8[0-9]-php-fpm|mutabe3-[a-z]+)\.service$ ]]; then
+    # Core web stack: it must start at boot, not wait for a watchdog cron (nginx came up 2 min 11 s after the
+    # 2026-10-05 boot, at the first */3 run of convertec-watchdog). Reversible: systemctl disable <unit>.
+    systemctl enable "$u" >/dev/null 2>&1 && { ENABLED+=("$u"); echo "enabled at boot: $u (was '$e')"; } || STOP+=("could not enable $u")
+  else
+    STOP+=("running but '$e' at boot and nothing pulls it in: $u")
+  fi
 done < "$BK/running-before.txt"
+echo "-- watchdog scripts that (re)start nginx --"
+grep -nisE 'nginx' /usr/local/bin/convertec-watchdog.sh /root/site-monitor.sh 2>/dev/null | cut -c1-160 | sed 's/^/  /'
 # 'static' units come back only if something pulls them in; show them so the post-check can be read against this.
 echo "static (pulled in by sockets/targets): $(while read -r u; do [ "$(systemctl is-enabled "$u" 2>/dev/null)" = static ] && printf '%s ' "$u"; done < "$BK/running-before.txt")"
 
@@ -55,6 +68,7 @@ echo
 if [ ${#STOP[@]} -gt 0 ]; then
   echo "❌ NOT rebooting:"; printf '  - %s\n' "${STOP[@]}"; exit 1
 fi
+[ ${#ENABLED[@]} -gt 0 ] && echo "enabled at boot in this run: ${ENABLED[*]} (undo: systemctl disable ${ENABLED[*]})"
 echo "== pre-flight passed — rebooting in 20 s =="
 systemd-run --quiet --on-active=20 --timer-property=AccuracySec=1s --unit=d062-reboot /usr/bin/systemctl reboot
 echo "scheduled at $(date -u +%T) UTC for $(date -u -d '+20 sec' +%T) UTC · then: gh workflow run ops-vps.yml -f action=post-reboot-check"
