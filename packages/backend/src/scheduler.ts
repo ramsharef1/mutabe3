@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { autoDigestTick, reapStuckSends } from './newsletter';
 import { flushAdStats } from './ads';
+import { flushViewStats } from './stats';
 import { audit, purgeOldAudit, q } from './audit';
 
 // Scheduled publishing: once a minute, every SCHEDULED article whose
@@ -39,6 +40,7 @@ export function startScheduler(prisma: PrismaClient, everyMs = 60_000) {
     purgeExpiredSessions(prisma).catch((e) => console.error('session sweep:', e));
     reapStuckSends(prisma).catch((e) => console.error('newsletter reaper:', e)); // D-054
     flushAdStats(prisma).catch((e) => console.error('ad stats flush:', e)); // D-057
+    flushViewStats(prisma).catch((e) => console.error('view stats flush:', e)); // D-069
     purgeOldAudit(prisma).catch((e) => console.error('audit retention:', e)); // D-064, hourly, entries > 24 months
   };
   tick();

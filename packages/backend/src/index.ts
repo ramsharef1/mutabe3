@@ -14,6 +14,7 @@ import { allow, isLoopback } from './ratelimit';
 import { sendError } from './errors';
 import { authorRoutes, ensureAuthorSlugs, AUTHOR_PUBLIC } from './authors';
 import { liveRoutes } from './live';
+import { recordView, flushViewStats } from './stats';
 
 // Crawlers, link previews and monitors: never counted as reads or ad deliveries.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
@@ -186,6 +187,7 @@ app.post('/api/articles/:id/view', async (req: Request, res: Response) => {
       if (recentViews.size > 50000) recentViews.clear();
     }
     recentViews.set(key, now);
+    recordView(id); // per-day count for the dashboard (D-069)
     res.json({ success: true, counted: true, viewsCount: rows[0].viewsCount });
   } catch {
     res.status(404).json({ error: 'Article not found' });
@@ -345,13 +347,14 @@ app.listen(port, () => {
 });
 
 // Graceful shutdown (systemd sends SIGTERM on deploy; Ctrl-C sends SIGINT).
-// Ad beacons are counted in memory and written once a minute, so flush them before leaving.
+// Ad beacons and daily reads are counted in memory and written once a minute, so flush them before leaving.
 let shuttingDown = false;
 const shutdown = async (signal: string) => {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log(`\n🛑 ${signal}: shutting down...`);
   try { await flushAdStats(prisma); } catch (e) { console.error('ad stats flush on shutdown:', e); }
+  try { await flushViewStats(prisma); } catch (e) { console.error('view stats flush on shutdown:', e); }
   await prisma.$disconnect();
   process.exit(0);
 };

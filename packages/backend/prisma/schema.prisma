@@ -367,3 +367,17 @@ model LiveEntry {
 
   @@index([articleId, at])
 }
+
+// Counted reads per article per Amman calendar day (D-069, ANALYTICS-PLAN §1): the same reads that move
+// Article.viewsCount (bots, repeats within 30 min and per-address excess never count), aggregated in
+// memory and written once a minute. No relation to Article: the dashboard joins on read and skips
+// deleted articles. Counting starts with this table — there is no history before it.
+model ArticleViewDaily {
+  id        String   @id @default(cuid())
+  day       DateTime @db.Date
+  articleId String
+  views     Int      @default(0)
+
+  @@unique([day, articleId])
+  @@index([articleId, day])
+}

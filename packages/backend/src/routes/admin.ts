@@ -11,6 +11,7 @@ import { audit, listAudit, q } from '../audit';
 import { sendError } from '../errors';
 import { freeSlug, parseProfile } from '../authors';
 import { plainText, LIVE_TEXT_MAX, LIVE_TITLE_MAX } from '../live';
+import { siteStats } from '../stats';
 import { RejectedImage } from '../images';
 
 const router = Router();
@@ -578,6 +579,16 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
     sendError(res, e);
   }
+});
+
+/* ───────────────────────────── statistics (editors, D-069) ───────────────────────────── */
+
+// GET /api/admin/stats?days=7|30|90 — reads, top articles, sections, authors, desk output, newsletter, comments, ads
+router.get('/stats', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const days = [7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 30;
+    res.json({ success: true, data: await siteStats(prisma, days) });
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────────────────────── own public profile (any staff, D-067) ───────────────────────────── */
