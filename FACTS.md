@@ -78,6 +78,6 @@
 | GTM container id (Google account) | ⬜ |
 | Mailboxes editor@ ads@ corrections@ privacy@ | ⬜ |
 | Original logo artwork file | ⬜ |
-| External uptime checker account | ⬜ Better Stack Uptime chosen 2026-10-08 — account not yet created |
+| External uptime checker | ⬜ none (Better Stack dropped 2026-10-08) |
 
 **Last updated:** 2026-10-07 (rewritten from verified facts; the 2026-09-12 card is in `archive/2026-10-07-forge-refresh/`)

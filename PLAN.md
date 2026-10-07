@@ -27,7 +27,7 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 ## Priorities
 
 1. **Rami's gates** (Open questions Q1–Q6) — they block the imprint, analytics, newsletter delivery and the legal go-ahead.
-2. **Real uptime alerts** (Q7) — Better Stack chosen; two monitors (`/`, `/api/health`) once Rami's account exists.
+2. **Real uptime alerts** (Q7) — open; Better Stack dropped.
 3. **Remaining security items** — Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02, ops), non-root deploy user + pinned host key (S-07); Next 16 with the deferred upgrade.
 4. **Weeks 5–8 · brand:** Ink & Signal built as a per-browser preview on branch `worktree-ink-skin` (D-066), review page sent for **client sign-off (Q10)**; after it: merge as default, regenerate OG/favicons/email shell.
 5. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass, paid-notices pilot if wanted.
@@ -40,7 +40,7 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 - **Q4 · Counsel** — who reviews the seven legal drafts and the soft-launch-before-licence posture. *Recommendation: before real traffic.*
 - **Q5 · SPF/DKIM DNS** at webhubteam's name servers. *Without them newsletter mail does not reach inboxes; alerts already work through GitHub.*
 - **Q6 · Original logo artwork file.** *The current logo is a vector re-creation; the re-theme needs the original.*
-- **Q7 · Uptime checker — Better Stack chosen (2026-10-08).** *Waiting on Rami:* sign up for Better Stack Uptime (free) — in the Claude browser pane if a session should then create the two monitors (spec: `brain/HOSTING-OPS.md` → External checker), or create them by hand from that spec.
+- **Q7 · Uptime checker** — still open. Better Stack dropped by Rami (2026-10-08). Remaining option: a VPS-side check that opens GitHub Issues (needs a GitHub token on the server; misses whole-server outages), or another external service Rami names. *GitHub's own schedule fires only every few hours, so today there is no real-time uptime alert.*
 - **Q8 · Kernel reboots** — dnf-automatic installs kernels but never reboots: (a) reboot on request, as on 2026-10-07; (b) a weekly reboot only when needed, Sundays 04:30 Amman (about one minute down). *Recommendation: (b).*
 - **Q9 · Demo articles** — when to remove the 19 demo articles. *Recommendation: once the desk has published about 20 real ones.*
 - **Q10 · Ink & Signal sign-off** — the client answers the three questions on the review page (https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6, private: Rami shares it): blue from the logo as the main colour, red only for «عاجل»/«مباشر», Naskh instead of Amiri for article text. *Yes → merge `worktree-ink-skin` and make ink the default.*
