@@ -12,6 +12,9 @@ for u in $failed; do
   systemctl show "$u" -p Description,ActiveEnterTimestamp,ExecMainStartTimestamp,ExecMainExitTimestamp,Result,ExecMainStatus,TriggeredBy 2>/dev/null | mask
   echo "-- last 25 journal lines --"
   journalctl -u "$u" -n 25 --no-pager -o short-iso 2>/dev/null | mask
+  # The journal on this VPS is volatile and small (it drops lines within hours); rsyslog keeps them (D-060).
+  echo "-- /var/log/messages (rsyslog) --"
+  grep -hE "${u%.service}(\[|:)|${u}" /var/log/messages 2>/dev/null | tail -n 12 | mask | cut -c1-220
 done
 echo; echo "== timers that trigger the failed units =="
 for u in $failed; do
