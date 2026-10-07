@@ -22,8 +22,16 @@ grep -nE '^\s*\[|^\s*excludepkgs|^\s*upgrade_type|^\s*apply_updates|^\s*reboot\s
 echo "-- what tomorrow's automatic run would install --"; probe "$CONF"
 
 echo; echo "== change =="
-if grep -qE '^\s*excludepkgs\s*=.*httpd' "$CONF"; then
-  echo "already held: $(grep -E '^\s*excludepkgs' "$CONF")"
+# First run (2026-10-07 17:30) missed that the file already says `exclude = httpd* mod_ssl* mod_lua*` (`exclude` is
+# dnf's older name for `excludepkgs`) and added a redundant line; converge back to the original.
+if grep -qE '^\s*exclude\s*=.*httpd' "$CONF" && grep -qE '^# D-061: ' "$CONF"; then
+  cp -a "$CONF" "$BK/automatic.conf"
+  sed -i -E '/^# D-061: /d; /^excludepkgs = httpd\* mod_\*$/d' "$CONF"
+  echo "removed the redundant D-061 lines — Apache was already held by: $(grep -E '^\s*exclude\s*=' "$CONF")"
+  ORIG=$(ls -1d /root/ops-backups/D-061-*/automatic.conf 2>/dev/null | sort | sed -n 1p)
+  [ -n "$ORIG" ] && { cmp -s "$ORIG" "$CONF" && echo "identical to the original ($ORIG) ✓" || { echo "differs from $ORIG:"; diff -u "$ORIG" "$CONF" | sed 's/^/  /'; }; }
+elif grep -qE '^\s*(exclude|excludepkgs)\s*=.*httpd' "$CONF"; then
+  echo "already held: $(grep -E '^\s*(exclude|excludepkgs)\s*=' "$CONF")"
 else
   cp -a "$CONF" "$BK/automatic.conf"
   if grep -qE '^\s*\[base\]' "$CONF"; then
