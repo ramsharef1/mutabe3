@@ -1,0 +1,105 @@
+name: Monitor
+
+# Ops alerts without a mail server (D-059). GitHub Issues are the alert channel: opening one emails Rami
+# through GitHub's own notifications (the body @mentions him), closing it emails the recovery. The VPS
+# cannot deliver mail to Gmail until SPF/DKIM exist, and an uptime probe has to run off the box anyway.
+#
+#   every 10 min                  ops/monitor/uptime.mjs — homepage + /api/health from a GitHub runner
+#   daily 04:17 UTC (07:17 Amman) ops/vps/healthcheck.sh over SSH → ops/monitor/server.mjs (disk, backups, units, TLS)
+#   Sundays                       the weekly digest comment on the rolling «🩺» issue — the heartbeat:
+#                                 GitHub disables schedules after 60 days without a commit, so no Sunday mail = look here
+#
+#   gh workflow run monitor.yml -f check=uptime|server|weekly        (-f drill=true opens a test alert; run uptime again to close it)
+#
+# Exit code 1 only on the run that opens an alert → one red run per incident in the Actions list (and GitHub's
+# own "run failed" mail to the workflow's last committer), green while the issue stays open.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      check:
+        description: 'Which check to run now'
+        type: choice
+        default: uptime
+        options: [uptime, server, weekly]
+      drill:
+        description: 'uptime only: treat every probe as failed to exercise the alert path (opens a «تجربة» issue)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  ALERT_MENTION: '@ramsharef1'
+
+jobs:
+  uptime:
+    if: github.event.schedule == '*/10 * * * *' || inputs.check == 'uptime'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: monitor-uptime
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ops/monitor
+      - name: Probe mutabe3.news
+        run: node ops/monitor/uptime.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MONITOR_DRILL: ${{ inputs.drill == true && '1' || '' }}
+
+  server:
+    if: github.event.schedule == '17 4 * * *' || inputs.check == 'server' || inputs.check == 'weekly'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: monitor-server
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ops
+
+      - name: Collect facts on the VPS (ops/vps/healthcheck.sh)
+        id: facts
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${VPS_PORT:-22}" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          if ssh -o ConnectTimeout=25 -o BatchMode=yes -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' < ops/vps/healthcheck.sh > facts.txt; then
+            echo "ssh_ok=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "ssh_ok=0" >> "$GITHUB_OUTPUT"; echo "❌ ssh failed"
+          fi
+          cat facts.txt
+
+      - name: Certificate expiry (from the runner)
+        id: tls
+        run: |
+          end=$(echo | openssl s_client -servername mutabe3.news -connect mutabe3.news:443 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+          if [ -n "$end" ]; then
+            days=$(( ( $(date -d "$end" +%s) - $(date +%s) ) / 86400 ))
+            echo "tls_days=$days" >> "$GITHUB_OUTPUT"; echo "certificate ends $end ($days days)"
+          else
+            echo "tls_days=" >> "$GITHUB_OUTPUT"; echo "⚠️ could not read the certificate"
+          fi
+
+      - name: Evaluate, alert, digest
+        run: node ops/monitor/server.mjs facts.txt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SSH_OK: ${{ steps.facts.outputs.ssh_ok }}
+          TLS_DAYS: ${{ steps.tls.outputs.tls_days }}
+          WEEKLY: ${{ inputs.check == 'weekly' && '1' || '' }}

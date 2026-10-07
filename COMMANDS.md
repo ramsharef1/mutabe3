@@ -93,6 +93,19 @@ pg_dump "$DATABASE_URL" > /var/backups/mutabe3-$(date +%F).sql
 
 ---
 
+## Monitoring & alerts (D-059)
+
+- **Channel:** GitHub Issues in this repo, opened and closed by `.github/workflows/monitor.yml`. Opening one emails Rami through GitHub's own notifications (the body mentions `@ramsharef1`); closing it emails the recovery. No mail server is involved — the VPS cannot reach Gmail inboxes until SPF/DKIM exist (D-043/D-044).
+- **Uptime** (every 10 min, from a GitHub runner — `ops/monitor/uptime.mjs`): `https://mutabe3.news/` must answer 200 with «المتابع» in the HTML and `/api/health` 200 `healthy` (includes a DB round-trip). A failure is re-checked after 60 s, ignored while `deploy-vps.yml` is running, then opens «🔴 الموقع لا يستجيب». Hourly reminder comment while down; auto-closed with the outage duration on recovery.
+- **Server** (daily 04:17 UTC = 07:17 Amman, over the deploy SSH credentials): `ops/vps/healthcheck.sh` prints `key=value` facts, `ops/monitor/server.mjs` alerts on disk ≥ 90 % (clears below 85 %), newest dump older than 30 h / not restorable / under 10 KB / timer inactive / last run failed / uploads archive older than 10 days, any of backend · frontend · nginx · postgres not `active` or local health ≠ 200, TLS certificate under 14 days (measured from the runner), SSH unreachable. One issue per category (`alert:*` labels), daily reminder while open, auto-closed when clear.
+- **Weekly digest:** on Sundays the daily run comments a health table on the rolling issue «🩺 الصحة الأسبوعية — mutabe3.news». That mail is the heartbeat: GitHub disables scheduled workflows after 60 days without a commit, so if the Sunday mail stops, open Actions → Monitor.
+- **Run by hand:** `gh workflow run monitor.yml -f check=uptime|server|weekly` · facts only: `gh workflow run ops-vps.yml -f action=healthcheck` · **drill:** `gh workflow run monitor.yml -f check=uptime -f drill=true` opens a «🧪 تجربة إنذار» issue (red run); `-f check=uptime` again closes it with a recovery comment.
+- **Local dry run (reads the repo, writes nothing):** `DRY_RUN=1 GH_TOKEN=$(gh auth token) node ops/monitor/uptime.mjs` · `DRY_RUN=1 GH_TOKEN=$(gh auth token) TLS_DAYS=60 node ops/monitor/server.mjs facts.txt` with any `key=value` facts file (`MONITOR_DRILL=1`, `SSH_OK=0`, `WEEKLY=1` force the other paths).
+- **Noise:** a run goes red only when it opens an issue — one red run per incident. Closing an alert issue by hand is fine; the next run reopens it if the condition persists.
+- **Not watched:** Hostinger's weekly VPS backups (hPanel only), nginx 5xx rates, page speed. Failed deploys already mail the pusher through GitHub's default Actions notifications.
+
+---
+
 ## Service user (D-048)
 
 - Both units run as system user `mutabe3` (uid 789, `/sbin/nologin`, HOME `/var/lib/mutabe3`), set by `/etc/systemd/system/mutabe3-{backend,frontend}.service.d/10-service-user.conf` (`User/Group`, `UMask=0022`, `NoNewPrivileges`, `PrivateTmp`, cache/HOME env). `/etc/mutabe3/backend.env` stays root-only; systemd injects it.
@@ -134,6 +147,6 @@ Rami keeps the dashboard signed in inside the Browser pane. Drive `/api/admin/*`
 
 ---
 
-**Last updated:** 2026-10-06 (rewritten to the deployed stack)  
+**Last updated:** 2026-10-07 (monitoring & alerts, D-059)  
 **Authority:** FORGE (Rami approves changes to this file)  
 **Related:** brain/DECISIONS.md · brain/ROADMAP.md · connectors/production.md · connectors/staging.md
