@@ -2,6 +2,13 @@
 
 ## 2026-10-07
 
+**D-061: Security updates on the shared VPS — install the stragglers, report the reboot**
+- **Decided by:** Rami 2026-10-07 ("apply the security updates"), after the D-059 digest showed «تحديثات أمنية معلّقة 19».
+- **Survey (read-only ops run 37658774413):** the 19 were advisory *lines*, not packages — 4 advisories: Apache `httpd*`/`mod_*` (Important + Low; the unit is masked since D-060 and never runs), `vim-minimal` (Important), and the kernel (Moderate) which is **already installed** (687.54.1, this morning) while 687.53.1 runs. `dnf-automatic.timer` is on with `upgrade_type = security`, `apply_updates = yes`, `reboot = never` — security packages are installed every morning around 06:00 UTC (transactions 93–100); only reboots never happen. A security upgrade now = 8 packages, 2.4 MB; no running service is on replaced files.
+- **Apply (ops action `security-updates-apply`):** `dnf -y upgrade --security`, restart only known-safe services that `dnf needs-restarting -s` flags (expected none), verify (failed units, `nginx -t`, mutabe3 health), print `dnf history undo <id>`. **No reboot** — it takes every site on the box down for a minute or two, so it is Rami's call and timing.
+- **Digest fixed:** `healthcheck.sh` now counts unique packages waiting (`check-update --security`, normally 0 thanks to dnf-automatic) and reads `dnf needs-restarting -r` (the standalone `needs-restarting` binary is absent, so the reboot flag was always blank) plus running vs installed kernel; the digest shows «إعادة تشغيل مطلوبة نعم (النواة … → …)».
+- **Status:** in progress · 2026-10-07
+
 **D-060: Shared-VPS housekeeping — the three failed systemd units the monitor reported**
 - **Decided by:** Rami 2026-10-07 ("clean up failed units"), after D-059's first digest listed `certbot-renew`, `httpd`, `logrotate` as failed. None belongs to mutabe3; the box is shared with Rami's other sites.
 - **Diagnosis (read-only ops runs 37657021614 and 37657373252; the volatile journal had already dropped the lines, rsyslog's `/var/log/messages` and `/var/log/cron` had them):**

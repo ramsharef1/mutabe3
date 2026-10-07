@@ -65,7 +65,12 @@ if [ -n "$DBURL" ] && command -v psql >/dev/null 2>&1; then
 fi
 
 # OS hygiene (informational — this VPS is shared with other sites, so only the digest reports it).
-if command -v needs-restarting >/dev/null 2>&1; then
-  if needs-restarting -r >/dev/null 2>&1; then kv reboot_required no; else kv reboot_required yes; fi
+# dnf-automatic installs security updates every morning with reboot=never (D-061), so the useful facts are
+# packages still waiting (normally 0) and whether a newer kernel/glibc is installed but not yet running.
+if dnf needs-restarting --help >/dev/null 2>&1; then
+  if dnf -q needs-restarting -r >/dev/null 2>&1; then kv reboot_required no; else kv reboot_required yes; fi
 fi
-if sec=$(dnf -q -C updateinfo list --security 2>/dev/null); then kv security_updates "$(printf '%s\n' "$sec" | grep -c .)"; fi
+upd=$(dnf -q -C check-update --security 2>/dev/null); rc=$?
+if [ "$rc" = 0 ] || [ "$rc" = 100 ]; then kv security_updates "$(printf '%s\n' "$upd" | awk 'NF==3 && $1 ~ /\./ {print $1}' | sort -u | grep -c .)"; fi
+kv kernel_running "$(uname -r)"
+kv kernel_installed "$(rpm -q kernel --last 2>/dev/null | awk 'NR==1{sub(/^kernel-/, "", $1); print $1}')"
