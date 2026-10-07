@@ -336,7 +336,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <SecHd t="بانوراما" slug="panorama" />
           <div className="pano">
             <div className="grid">{pano.slice(1).map((a) => <a key={a.id} className="th" href={link(a)} aria-label={a.title}><Img src={a.featuredImageUrl} /></a>)}</div>
-            <div className="big"><a className="im" href={link(pano[0])} style={{ display: 'block' }}><Img src={pano[0].featuredImageUrl} /></a><a className="t" href={link(pano[0])}>{pano[0].title}</a><p>{excerpt(pano[0], 220)}</p></div>
+            <div className="big"><a className="im" href={link(pano[0])} style={{ display: 'block' }} aria-label={pano[0].title}><Img src={pano[0].featuredImageUrl} /></a><a className="t" href={link(pano[0])}>{pano[0].title}</a><p>{excerpt(pano[0], 220)}</p></div>
           </div>
           <More slug="panorama" />
         </div>

@@ -2252,11 +2252,11 @@ a.au:hover b{color:var(--k-text,var(--red))}
 .comments h2.cm-h span{color:var(--muted);font-family:var(--k-sys,Arial);font-weight:normal;font-size:12px}
 /* text contrast ≥ 4.5:1 */
 .weather .pill small{color:#595959}
-.up,.vote .leg .y{color:#15803d}
+.up,.mkt .up,.vote .leg .y{color:#15803d}
 .debate .vs b{color:var(--muted)}
 .vote .bar span:nth-child(3){background:#757575}
-.dec .k,.greet .k{filter:brightness(.72)} /* badges take their colour inline (gold #c98a00 failed with white text) */
 .host{color:#9a9a9a}
 /* touch targets ≥ 24 px (footer link lists were 14 px tall and tightly stacked) */
 .fcols li{padding:0}
 .fcols li a{display:inline-block;padding:4px 0;min-height:24px;line-height:16px}
+.ticker .pause{min-width:32px;min-height:32px}
