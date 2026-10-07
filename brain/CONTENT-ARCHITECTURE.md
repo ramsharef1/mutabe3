@@ -16,10 +16,10 @@ Also: category/tag/search pages are client-rendered without own title/canonical;
 | Category / section | exists, client-rendered | name, intro, (child sections later) | server-rendered, own title/description, CollectionPage; `?page=N` self-canonical; unknown slug = 404 | links to hubs; advertise slot; hubs reviewed quarterly |
 | Tag / topic | partial (hardcoded) | Tag model: name, slug, description | CollectionPage; noindex under 3 articles | from article + category |
 | Columnist + author page | **live (D-067)** — opt-in profile (job title + published piece); illustrative WRITERS only while none exists and the demo switch is on | slug, photo (real or monogram), bio, role; `kind=OPINION` labelled «رأي» | ProfilePage + Person ([docs](https://developers.google.com/search/docs/appearance/structured-data/profile-page)) | CTA follow/newsletter; list by date; **hide كتاب المتابع until real columnists exist** |
-| Video | partial (hardcoded ids) | YouTube id, title, description, duration, thumbnail | VideoObject ([docs](https://developers.google.com/search/docs/appearance/structured-data/video)) | embedded in related articles |
-| Caricature | missing | WebP image, artist, alt | ImageObject | archive by artist |
+| Video | **live (D-068)** — VIDEO articles with an embedded YouTube video feed «فيديو المتابع»; VideoObject | YouTube id, title, description, duration, thumbnail | VideoObject ([docs](https://developers.google.com/search/docs/appearance/structured-data/video)) | embedded in related articles |
+| Caricature | **live (D-068)** — CARICATURE articles, drawing as the cover image shown uncropped; homepage block | WebP image, artist, alt | ImageObject | archive by artist |
 | Photo gallery | partial (placeholders) | images with credit + caption | Article + image sitemap | — |
-| Live blog | partial (one hardcoded) | entries (time, text, key flag), start/end | LiveBlogPosting | close with a summary |
+| Live blog | **live (D-068)** — LiveEntry updates, editor panel, auto-refresh, end/reopen; LiveBlogPosting | entries (time, text, key flag), start/end | LiveBlogPosting | close with a summary |
 | Poll / debate | exists | replace demo personas | not indexed | — |
 | Newsletter issue | exists | — | optional public archive | CTA surface |
 | **Sponsored article** | missing → weeks 3–4 | sponsor, `kind=SPONSORED`, label «إعلان» on card + «محتوى مدفوع من ‹الجهة›» on page, `rel=sponsored` links | NewsArticle; **excluded** from news sitemap, RSS, lead/breaking/picks, most-read | — |

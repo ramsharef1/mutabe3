@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · video, caricature, live blog (D-068)
+
+- **Shipped and verified (b9422b1 + d6ffe55):** live-blog entries with an editor panel, self-refreshing live blog with LiveBlogPosting, real homepage live strip; video section from VIDEO articles with VideoObject; caricature block and uncropped page; templates for the three kinds; `?kind=` list filter.
+- **Caught after the first deploy:** a caricature block briefly held a news article (old API ignored `?kind=`, answer cached 60 s) — self-cleared; the homepage now checks the kind itself.
+- **Status:** ✅ nothing in flight · next: weekly conditional kernel reboot (Q8).
+
+---
+
 ## 2026-10-08 · Claude Code · author profiles (D-067)
 
 - **Answers recorded** (PLAN): Q2 Rami's Google account, Q3 forwarding, Q4 no legal review for now, Q7 leave, Q8 weekly conditional reboot, Q9 after ~20 real articles, Q10 Rami shares the review page; build order "everything".
