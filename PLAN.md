@@ -26,27 +26,29 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 
 ## Priorities
 
-1. **Rami's gates** (Open questions Q1–Q6) — they block the imprint, analytics, newsletter delivery and the legal go-ahead.
-2. **Real uptime alerts** (Q7) — open; Better Stack dropped.
-3. **Remaining security items** — Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02, ops), non-root deploy user + pinned host key (S-07); Next 16 with the deferred upgrade.
-4. **Weeks 5–8 · brand:** Ink & Signal built as a per-browser preview on branch `worktree-ink-skin` (D-066), review page sent for **client sign-off (Q10)**; after it: merge as default, regenerate OG/favicons/email shell.
-5. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass, paid-notices pilot if wanted.
+Build order chosen by Rami 2026-10-08 ("everything"), one slice at a time, each verified locally then on production:
+1. **Real people and data:** columnist/author pages from staff accounts (monogram without a photo) replacing the invented writers; demo data blocks (roads, FX, obituaries, jobs, MP votes, fact-check) sourced or hidden.
+2. **Content types:** video, caricature and live-blog pages on the existing article kinds, replacing the hard-coded sections.
+3. **Ops:** weekly conditional kernel reboot (Q8).
+4. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass.
+5. **Remaining security:** Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02), non-root deploy user + pinned host key (S-07).
+Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design answers (Q10).
 
 ## Open questions
 
 - **Q1 · Imprint names** — client legal name and editor-in-chief. *Needed for the about page, imprint and licence records.*
-- **Q2 · GTM container id** — from the Google account that owns GA4. *Analytics and the consent bar switch on with it; nothing else to build.*
-- **Q3 · Mailboxes** — editor@, ads@, corrections@, privacy@ on mutabe3.news. *The legal pages and `/advertise` point to them.*
-- **Q4 · Counsel** — who reviews the seven legal drafts and the soft-launch-before-licence posture. *Recommendation: before real traffic.*
+- **Q2 · GTM container id** — **answered 2026-10-08: Rami's own Google account** owns GA4, GTM and Search Console (ownership can move to the client later). *Waiting on Rami: the `GTM-XXXX` id; analytics and the consent bar switch on with it.*
+- **Q3 · Mailboxes** — **answered 2026-10-08: forwarding** of editor@, ads@, corrections@, privacy@ to the editors' existing inboxes. *Waiting on Rami: MX/forwarding records at the DNS host (same visit as Q5) and the target addresses.*
+- **Q4 · Counsel** — **answered 2026-10-08: no legal review for now** (Rami's decision; higher legal risk accepted). The «مسودة» banners stay on the seven legal pages until a lawyer approves them.
 - **Q5 · SPF/DKIM DNS** at webhubteam's name servers. *Without them newsletter mail does not reach inboxes; alerts already work through GitHub.*
 - **Q6 · Original logo artwork file.** *The current logo is a vector re-creation; the re-theme needs the original.*
-- **Q7 · Uptime checker** — still open. Better Stack dropped by Rami (2026-10-08). Remaining option: a VPS-side check that opens GitHub Issues (needs a GitHub token on the server; misses whole-server outages), or another external service Rami names. *GitHub's own schedule fires only every few hours, so today there is no real-time uptime alert.*
-- **Q8 · Kernel reboots** — dnf-automatic installs kernels but never reboots: (a) reboot on request, as on 2026-10-07; (b) a weekly reboot only when needed, Sundays 04:30 Amman (about one minute down). *Recommendation: (b).*
-- **Q9 · Demo articles** — when to remove the 19 demo articles. *Recommendation: once the desk has published about 20 real ones.*
-- **Q10 · Ink & Signal sign-off** — the client answers the three questions on the review page (https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6, private: Rami shares it): blue from the logo as the main colour, red only for «عاجل»/«مباشر», Naskh instead of Amiri for article text. *Yes → merge `worktree-ink-skin` and make ink the default.*
+- **Q7 · Uptime checker** — **answered 2026-10-08: leave it for now** (Better Stack dropped). Only the slow GitHub probe and the daily server check run; no real-time down alert.
+- **Q8 · Kernel reboots** — **answered 2026-10-08: weekly, only when a new kernel waits**, Sundays 04:30 Amman, with the D-062 pre-flight. *To build (ops slice).*
+- **Q9 · Demo articles** — **answered 2026-10-08: after ~20 real articles** are published, then delete the 19 demo articles and switch the demo blocks off.
+- **Q10 · Ink & Signal sign-off** — **answered 2026-10-08: Rami shares the review page** (https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6) with the client and passes on their answers to the three questions. *Yes → merge `worktree-ink-skin` and make ink the default.*
 
 ## Resume point
 
 Last session 2026-10-08 (Claude Code): D-057 … D-065 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
-**Last updated:** 2026-10-08 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
+**Last updated:** 2026-10-08 (answers to Q2–Q4, Q7–Q10) (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
