@@ -68,3 +68,4 @@ Replace `face()` placeholder portraits (pravatar.cc) with real photos or `.au-in
 ## Rollout & risks
 1. **The client reads red as "Ammon".** Ship under `:root[data-skin=ink]` from a worktree build; before/after screenshots at 1002px (home, article, category), 390px mobile, dark; the red skin stays one attribute away until sign-off.
 2. **Contrast/density regressions.** `accentText` + CI contrast script; Kufi may be wider than Arial/Tahoma — measure the 13-item nav and 2-line card clamps on real articles.
+3. **Measured in the worktree (D-066, 2026-10-08):** Kufi 700 13 px wraps card/list titles → titles use `titleFallbackIfClampTruncates` (Naskh 700); nav Kufi 13 px / 8 px padding keeps today's wrap; root line-height 1.3 (Naskh "normal" ≈ 1.7); article height unchanged, home +1.6 %, category +3 %. Implementation: `--k-<role>` variables with classic fallbacks in `globals.css`, values in `app/skin-ink.css`.

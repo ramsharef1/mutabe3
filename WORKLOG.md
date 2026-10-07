@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · Ink & Signal skin (D-066)
+
+- **Built (branch `worktree-ink-skin`, 523600f, not deployed):** brand reds and font stacks read `--k-<role>` variables with the classic value as fallback; `skin-ink.css` defines them from `tokens.json`; `?skin=ink` previews per browser. Classic proven unchanged (computed styles, 9 page/mode combinations, 0 differences). Density measured and fixed (Naskh 700 list titles, nav 13 px, root line-height).
+- **Review page for the client:** https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6 (private).
+- **Status:** ⏸ waiting for client sign-off (PLAN Q10).
+
+---
+
 ## 2026-10-07 · Claude Code · security slice 2 (D-065)
 
 - **Shipped and verified on production (cb47c6f, run 37682500545):** generic Arabic error responses with stable codes through one `sendError()` (S-12, 52 sites); uploads typed by their bytes, always re-encoded to WebP, failures refused, `nosniff` checked (S-11); CORS without the raw IP, `CORS_ORIGINS` optional (S-17); links cut from reader comments (S-13); unused `redis` removed (S-19). Evidence in `brain/DECISIONS.md` D-065.

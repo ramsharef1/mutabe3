@@ -29,7 +29,7 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 1. **Rami's gates** (Open questions Q1–Q6) — they block the imprint, analytics, newsletter delivery and the legal go-ahead.
 2. **Real uptime alerts** (Q7) — an external checker on `/` and `/api/health`.
 3. **Remaining security items** — Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02, ops), non-root deploy user + pinned host key (S-07); Next 16 with the deferred upgrade.
-4. **Weeks 5–8 · brand:** Ink & Signal re-theme as a skin toggle in a worktree, screenshots on real content, client sign-off.
+4. **Weeks 5–8 · brand:** Ink & Signal built as a per-browser preview on branch `worktree-ink-skin` (D-066), review page sent for **client sign-off (Q10)**; after it: merge as default, regenerate OG/favicons/email shell.
 5. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass, paid-notices pilot if wanted.
 
 ## Open questions
@@ -43,9 +43,10 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 - **Q7 · Uptime checker** — (a) Better Stack free tier, recommended: 3-minute checks, mail, commercial use allowed, Rami creates the account; (b) a VPS-side check with a GitHub token: misses whole-server outages. *GitHub's own schedule fires only every few hours.*
 - **Q8 · Kernel reboots** — dnf-automatic installs kernels but never reboots: (a) reboot on request, as on 2026-10-07; (b) a weekly reboot only when needed, Sundays 04:30 Amman (about one minute down). *Recommendation: (b).*
 - **Q9 · Demo articles** — when to remove the 19 demo articles. *Recommendation: once the desk has published about 20 real ones.*
+- **Q10 · Ink & Signal sign-off** — the client answers the three questions on the review page (https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6, private: Rami shares it): blue from the logo as the main colour, red only for «عاجل»/«مباشر», Naskh instead of Amiri for article text. *Yes → merge `worktree-ink-skin` and make ink the default.*
 
 ## Resume point
 
-Last session 2026-10-07 (Claude Code): D-057 … D-065 shipped and verified on production; everything pushed. Nothing is in flight. The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
+Last session 2026-10-08 (Claude Code): D-057 … D-065 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
-**Last updated:** 2026-10-07 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
+**Last updated:** 2026-10-08 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
