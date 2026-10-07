@@ -16,6 +16,7 @@ import { sendError } from './errors';
 import { authorRoutes, ensureAuthorSlugs, AUTHOR_PUBLIC } from './authors';
 import { liveRoutes } from './live';
 import { recordView, flushViewStats } from './stats';
+import { searchArticles, ensureSearchText } from './search';
 
 // Crawlers, link previews and monitors: never counted as reads or ad deliveries.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
@@ -99,27 +100,6 @@ app.get('/api/health', async (req: Request, res: Response) => {
   }
 });
 
-// Arabic search terms match loosely: with/without the definite article, hamza
-// forms interchangeable, ة/ه interchangeable. Postgres `contains` compares code
-// points literally, so we OR the spellings instead. Hamza is stripped from the
-// query AND re-added in its common forms — otherwise "اردن" never finds "الأردن"
-// (D-041 Found 1).
-const termVariants = (t: string): string[] => {
-  const bare = t.replace(/[أإآ]/g, 'ا');
-  const stem = /^ال./.test(bare) ? bare.slice(2) : bare; // no ال, no hamza
-  const stems = new Set<string>([stem]);
-  if (stem.startsWith('ا')) for (const h of ['أ', 'إ', 'آ']) stems.add(h + stem.slice(1));
-  const out = new Set<string>([t]);
-  for (const s of stems) {
-    for (const f of s.length >= 3 ? [s, `ال${s}`] : [s]) {
-      out.add(f);
-      if (f.endsWith('ة')) out.add(`${f.slice(0, -1)}ه`);
-      if (f.endsWith('ه')) out.add(`${f.slice(0, -1)}ة`);
-    }
-  }
-  return Array.from(out).filter((v) => v.length >= 2);
-};
-
 // Articles endpoints — public list; `?q=` searches title/summary/content/keywords, `?take=` up to 100
 app.get('/api/articles', async (req: Request, res: Response) => {
   try {
@@ -134,33 +114,18 @@ app.get('/api/articles', async (req: Request, res: Response) => {
     // `?kind=VIDEO|CARICATURE|LIVE|…` — homepage video, caricature and live blocks (D-068); unknown kinds are ignored
     const kind = String(req.query.kind || '');
     if (PUBLIC_KINDS.has(kind)) where.kind = kind;
+    const include = { author: { select: AUTHOR_PUBLIC }, category: true, ...APPROVED_COMMENTS };
+    // `?q=`: normalised Arabic search, ranked by relevance, with «هل تقصد…» when nothing matches (D-071)
     if (q) {
-      const terms = q.split(/\s+/).filter((t) => t.length >= 2).slice(0, 6);
-      if (terms.length) {
-        where.AND = terms.map((t) => ({
-          OR: [
-            ...termVariants(t).flatMap((v) => [
-              { title: { contains: v, mode: 'insensitive' } },
-              { summary: { contains: v, mode: 'insensitive' } },
-              { content: { contains: v, mode: 'insensitive' } },
-            ]),
-            { seoKeywords: { has: t } },
-          ],
-        }));
-      }
+      const found = await searchArticles(prisma, q, { take, where, include });
+      return res.json({ success: true, data: found.data, count: found.data.length, q, suggest: found.suggest });
     }
-    const articles = await prisma.article.findMany({
-      where,
-      include: { author: { select: AUTHOR_PUBLIC }, category: true, ...APPROVED_COMMENTS },
-      orderBy: { publishedAt: 'desc' },
-      take,
-    });
+    const articles = await prisma.article.findMany({ where, include, orderBy: { publishedAt: 'desc' }, take });
 
     res.json({
       success: true,
       data: articles,
       count: articles.length,
-      q: q || undefined,
     });
   } catch (error) {
     sendError(res, error);
@@ -348,6 +313,7 @@ app.listen(port, () => {
   ensureCategories(prisma).catch((e) => console.error('categories seed:', e));
   ensurePolls(prisma).catch((e) => console.error('polls seed:', e));
   ensureAuthorSlugs(prisma).catch((e) => console.error('author slugs:', e));
+  ensureSearchText(prisma).catch((e) => console.error('search index:', e));
   startScheduler(prisma);
 });
 

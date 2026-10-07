@@ -2260,3 +2260,6 @@ a.au:hover b{color:var(--k-text,var(--red))}
 .fcols li{padding:0}
 .fcols li a{display:inline-block;padding:4px 0;min-height:24px;line-height:16px}
 .ticker .pause{min-width:32px;min-height:32px}
+/* search «هل تقصد…» (D-071) */
+.empty .dym{margin:10px 0 0;font-family:var(--naskh);font-size:15px}
+.empty .dym a{font-weight:bold;color:var(--k-text,var(--red));text-decoration:underline;text-underline-offset:3px}

@@ -138,6 +138,10 @@ model Article {
   savedBy           SavedArticle[]
   liveEntries       LiveEntry[]
   liveEndedAt       DateTime? // LIVE only: coverage closed (D-068); open while null
+  // Normalised Arabic search text (D-071): title + summary + body without HTML + keywords, folded by
+  // search.ts normalizeAr (no tashkeel/tatweel, one alef, ى→ي, ة→ه, Western digits). Written with a raw
+  // UPDATE so it never moves updatedAt (dateModified, BIBLE F-04). A pg_trgm index can come with volume.
+  searchText        String?
   
   // Status & Timestamps
   status            ArticleStatus @default(DRAFT)

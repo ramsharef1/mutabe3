@@ -12,6 +12,7 @@ import { sendError } from '../errors';
 import { freeSlug, parseProfile } from '../authors';
 import { plainText, LIVE_TEXT_MAX, LIVE_TITLE_MAX } from '../live';
 import { siteStats } from '../stats';
+import { reindexArticle } from '../search';
 import { RejectedImage } from '../images';
 
 const router = Router();
@@ -154,6 +155,7 @@ router.post('/articles', async (req: Request, res: Response) => {
         seoKeywords: Array.isArray(seoKeywords) ? seoKeywords : [],
       },
     });
+    await reindexArticle(prisma, article.id); // search text (D-071)
     const { action, verb } = st === 'DRAFT' ? { action: 'article.create', verb: 'أنشأ' } : articleAction(null, st);
     const backdated = st === 'SCHEDULED' && !!when && when.getTime() < Date.now() - BACKDATE_SLACK_MS;
     await audit(prisma, u, req, {
@@ -207,6 +209,7 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
       data.scheduledPublishAt = when;
     }
     const article = await prisma.article.update({ where: { id: req.params.id }, data });
+    if (['title', 'summary', 'content', 'seoKeywords'].some((k) => k in data)) await reindexArticle(prisma, article.id); // D-071
     const changed = Object.keys(data).filter((k) => k !== 'publishedAt' && JSON.stringify((existing as any)[k]) !== JSON.stringify((article as any)[k]));
     if (changed.length) {
       const { action, verb } = articleAction(existing.status, data.status ?? null);

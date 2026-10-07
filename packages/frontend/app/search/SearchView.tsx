@@ -11,10 +11,12 @@ function SearchInner() {
   const [results, setResults] = useState<Article[] | null>(null); // null = fetching
   const [term, setTerm] = useState(q);
   const [notice, setNotice] = useState(''); // e.g. the API's rate-limit message (D-064) — not "no results"
+  const [didYouMean, setDidYouMean] = useState(''); // «هل تقصد…» from the API when nothing matched (D-071)
 
   useEffect(() => {
     setTerm(q);
     setNotice('');
+    setDidYouMean('');
     if (!q) { setResults([]); return; }
     setResults(null);
     fetch(`/api/articles?q=${encodeURIComponent(q)}&take=50`)
@@ -22,7 +24,7 @@ function SearchInner() {
         if (r.status === 429) { setNotice((await r.json().catch(() => ({}))).error || 'عمليات بحث كثيرة — حاول بعد دقيقة'); return { data: [] }; }
         return r.ok ? r.json() : Promise.reject();
       })
-      .then((d) => setResults(d.data || []))
+      .then((d) => { setResults(d.data || []); setDidYouMean(d.suggest || ''); })
       .catch(() => setResults([]));
   }, [q]);
 
@@ -58,6 +60,7 @@ function SearchInner() {
             ) : results.length === 0 ? (
               <div className="empty" role={notice ? 'status' : undefined}>
                 <b>{notice || (q ? `لا توجد نتائج لـ «${q}»` : 'اكتب كلمة للبحث في أخبار المتابع')}</b>
+                {didYouMean && <p className="dym">هل تقصد: <a href={`/search?q=${encodeURIComponent(didYouMean)}`}>{didYouMean}</a>؟</p>}
                 {suggestions.length > 0 && (
                   <div className="tags" style={{ marginTop: 14 }}>
                     <span>{q ? 'جرّب:' : 'الأكثر تداولاً:'}</span>
