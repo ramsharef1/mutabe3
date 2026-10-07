@@ -10,6 +10,7 @@ import { readAds, parseAds, writeAds, adStats, safeHref, AdsSetting, ZONES } fro
 import { audit, listAudit, q } from '../audit';
 import { sendError } from '../errors';
 import { freeSlug, parseProfile } from '../authors';
+import { plainText, LIVE_TEXT_MAX, LIVE_TITLE_MAX } from '../live';
 import { RejectedImage } from '../images';
 
 const router = Router();
@@ -242,6 +243,92 @@ router.delete('/articles/:id', async (req: Request, res: Response) => {
       meta: { title: existing.title, slug: existing.slug, status: existing.status, publishedAt: existing.publishedAt },
     });
     res.json({ success: true });
+  } catch (e) { sendError(res, e); }
+});
+
+/* ───────────────────────────── live blog (D-068) ───────────────────────────── */
+
+// Same rule as editing the article: editors on any LIVE article, a journalist only on their own draft
+// (so nothing a journalist writes reaches readers without an editor publishing it).
+async function liveArticle(req: Request, res: Response) {
+  const u = who(req);
+  const a = await prisma.article.findUnique({ where: { id: req.params.id }, select: { id: true, title: true, kind: true, status: true, authorId: true, liveEndedAt: true } });
+  if (!a) { res.status(404).json({ error: 'Not found' }); return null; }
+  if (!isEditor(u) && (a.authorId !== u.id || a.status !== 'DRAFT')) { res.status(403).json({ error: 'التحديثات المباشرة على مادة منشورة يضيفها محرر' }); return null; }
+  if (a.kind !== 'LIVE') { res.status(400).json({ error: 'غيّر نوع المادة إلى «تغطية مباشرة» واحفظها أولاً' }); return null; }
+  return a;
+}
+const parseEntry = (b: any, partial = false): { ok: true; data: any } | { ok: false; error: string } => {
+  const data: any = {};
+  if (b?.text !== undefined || !partial) {
+    const text = plainText(b?.text, LIVE_TEXT_MAX);
+    if (text.length < 2) return { ok: false, error: 'نص التحديث مطلوب' };
+    data.text = text;
+  }
+  if (b?.title !== undefined) data.title = plainText(b.title, LIVE_TITLE_MAX) || null;
+  if (b?.key !== undefined) data.key = !!b.key;
+  if (b?.at !== undefined && b.at !== '' && b.at !== null) {
+    const at = parseWhen(b.at);
+    if (!at) return { ok: false, error: 'وقت التحديث غير صالح' };
+    if (at.getTime() > Date.now() + 5 * 60_000) return { ok: false, error: 'وقت التحديث لا يكون في المستقبل' };
+    data.at = at;
+  }
+  return { ok: true, data };
+};
+const ENTRY_SELECT = { id: true, at: true, title: true, text: true, key: true, authorId: true, createdAt: true } as const;
+
+router.get('/articles/:id/live', async (req: Request, res: Response) => {
+  try {
+    const a = await liveArticle(req, res); if (!a) return;
+    const entries = await prisma.liveEntry.findMany({ where: { articleId: a.id }, orderBy: { at: 'desc' }, select: ENTRY_SELECT });
+    res.json({ success: true, data: { open: !a.liveEndedAt, endedAt: a.liveEndedAt, entries } });
+  } catch (e) { sendError(res, e); }
+});
+
+router.post('/articles/:id/live', async (req: Request, res: Response) => {
+  try {
+    const a = await liveArticle(req, res); if (!a) return;
+    const p = parseEntry(req.body);
+    if (!p.ok) return res.status(400).json({ error: p.error });
+    const row = await prisma.liveEntry.create({ data: { ...p.data, articleId: a.id, authorId: who(req).id }, select: ENTRY_SELECT });
+    await audit(prisma, who(req), req, { action: 'live.add', targetType: 'article', targetId: a.id, summary: `أضاف تحديثاً مباشراً إلى ${q(a.title)}${row.key ? ' (لحظة مهمة)' : ''}` });
+    res.status(201).json({ success: true, data: row });
+  } catch (e) { sendError(res, e); }
+});
+
+router.put('/articles/:id/live/:entryId', async (req: Request, res: Response) => {
+  try {
+    const a = await liveArticle(req, res); if (!a) return;
+    const p = parseEntry(req.body, true);
+    if (!p.ok) return res.status(400).json({ error: p.error });
+    const found = await prisma.liveEntry.findFirst({ where: { id: req.params.entryId, articleId: a.id }, select: { id: true } });
+    if (!found) return res.status(404).json({ error: 'Not found' });
+    const row = await prisma.liveEntry.update({ where: { id: found.id }, data: p.data, select: ENTRY_SELECT });
+    await audit(prisma, who(req), req, { action: 'live.edit', targetType: 'article', targetId: a.id, summary: `عدّل تحديثاً مباشراً في ${q(a.title)}`, meta: { entry: row.id, fields: Object.keys(p.data) } });
+    res.json({ success: true, data: row });
+  } catch (e) { sendError(res, e); }
+});
+
+router.delete('/articles/:id/live/:entryId', async (req: Request, res: Response) => {
+  try {
+    const a = await liveArticle(req, res); if (!a) return;
+    const gone = await prisma.liveEntry.deleteMany({ where: { id: req.params.entryId, articleId: a.id } });
+    if (!gone.count) return res.status(404).json({ error: 'Not found' });
+    await audit(prisma, who(req), req, { action: 'live.delete', targetType: 'article', targetId: a.id, summary: `حذف تحديثاً مباشراً من ${q(a.title)}`, meta: { entry: req.params.entryId } });
+    res.json({ success: true });
+  } catch (e) { sendError(res, e); }
+});
+
+// PUT /api/admin/articles/:id/live-state { open: boolean } — end the coverage or reopen it
+router.put('/articles/:id/live-state', async (req: Request, res: Response) => {
+  try {
+    const a = await liveArticle(req, res); if (!a) return;
+    const open = req.body?.open !== false;
+    const row = await prisma.article.update({ where: { id: a.id }, data: { liveEndedAt: open ? null : new Date() }, select: { liveEndedAt: true } });
+    if (!!a.liveEndedAt !== !open) {
+      await audit(prisma, who(req), req, { action: open ? 'live.reopen' : 'live.end', targetType: 'article', targetId: a.id, summary: `${open ? 'استأنف' : 'أنهى'} التغطية المباشرة ${q(a.title)}` });
+    }
+    res.json({ success: true, data: { open: !row.liveEndedAt, endedAt: row.liveEndedAt } });
   } catch (e) { sendError(res, e); }
 });
 

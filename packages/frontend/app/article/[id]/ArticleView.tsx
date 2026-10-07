@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Amiri } from 'next/font/google';
 import { Article, Img, useArticles, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner, isHtml, plain } from '../../components/site';
-import { tagsFor, relatedByTag, gallery, LIVE } from '../../components/content';
+import { tagsFor, relatedByTag, gallery, LIVE, liveNow } from '../../components/content';
 import { decorateRichImages } from '../../components/img';
 import { track } from '../../lib/track';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
-import { LiveBlog, LiveBadge } from '../../components/live';
+import { LiveBlog, LiveBadge, LiveFeed } from '../../components/live';
+import type { LiveData } from '../../lib/api';
 import { Comments } from '../../components/comments';
 import { AuthorFace, authorHref } from '../../components/authors';
 
@@ -43,7 +44,7 @@ function Progress() {
  * dashboard preview); the published list is still loaded client-side for the
  * header, sidebar, related items and prev/next, and never blocks the article.
  */
-export default function ArticleView({ article: a, preview = false }: { article: Article; preview?: boolean }) {
+export default function ArticleView({ article: a, preview = false, live: liveData = null }: { article: Article; preview?: boolean; live?: LiveData | null }) {
   const { articles } = useArticles();
   const [size, setSize] = useState(0); // -1 / 0 / 1 / 2 → font-size steps
   const lb = useLightbox();
@@ -72,7 +73,9 @@ export default function ArticleView({ article: a, preview = false }: { article: 
   const catName = a.category?.name || 'أخبار';
   const related = relatedByTag(a, articles.filter((x) => x.id !== a.id));
   const tags = tagsFor(a);
-  const live = LIVE[a.id];
+  const live = LIVE[a.id]; // seeded demo story only; real coverage comes from `liveData` (D-068)
+  const realLive = a.kind === 'LIVE' && liveData;
+  const caricature = a.kind === 'CARICATURE';
   // CMS articles are stored as sanitized HTML and carry their real author; the
   // seeded demo set is plain text and keeps its filler/gallery/writer dressing.
   const html = isHtml(a.content);
@@ -104,7 +107,7 @@ export default function ArticleView({ article: a, preview = false }: { article: 
             <Crumbs items={[{ label: catName, href: `/category/${catSlug}` }, { label: a.title }]} />
 
             <div className="arthead">
-              {live ? <LiveBadge /> : <Chip a={a} />}
+              {liveNow(a) ? <LiveBadge /> : <Chip a={a} />}
               {/* Paid material: the disclosure the Press & Publications Law asks for, above the headline (D-056) */}
               {a.kind === 'SPONSORED' && <div className="sponsored-note">محتوى مدفوع{a.sponsorName ? ` من ${a.sponsorName}` : ''} — لا يعبّر عن رأي التحرير · <a href="/editorial-policy#sponsored">كيف نتعامل مع الإعلان</a></div>}
               <h1>{a.title}</h1>
@@ -128,14 +131,14 @@ export default function ArticleView({ article: a, preview = false }: { article: 
             </div>
 
             {a.featuredImageUrl && (
-              <figure className="artlead">
+              <figure className={`artlead${caricature ? ' caric' : ''}`}>
                 <button type="button" className="im" onClick={() => lb.open(0)} title="عرض الصورة"><Img src={a.featuredImageUrl} priority /><span className="zoom">{Ico.search}</span></button>
                 {/* no invented credit: the credit line appears only when the desk filled it in (D-054, F-03) */}
                 <figcaption>{a.coverCaption || a.title}{a.coverCredit && <em> — الصورة: {a.coverCredit}</em>}</figcaption>
               </figure>
             )}
 
-            {live && <LiveBlog entries={live} />}
+            {realLive ? <LiveFeed articleId={a.id} initial={{ open: liveData.open, entries: liveData.entries }} /> : live && <LiveBlog entries={live} />}
 
             <div className={`artbody fs${size}`}>
               {html ? (

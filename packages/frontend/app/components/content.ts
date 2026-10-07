@@ -49,7 +49,7 @@ export const gallery = (a: Article, n = 5) => {
 };
 
 /* ---------- live blog (demo entries; art-006 is the running story) ---------- */
-export interface LiveEntry { at: string; title?: string; text: string; key?: boolean }
+export interface LiveEntry { id?: string; at: string; title?: string | null; text: string; key?: boolean }
 // Demo timestamps are relative to load time so the running story reads as
 // genuinely recent (real entries will carry real times from the CMS).
 const agoISO = (min: number) => new Date(Date.now() - min * 60000).toISOString();
@@ -63,6 +63,9 @@ export const LIVE: Record<string, LiveEntry[]> = {
   ],
 };
 export const isLive = (id?: string) => !!(id && LIVE[id]);
+/** Coverage running now: a LIVE article not yet ended (D-068), or the demo story while it is seeded. */
+export const liveNow = (a?: { id?: string; kind?: string; liveEndedAt?: string | null } | null) =>
+  !!a && ((a.kind === 'LIVE' && !a.liveEndedAt) || isLive(a.id));
 export const fmtTime = (d: string) => {
   const x = new Date(d);
   return `${String(x.getHours()).padStart(2, '0')}:${String(x.getMinutes()).padStart(2, '0')}`;

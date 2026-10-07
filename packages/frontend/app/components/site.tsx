@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { isLive } from './content';
+import { liveNow } from './content';
 import { AudioPill } from './blocks/jordan';
 import { AdBanner, AdBox } from './ads';
 import { InstallApp } from './pwa';
@@ -67,7 +67,7 @@ export const Chip = ({ a }: { a: Article }) =>
     ? <span className="chip sponsored">إعلان</span>
     : a.kind === 'OPINION'
       ? <span className="chip opinion">رأي</span>
-      : isLive(a.id)
+      : liveNow(a)
         ? <span className="chip islive"><i />مباشر</span>
         : a.category ? <span className="chip" style={{ background: catColor(a.category.slug) }}>{a.category.name}</span> : null;
 

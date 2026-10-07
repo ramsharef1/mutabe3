@@ -13,6 +13,7 @@ import { readAds, recordAdEvents, flushAdStats } from './ads';
 import { allow, isLoopback } from './ratelimit';
 import { sendError } from './errors';
 import { authorRoutes, ensureAuthorSlugs, AUTHOR_PUBLIC } from './authors';
+import { liveRoutes } from './live';
 
 // Crawlers, link previews and monitors: never counted as reads or ad deliveries.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
@@ -23,6 +24,9 @@ const SEARCH_LIMIT = { n: 90, ms: 60_000 };
 const VIEW_LIMIT = { n: 120, ms: 10 * 60_000 };
 
 // Approved reader comments only (D-043 Stage 4) — pending/rejected rows and emails never leave the API
+// Article kinds a public list may filter on (ArticleKind minus SPONSORED, which has its own placements).
+const PUBLIC_KINDS = new Set(['NEWS', 'OPINION', 'EXPLAINER', 'LIVE', 'VIDEO', 'GALLERY', 'CARICATURE', 'NOTICE']);
+
 const APPROVED_COMMENTS = { _count: { select: { comments: { where: { status: 'APPROVED' as const } } } } };
 
 const app = express();
@@ -121,6 +125,9 @@ app.get('/api/articles', async (req: Request, res: Response) => {
     const category = String(req.query.category || '').trim().slice(0, 60);
     const where: any = { status: 'PUBLISHED' };
     if (category) where.category = { slug: category }; // `?category=<slug>` — category pages fetch their own list
+    // `?kind=VIDEO|CARICATURE|LIVE|…` — homepage video, caricature and live blocks (D-068); unknown kinds are ignored
+    const kind = String(req.query.kind || '');
+    if (PUBLIC_KINDS.has(kind)) where.kind = kind;
     if (q) {
       const terms = q.split(/\s+/).filter((t) => t.length >= 2).slice(0, 6);
       if (terms.length) {
@@ -284,6 +291,9 @@ app.use('/api', readerRoutes);
 
 // Public author profiles: /api/authors, /api/authors/:slug (D-067)
 app.use('/api', authorRoutes(prisma));
+
+// Live blogs: /api/articles/:id/live, /api/live/current (D-068)
+app.use('/api', liveRoutes(prisma));
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

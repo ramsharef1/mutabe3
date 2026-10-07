@@ -81,3 +81,27 @@ export async function fetchAuthor(slug: string, page = 1): Promise<AuthorPage | 
   if (!r.ok) throw new Error(`authors ${r.status}`);
   return ((await r.json()).data || null) as AuthorPage | null;
 }
+
+/** A LIVE article's updates (D-068), newest first; null when it is not a published LIVE article. */
+export interface LiveData { id: string; open: boolean; endedAt: string | null; startedAt: string | null; entries: { id: string; at: string; title: string | null; text: string; key: boolean }[] }
+export async function fetchLive(idOrSlug: string): Promise<LiveData | null> {
+  try {
+    const r = await fetch(`${API_BASE}/api/articles/${encodeURIComponent(idOrSlug)}/live`, { cache: 'no-store' });
+    if (!r.ok) return null;
+    return ((await r.json()).data || null) as LiveData | null;
+  } catch {
+    return null;
+  }
+}
+
+/** The open coverage with the newest update in the last 12 h, for the homepage strip; null when none. */
+export interface CurrentLive { id: string; slug: string; title: string; count: number; latest: { at: string; title: string | null; text: string } }
+export async function fetchCurrentLive(): Promise<CurrentLive | null> {
+  try {
+    const r = await fetch(`${API_BASE}/api/live/current`, { next: { revalidate: 30 } });
+    if (!r.ok) return null;
+    return ((await r.json()).data || null) as CurrentLive | null;
+  } catch {
+    return null;
+  }
+}

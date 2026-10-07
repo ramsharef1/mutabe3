@@ -17,6 +17,7 @@ export interface Article {
   coverCaption?: string | null; // lead-image caption; falls back to the title
   kind?: 'NEWS' | 'OPINION' | 'EXPLAINER' | 'SPONSORED' | 'LIVE' | 'VIDEO' | 'GALLERY' | 'CARICATURE' | 'NOTICE'; // D-056
   sponsorName?: string | null;  // SPONSORED: «محتوى مدفوع من ‹الجهة›»
+  liveEndedAt?: string | null;  // LIVE: coverage closed (D-068); open while null
   seoKeywords?: string[];
   _count?: { comments?: number }; // approved reader comments (D-043 Stage 4)
 }
@@ -140,3 +141,11 @@ export const excerpt = (a: { summary?: string; content: string }, n = 110) => {
 };
 
 export const readMins = (text: string) => Math.max(1, Math.round(plain(text).split(/\s+/).length / 180));
+
+/** First YouTube video in an article body (the editor's «▶ فيديو» embed, or a pasted link), or null (D-068). */
+export const youTubeId = (html?: string | null) => {
+  const m = /(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/.exec(html || '');
+  return m ? m[1] : null;
+};
+export const ytThumb = (id: string, size: 'mq' | 'hq' = 'mq') => `https://i.ytimg.com/vi/${id}/${size}default.jpg`;
+

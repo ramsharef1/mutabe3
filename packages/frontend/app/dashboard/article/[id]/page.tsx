@@ -7,6 +7,7 @@ import { uploadImage, listMedia, deleteMedia } from '../../components/upload';
 import { adminFetch, jsonInit, useStaff, isEditorRole, ROLE_AR, refreshHomepage } from '../../components/staff';
 import { isHtml, plain } from '../../../components/util';
 import { imgAt } from '../../../components/img';
+import LivePanel from './LivePanel';
 
 // Article kinds (ArticleKind, D-056) and the editor's templates per kind.
 type Kind = 'NEWS' | 'OPINION' | 'EXPLAINER' | 'SPONSORED' | 'LIVE' | 'VIDEO' | 'GALLERY' | 'CARICATURE' | 'NOTICE';
@@ -26,6 +27,13 @@ const TEMPLATES: Template[] = [
     html: '<p>[لماذا يهم هذا الموضوع الآن].</p><h2>ما القصة؟</h2><p>[…]</p><h2>لماذا الآن؟</h2><p>[…]</p><h2>الأرقام الأساسية</h2><ul><li>[…]</li><li>[…]</li></ul><h2>ماذا يعني لك؟</h2><p>[…]</p>' },
   { label: 'عمود رأي', hint: 'فكرة واحدة، حجج، خاتمة، توقيع الكاتب', kind: 'OPINION',
     html: '<p>[الفكرة الرئيسية في فقرة].</p><p>[الحجة الأولى].</p><p>[الحجة الثانية].</p><p>[الخاتمة].</p><p><em>[اسم الكاتب] — كاتب في المتابع</em></p>' },
+  // D-068: the homepage video section uses the first YouTube video in the body; the caricature block uses the cover image.
+  { label: 'فيديو', hint: 'أضف الفيديو بزر «▶ فيديو» في شريط الأدوات، ثم وصفاً قصيراً', kind: 'VIDEO',
+    html: '<p>[وصف الفيديو في جملتين: ماذا يعرض، أين ومتى صُوّر].</p><p>[أضف الفيديو هنا بزر «▶ فيديو»].</p><p><em>تصوير: [الاسم]</em></p>' },
+  { label: 'كاريكاتير', hint: 'ارفع الرسم كصورة الغلاف — يظهر كاملاً دون قص', kind: 'CARICATURE',
+    html: '<p>[تعليق الرسام أو عنوان الرسم إن وُجد].</p><p><em>بريشة: [اسم الرسام]</em></p>' },
+  { label: 'تغطية مباشرة', hint: 'مقدمة ثابتة؛ التحديثات تُضاف من لوحة «التحديثات المباشرة» بعد الحفظ', kind: 'LIVE',
+    html: '<p>[ما الحدث، أين ومتى، ولماذا نتابعه مباشرة].</p><p>[ما نعرفه حتى الآن في سطرين].</p>' },
 ];
 
 interface Cat { id: string; name: string }
@@ -60,6 +68,7 @@ export default function Editor() {
   const [sponsorName, setSponsorName] = useState('');
   const [status, setStatus] = useState('DRAFT');
   const [loadedStatus, setLoadedStatus] = useState('DRAFT');
+  const [savedKind, setSavedKind] = useState<Kind | null>(null); // the live panel needs the article stored as LIVE (D-068)
   const [when, setWhen] = useState(''); // datetime-local value for SCHEDULED
   const [keywords, setKeywords] = useState('');
   const [loading, setLoading] = useState(true);
@@ -84,7 +93,7 @@ export default function Editor() {
         setContent(isHtml(c) ? c : textToHtml(c)); // seeded articles are plain text
         setCategoryId(a.categoryId || cl[0]?.id || ''); setImage(a.featuredImageUrl || '');
         setCoverCredit(a.coverCredit || ''); setCoverCaption(a.coverCaption || '');
-        setKind((KIND_AR[a.kind as Kind] ? a.kind : 'NEWS') as Kind); setSponsorName(a.sponsorName || '');
+        setKind((KIND_AR[a.kind as Kind] ? a.kind : 'NEWS') as Kind); setSavedKind(a.kind); setSponsorName(a.sponsorName || '');
         setStatus(a.status || 'DRAFT'); setLoadedStatus(a.status || 'DRAFT');
         setWhen(toLocalInput(a.scheduledPublishAt));
         setKeywords((a.seoKeywords || []).join('، '));
@@ -216,6 +225,10 @@ export default function Editor() {
           <span className="adm-lbl">المحتوى</span>
           <RichEditor value={content} onChange={setContent} upload={uploadImage} listMedia={listMedia} deleteMedia={editor ? deleteMedia : undefined} canForceDelete={me?.role === 'ADMIN'} />
         </div>
+
+        {kind === 'LIVE' && (!isNew && savedKind === 'LIVE'
+          ? <LivePanel articleId={id} published={loadedStatus === 'PUBLISHED'} />
+          : <p className="adm-hint">احفظ المادة كتغطية مباشرة ثم افتحها من جديد لإضافة التحديثات المباشرة.</p>)}
 
         <div className="adm-row">
           <label>القسم

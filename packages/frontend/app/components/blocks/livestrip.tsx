@@ -1,15 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LIVE, fmtTime } from '../content';
+import { LIVE, fmtTime, type LiveEntry } from '../content';
+import type { CurrentLive } from '../../lib/api';
 import { ago } from '../util';
 
 // Prominent "live now" banner for the running story — the top-of-page hook that
 // links into the full live blog on the article page. Renders nothing when no
 // story is live. Follow persists locally (a bookmark primitive; real push comes
 // with the backend) so the label stays honest — no notification promise.
-export function LiveStrip({ id = 'art-006', title = 'الاجتماع العربي في عمّان' }: { id?: string; title?: string }) {
-  const entries = LIVE[id];
+// Real coverage (D-068) passes `current` from GET /api/live/current; without it the seeded demo story is used.
+export function LiveStrip({ current }: { current?: CurrentLive | null }) {
+  const id = current?.id || 'art-006';
+  const title = current?.title || 'الاجتماع العربي في عمّان';
+  const href = current ? `/article/${encodeURIComponent(current.slug || current.id)}` : `/article/${id}`;
+  const entries: LiveEntry[] | undefined = current ? [{ ...current.latest }] : LIVE[id];
+  const count = current ? current.count : entries?.length || 0;
   const [, setTick] = useState(0);
   const [following, setFollowing] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -44,13 +50,13 @@ export function LiveStrip({ id = 'art-006', title = 'الاجتماع العرب
 
   return (
     <div className="livestrip">
-      <a className="body" href={`/article/${id}`}>
+      <a className="body" href={href}>
         <span className="badge"><i />مباشر</span>
         <span className="txt">
-          <span className="ttl">تطور القصة: {title}</span>
+          <span className="ttl">{current ? title : `تطور القصة: ${title}`}</span>
           <span className="upd"><time>{fmtTime(latest.at)}</time>{latest.title || latest.text}</span>
         </span>
-        <span className="meta">{entries.length} تحديثات · {ago(latest.at)}</span>
+        <span className="meta">{count} تحديثات · {ago(latest.at)}</span>
       </a>
       <button type="button" className={`follow ${following ? 'on' : ''}`} onClick={toggle} aria-pressed={following}>
         {following ? '✓ تتابع' : '+ تابِع'}

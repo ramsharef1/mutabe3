@@ -136,6 +136,8 @@ model Article {
 
   comments          Comment[]
   savedBy           SavedArticle[]
+  liveEntries       LiveEntry[]
+  liveEndedAt       DateTime? // LIVE only: coverage closed (D-068); open while null
   
   // Status & Timestamps
   status            ArticleStatus @default(DRAFT)
@@ -348,4 +350,20 @@ model AdStatDaily {
 
   @@unique([day, zone, bannerId])
   @@index([bannerId, day])
+}
+
+// Live-blog updates of a LIVE article (D-068): plain text, newest first on the page; a key entry
+// is listed under «أبرز اللحظات». Deleted with the article.
+model LiveEntry {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  at        DateTime @default(now())
+  title     String?
+  text      String
+  key       Boolean  @default(false)
+  authorId  String?
+  createdAt DateTime @default(now())
+
+  @@index([articleId, at])
 }

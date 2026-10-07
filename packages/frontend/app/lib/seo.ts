@@ -1,8 +1,8 @@
 // schema.org structured data for Google (Top stories, article rich results,
 // breadcrumbs, publisher knowledge panel) — D-043 Stage 5. Server-only helpers.
 import type { Article } from '../components/util';
-import { isHtml, plain } from '../components/util';
-import { SITE_URL, absUrl } from './api';
+import { isHtml, plain, youTubeId, ytThumb } from '../components/util';
+import { SITE_URL, absUrl, type LiveData } from './api';
 
 export const SITE_NAME = 'موقع المتابع الاخباري';
 const LOGO = { '@type': 'ImageObject', url: `${SITE_URL}/brand/logo@2x.png`, width: 1320, height: 523 };
@@ -48,6 +48,48 @@ export function newsArticleLd(a: Article) {
     wordCount: body ? body.split(/\s+/).length : undefined,
     inLanguage: 'ar',
     isAccessibleForFree: true,
+  };
+}
+
+/**
+ * A LIVE article as Google's LiveBlogPosting (D-068): the NewsArticle fields plus coverage start/end and
+ * the 20 newest updates as BlogPosting items with their own anchors.
+ */
+export function liveBlogLd(a: Article, live: LiveData) {
+  const base = newsArticleLd(a);
+  const url = base.url as string;
+  return {
+    ...base,
+    '@type': 'LiveBlogPosting',
+    coverageStartTime: live.startedAt || a.publishedAt,
+    ...(live.endedAt ? { coverageEndTime: live.endedAt } : {}),
+    dateModified: live.entries[0]?.at || base.dateModified,
+    liveBlogUpdate: live.entries.slice(0, 20).map((e) => ({
+      '@type': 'BlogPosting',
+      headline: (e.title || e.text).slice(0, 110),
+      articleBody: e.text,
+      datePublished: e.at,
+      url: `${url}#u-${e.id}`,
+    })),
+  };
+}
+
+/** A VIDEO article whose body embeds a YouTube video → VideoObject (D-068); null when there is no video. */
+export function videoLd(a: Article) {
+  const id = youTubeId(a.content);
+  if (!id) return null;
+  const body = plain(a.content);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: a.title,
+    description: a.summary || body.slice(0, 300) || a.title,
+    thumbnailUrl: [ytThumb(id, 'hq')],
+    uploadDate: a.publishedAt,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${id}`,
+    contentUrl: `https://www.youtube.com/watch?v=${id}`,
+    publisher,
+    inLanguage: 'ar',
   };
 }
 

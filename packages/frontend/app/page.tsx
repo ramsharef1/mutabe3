@@ -1,6 +1,6 @@
 // Server component (B9): articles + weather are fetched on the server and revalidated; interactive blocks are client islands.
 import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, AdBox, Chip } from './components/site';
-import { Article, WRITERS, face, ago, readMins, excerpt } from './components/util';
+import { Article, WRITERS, face, ago, readMins, excerpt, youTubeId } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
 import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Carousel, Debate, WritersRail } from './components/blocks/fold';
@@ -17,7 +17,8 @@ import { MostDiscussed } from './components/blocks/discussed';
 import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText, BreakingItem } from './components/feeds';
 import JsonLd from './components/JsonLd';
 import { websiteLd } from './lib/seo';
-import { fetchAuthors } from './lib/api';
+import { fetchAuthors, fetchArticles, fetchCurrentLive } from './lib/api';
+import { CaricatureBand } from './components/blocks/caricature';
 import { WritersBand } from './components/authors';
 
 export const revalidate = 60;
@@ -98,7 +99,12 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
 );
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
-  const [latestArticles, wx, curated, writers] = await Promise.all([getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION')]);
+  const [latestArticles, wx, curated, writers, videoArts, caricatures, liveNowItem] = await Promise.all([
+    getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION'),
+    fetchArticles({ kind: 'VIDEO', take: '7' }, 60), fetchArticles({ kind: 'CARICATURE', take: '4' }, 60), fetchCurrentLive(),
+  ]);
+  // Real video pieces: the first YouTube embed in each VIDEO article's body (D-068).
+  const videos = videoArts.flatMap((a) => { const id = youTubeId(a.content); return id ? [{ id, title: a.title, href: `/article/${encodeURIComponent(a.slug || a.id)}` }] : []; });
   // A curated lead story goes first (and is removed from its newest-first slot) so the pool hands it to the hero.
   const articles = curated.hero ? [curated.hero, ...latestArticles.filter((a) => a.id !== curated.hero!.id)] : latestArticles;
   if (!articles.length) {
@@ -142,7 +148,8 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <BreakingBar item={curated.breaking} />
         {demo && <MetAlert />}
         <Ticker items={ticker} hot={!!curated.breaking} />
-        {demo && <LiveStrip />}
+        {/* running coverage (D-068) wins; the seeded demo story only while the demo switch is on */}
+        {liveNowItem ? <LiveStrip current={liveNowItem} /> : demo && <LiveStrip />}
         {demo && <MarketStrip updated={ammanTime(now)} />}
         <Missed articles={articles} />
 
@@ -336,7 +343,11 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <MostDiscussed items={latestArticles.filter((a) => a.kind !== 'SPONSORED')} />
 
-        {demo && <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>}
+        {/* video: the desk's VIDEO articles (D-068); the placeholder playlist only while none exists and the demo switch is on */}
+        {videos.length > 0
+          ? <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection items={videos} /></div>
+          : demo && <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>}
+        {caricatures.some((a) => a.featuredImageUrl) && <div className="sec"><SecHd t="كاريكاتير المتابع" slug="caricature" /><CaricatureBand items={caricatures} /></div>}
       </div>
 
       <SiteFooter />
