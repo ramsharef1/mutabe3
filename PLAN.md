@@ -30,7 +30,7 @@ Build order chosen by Rami 2026-10-08 ("everything"), one slice at a time, each 
 1. **Real people and data:** ✅ author profiles live (D-067, opt-in by job title). Demo data blocks are already behind the demo switch (D-052); sourcing live feeds (FX, roads, obituaries) not started.
 2. **Content types:** ✅ video, caricature and live blog live (D-068).
 3. **Ops:** ~~weekly conditional kernel reboot~~ — dropped 2026-10-08; reboots on request (Q8).
-4. **Weeks 9–12 · grow:** ✅ in-admin analytics (D-069), ✅ Lighthouse pass (D-070: mobile 95–97, accessibility 97–100); next: Arabic search (trigram), web push for عاجل.
+4. **Weeks 9–12 · grow:** ✅ in-admin analytics (D-069), ✅ Lighthouse pass (D-070: mobile 95–97, accessibility 97–100), ✅ Arabic search (D-071); next: web push for عاجل.
 5. **Remaining security:** Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02), non-root deploy user + pinned host key (S-07).
 Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design answers (Q10).
 
@@ -49,6 +49,6 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 
 ## Resume point
 
-Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 statistics and D-070 Lighthouse pass live. Next: Priorities item 4 continued (Arabic search, web push). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
+Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 statistics, D-070 Lighthouse pass and D-071 Arabic search live. Next: web push for عاجل (last of item 4), then item 5 (remaining security). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
 **Last updated:** 2026-10-08 (answers to Q2–Q4, Q7–Q10) (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)

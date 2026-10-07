@@ -2,6 +2,15 @@
 
 ## 2026-10-08
 
+**D-071: Arabic search — normalised text, prefix-aware stems, relevance ranking, «هل تقصد…»**
+- **Decided by:** Rami 2026-10-08 ("go with next slice", PLAN Priorities item 4 — "Arabic trigram search").
+- **Before:** each query word was widened into up to ~10 spelling variants and matched with ILIKE against title, summary and the raw HTML body; no handling of tashkeel, tatweel, ى/ي, ؤ/ئ, Arabic-Indic digits or attached prefixes; newest first, not most relevant. Production: «بالأردن» 0 results, «الحُكومة» 0, «للحكومة» 0.
+- **Choice — no database extension:** pg_trgm would need `CREATE EXTENSION` on the shared Postgres; at today's volume (19 articles, ~10/day planned) a normalised column is enough. pg_trgm + a GIN index stays the path when volume makes the substring scan slow.
+- **What:** `Article.searchText` (nullable, additive) — title + summary + body with HTML removed + keywords, folded by `normalizeAr` (lowercase, tashkeel and tatweel removed, أ إ آ ٱ → ا, ى → ي, ؤ → و, ئ → ي, ة → ه, Arabic-Indic digits → Western, punctuation → space). Written by a raw UPDATE after every create and every edit of title/summary/body/keywords, and back-filled at startup — never moving `updatedAt` (dateModified, F-04). Queries are folded the same way, each word reduced to a stem (و/ف only before ال/لل/بال, لل, بال/كال, ال; every cut keeps 3+ letters so «فلسطين», «الله», «بالون» stay whole), one substring match per word. Ranking in the API: title 5, summary 2, body 1 per word, +3 when all words are in the title, +4 for the exact phrase in the title, newer first on ties. No match → a suggestion from headline/keyword vocabulary (edit distance 1 for 4–5 letters, 2 for 6+), returned only if the suggested query itself finds articles; the search page shows «هل تقصد: …؟» as a link.
+- **Verified locally:** 16/16 folding/stemming cases; 13/13 end-to-end (four spellings of الأردن, title above body, tashkeel in the article, ى/ي and Arabic-Indic digits, summary indexed, HTML markup not searchable, typo → «مستشفى جديد», nonsense → no suggestion, plain list unchanged, edit re-indexes); search page screenshots (suggestion link; «بالأردن» results). Back-fill indexed the existing local articles. Lint (one pre-existing warning) and builds pass; test articles deleted, `VPS_API` restored.
+- **Deployed (2026-10-08, 8acfd6f, run 37701170902):** schema in sync. Production: «بالأردن» 0 → 11, «الاردن»/«الأردن»/«اردن» 11 each with the title match first, «الحُكومة» 0 → 2, «للحكومة» 0 → 2, «الحكومه تطلف» → «هل تقصد: الحكومة تطلق»; nonsense → none; all 19 articles indexed with `updatedAt` untouched (newest still 18:05 UTC).
+- **Status:** ✅ LIVE · 2026-10-08
+
 **D-070: Lighthouse pass — mobile performance 75–83 → 95–97, accessibility 86–88 → 97–100**
 - **Decided by:** Rami 2026-10-08 ("go with next slice", PLAN Priorities item 4).
 - **Baseline (production, Lighthouse 12 mobile, simulated throttling):** home 83/87/100/100 (performance/accessibility/best practices/SEO), article 76/86, category 75/88; LCP 4.2 / 6.0 / 5.5 s.

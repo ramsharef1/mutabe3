@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · Arabic search (D-071)
+
+- **Shipped (8acfd6f):** normalised search text per article, prefix-aware stems, relevance ranking, «هل تقصد…». No database extension needed.
+- **Production:** «بالأردن» 0 → 11 results, «الحُكومة» 0 → 2, typo «الحكومه تطلف» → «الحكومة تطلق»; dateModified untouched.
+- **Status:** ✅ nothing in flight · next: web push for عاجل.
+
+---
+
 ## 2026-10-08 · Claude Code · Lighthouse pass (D-070)
 
 - **Shipped (fc08f78 … c4ee4a5):** one preloaded font, gzip API, category/article lists server-rendered, eager lead images, live strip server-rendered (CLS 0.112 → 0.006), Amman clock everywhere, accessibility fixes.
