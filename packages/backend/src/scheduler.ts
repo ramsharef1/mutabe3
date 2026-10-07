@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { autoDigestTick, reapStuckSends } from './newsletter';
 import { flushAdStats } from './ads';
+import { audit, purgeOldAudit, q } from './audit';
 
 // Scheduled publishing: once a minute, every SCHEDULED article whose
 // scheduledPublishAt has passed becomes PUBLISHED, dated at the scheduled time
@@ -16,6 +17,7 @@ export async function publishDue(prisma: PrismaClient) {
       data: { status: 'PUBLISHED', publishedAt: a.scheduledPublishAt ?? new Date() },
     });
     console.log(`⏰ published scheduled article ${a.id} — ${a.title}`);
+    await audit(prisma, null, null, { action: 'article.publish', targetType: 'article', targetId: a.id, summary: `نشر النظام ${q(a.title)} في موعده المجدول`, meta: { scheduled: true, publishedAt: a.scheduledPublishAt } });
   }
   return due.length;
 }
@@ -37,6 +39,7 @@ export function startScheduler(prisma: PrismaClient, everyMs = 60_000) {
     purgeExpiredSessions(prisma).catch((e) => console.error('session sweep:', e));
     reapStuckSends(prisma).catch((e) => console.error('newsletter reaper:', e)); // D-054
     flushAdStats(prisma).catch((e) => console.error('ad stats flush:', e)); // D-057
+    purgeOldAudit(prisma).catch((e) => console.error('audit retention:', e)); // D-064, hourly, entries > 24 months
   };
   tick();
   const handle = setInterval(tick, everyMs);

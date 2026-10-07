@@ -10,13 +10,18 @@ function SearchInner() {
   const { articles, loading } = useArticles();
   const [results, setResults] = useState<Article[] | null>(null); // null = fetching
   const [term, setTerm] = useState(q);
+  const [notice, setNotice] = useState(''); // e.g. the API's rate-limit message (D-064) — not "no results"
 
   useEffect(() => {
     setTerm(q);
+    setNotice('');
     if (!q) { setResults([]); return; }
     setResults(null);
     fetch(`/api/articles?q=${encodeURIComponent(q)}&take=50`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(async (r) => {
+        if (r.status === 429) { setNotice((await r.json().catch(() => ({}))).error || 'عمليات بحث كثيرة — حاول بعد دقيقة'); return { data: [] }; }
+        return r.ok ? r.json() : Promise.reject();
+      })
       .then((d) => setResults(d.data || []))
       .catch(() => setResults([]));
   }, [q]);
@@ -42,17 +47,17 @@ function SearchInner() {
                 <div>
                   <small>نتائج البحث عن</small>
                   <h1>«{q}»</h1>
-                  {results && <p>{results.length ? `${results.length} نتيجة` : 'لا نتائج مطابقة'}</p>}
+                  {results && !notice && <p>{results.length ? `${results.length} نتيجة` : 'لا نتائج مطابقة'}</p>}
                 </div>
-                {results && <div className="catnum"><b>{results.length}</b><small>خبر</small></div>}
+                {results && !notice && <div className="catnum"><b>{results.length}</b><small>خبر</small></div>}
               </div>
             )}
 
             {results === null ? (
               <div className="loading" style={{ padding: '40px 0' }}>جاري البحث…</div>
             ) : results.length === 0 ? (
-              <div className="empty">
-                <b>{q ? `لا توجد نتائج لـ «${q}»` : 'اكتب كلمة للبحث في أخبار المتابع'}</b>
+              <div className="empty" role={notice ? 'status' : undefined}>
+                <b>{notice || (q ? `لا توجد نتائج لـ «${q}»` : 'اكتب كلمة للبحث في أخبار المتابع')}</b>
                 {suggestions.length > 0 && (
                   <div className="tags" style={{ marginTop: 14 }}>
                     <span>{q ? 'جرّب:' : 'الأكثر تداولاً:'}</span>

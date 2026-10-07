@@ -2125,3 +2125,12 @@ button[type="submit"]:active, .btn-primary:active {
 .adm-badge.s-scheduled{background:#fff3cd;color:#7a4b00}
 .adm-badge.s-active{background:#d8f3dc;color:#1b5e20}
 .adm-badge.s-ended{background:#eee;color:#666}
+/* Audit log (D-064) */
+.adm-badge.s-error{background:#fde8e8;color:#9b1c1c}
+.adm-badge.s-warn{background:#fff3cd;color:#7a4b00}
+.adm-filters{margin-bottom:12px}
+.adm-filters label{max-width:280px}
+.adm-audit td{vertical-align:top}
+.adm-at{white-space:nowrap;color:#555;font-size:13px}
+.adm-audit .adm-ops{margin-top:4px}
+.adm-meta{background:#f6f6f6;border:1px solid #e5e5e5;border-radius:6px;padding:8px 10px;margin:6px 0 0;font-size:12px;line-height:1.5;max-width:560px;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word;text-align:left}

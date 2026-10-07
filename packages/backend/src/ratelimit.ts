@@ -9,7 +9,12 @@ export function allow(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
   const h = hits.get(key);
   if (!h || h.until <= now) {
-    if (hits.size > 100_000) hits.clear();
+    // Drop expired windows first; clearing everything would let a flood of fresh keys reset every
+    // other client's window (D-064).
+    if (hits.size > 100_000) {
+      for (const [k, v] of hits) if (v.until <= now) hits.delete(k);
+      if (hits.size > 100_000) hits.clear();
+    }
     hits.set(key, { n: 1, until: now + windowMs });
     return true;
   }
@@ -17,6 +22,13 @@ export function allow(key: string, limit: number, windowMs: number): boolean {
   h.n++;
   return true;
 }
+
+/**
+ * Requests from this host itself: the Next server renders pages by calling the API on 127.0.0.1, so a
+ * per-IP limit must never count them (every reader would share one bucket). Browser traffic arrives
+ * through nginx with the reader's address in X-Forwarded-For (verified D-064), never as loopback.
+ */
+export const isLoopback = (ip?: string) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
 
 const SALT = process.env.JWT_SECRET || 'dev-salt';
 

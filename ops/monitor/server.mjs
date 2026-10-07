@@ -135,7 +135,7 @@ const rows = has
       ['النظام', `حزم أمنية بانتظار التثبيت ${v('security_updates')} · إعادة تشغيل مطلوبة ${{ yes: 'نعم', no: 'لا' }[f.reboot_required] || '—'}` +
         `${f.reboot_required === 'yes' && f.kernel_installed ? ` (النواة ${v('kernel_running')} → ${v('kernel_installed')})` : ''}` +
         ` · وحدات فاشلة ${f.failed_units === 'none' ? 'لا يوجد' : v('failed_units')}`],
-      ['سجل الخلفية', `${v('backend_err_24h')} سطر خطأ خلال 24 س`],
+      ['سجل الخلفية', `${v('backend_err_24h')} سطر خطأ خلال 24 س · بلاغات CSP ${v('csp_reports_24h')}`],
     ]
   : [['الخادم', sshOk ? 'لا توجد حقائق (ملف فارغ)' : '❌ لم يصل الفحص إلى الخادم (SSH)'], ['الشهادة', Number.isFinite(tlsDays) ? `تنتهي بعد ${days(tlsDays)}` : '—']];
 rows.push(['التنبيهات', `مفتوحة ${openAlerts.length}${openAlerts.length ? ' (' + openAlerts.map((i) => `#${i.number}`).join(' ') + ')' : ''} · أُغلقت خلال 7 أيام ${closedWeek.length}`]);

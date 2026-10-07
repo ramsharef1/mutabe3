@@ -10,7 +10,15 @@ import { resolveHomepage } from './homepage';
 import readerRoutes from './routes/readers';
 import { ensurePolls } from './polls';
 import { readAds, recordAdEvents, flushAdStats } from './ads';
-import { allow } from './ratelimit';
+import { allow, isLoopback } from './ratelimit';
+
+// Crawlers, link previews and monitors: never counted as reads or ad deliveries.
+const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
+// Search runs ILIKE over title/summary/body, the most expensive public query. Per reader address,
+// generous because Jordanian carriers put many readers behind one address (D-064, SECURITY S-06).
+const SEARCH_LIMIT = { n: 90, ms: 60_000 };
+// Counted reads per address (on top of once per article per 30 min): caps scripted inflation (S-13).
+const VIEW_LIMIT = { n: 120, ms: 10 * 60_000 };
 
 // Approved reader comments only (D-043 Stage 4) — pending/rejected rows and emails never leave the API
 const APPROVED_COMMENTS = { _count: { select: { comments: { where: { status: 'APPROVED' as const } } } } };
@@ -100,6 +108,9 @@ app.get('/api/articles', async (req: Request, res: Response) => {
   try {
     const take = Math.min(100, Math.max(1, parseInt(String(req.query.take), 10) || 20));
     const q = String(req.query.q || '').trim().slice(0, 100);
+    if (q && !isLoopback(req.ip) && !allow(`sq:${req.ip || 'unknown'}`, SEARCH_LIMIT.n, SEARCH_LIMIT.ms)) {
+      return res.status(429).json({ success: false, error: 'عمليات بحث كثيرة في وقت قصير — حاول بعد دقيقة' });
+    }
     const category = String(req.query.category || '').trim().slice(0, 60);
     const where: any = { status: 'PUBLISHED' };
     if (category) where.category = { slug: category }; // `?category=<slug>` — category pages fetch their own list
@@ -139,21 +150,31 @@ app.get('/api/articles', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/articles/:id/view — count a read. Same reader+article within 30 min counts once.
+// POST /api/articles/:id/view — count a read. Same reader+article within 30 min counts once; bots never;
+// at most VIEW_LIMIT counted reads per address (D-064). Over a limit the answer is still 200 `counted: false`.
+const VIEW_WINDOW_MS = 30 * 60 * 1000;
 const recentViews = new Map<string, number>();
 app.post('/api/articles/:id/view', async (req: Request, res: Response) => {
   try {
-    const key = `${req.ip}|${req.params.id}`;
+    const id = req.params.id;
+    if (!/^[\w-]{1,100}$/.test(id)) return res.status(404).json({ error: 'Article not found' });
+    if (BOT_UA.test(String(req.headers['user-agent'] || ''))) return res.json({ success: true, counted: false });
+    const key = `${req.ip}|${id}`;
     const now = Date.now();
     const last = recentViews.get(key);
-    if (last && now - last < 30 * 60 * 1000) return res.json({ success: true, counted: false });
-    if (recentViews.size > 50000) recentViews.clear();
-    recentViews.set(key, now);
+    if (last && now - last < VIEW_WINDOW_MS) return res.json({ success: true, counted: false });
+    if (!isLoopback(req.ip) && !allow(`vw:${req.ip || 'unknown'}`, VIEW_LIMIT.n, VIEW_LIMIT.ms)) return res.json({ success: true, counted: false });
     // Raw increment so Prisma's @updatedAt is NOT bumped: updatedAt feeds dateModified in the
     // article JSON-LD and must only move on editorial edits (BIBLE F-04, CONTENT-ARCHITECTURE §0).
     const rows = await prisma.$queryRaw<{ viewsCount: number }[]>`
-      UPDATE "Article" SET "viewsCount" = "viewsCount" + 1 WHERE id = ${req.params.id} RETURNING "viewsCount"`;
+      UPDATE "Article" SET "viewsCount" = "viewsCount" + 1 WHERE id = ${id} RETURNING "viewsCount"`;
     if (!rows.length) return res.status(404).json({ error: 'Article not found' });
+    // Remember the read only once it counted, so unknown ids can't fill the map; sweep stale keys before clearing.
+    if (recentViews.size > 50000) {
+      for (const [k, t] of recentViews) if (now - t >= VIEW_WINDOW_MS) recentViews.delete(k);
+      if (recentViews.size > 50000) recentViews.clear();
+    }
+    recentViews.set(key, now);
     res.json({ success: true, counted: true, viewsCount: rows[0].viewsCount });
   } catch {
     res.status(404).json({ error: 'Article not found' });
@@ -218,13 +239,33 @@ app.get('/api/ads', async (_req: Request, res: Response) => {
 
 // POST /api/ads/ev — delivery beacons from the page: {"events":[{zone,bannerId,type:"view"|"click"}]} (D-057).
 // sendBeacon posts text/plain, so parse the body here; bots and bursts are dropped; nothing identifies the reader.
-const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime/i;
 app.post('/api/ads/ev', express.text({ type: '*/*', limit: '8kb' }), (req: Request, res: Response) => {
   try {
     if (BOT_UA.test(String(req.headers['user-agent'] || ''))) return res.status(204).end();
     if (!allow(`ae:${req.ip || 'unknown'}`, 120, 10 * 60_000)) return res.status(204).end();
     recordAdEvents(typeof req.body === 'string' ? JSON.parse(req.body) : req.body);
   } catch { /* malformed beacon: ignore */ }
+  res.status(204).end();
+});
+
+// POST /api/csp-report — browsers report Content-Security-Policy violations here (SECURITY S-02, D-064):
+// `report-uri` posts {"csp-report":{…}} as application/csp-report, the Reporting API posts an array as
+// application/reports+json. One compact warn line per report (rate-limited) so a page the policy breaks
+// shows up in the backend log; nothing is stored. The page is logged as a path only — never the query.
+const pathOnly = (u: unknown) => { try { return new URL(String(u)).pathname.slice(0, 120); } catch { return '-'; } };
+app.post('/api/csp-report', express.text({ type: '*/*', limit: '16kb' }), (req: Request, res: Response) => {
+  try {
+    if (allow(`csp:${req.ip || 'unknown'}`, 20, 10 * 60_000) && allow('csp:all', 300, 60 * 60_000)) {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const reports: any[] = Array.isArray(body) ? body.map((r) => r?.body || r) : [body?.['csp-report'] || body];
+      for (const r of reports.slice(0, 5)) {
+        const dir = r?.effectiveDirective || r?.['effective-directive'] || r?.violatedDirective || r?.['violated-directive'];
+        const blocked = r?.blockedURL || r?.['blocked-uri'] || '';
+        const src = r?.sourceFile || r?.['source-file'] || '';
+        console.warn(`[csp] ${String(dir).slice(0, 40)} blocked=${String(blocked).slice(0, 120)} page=${pathOnly(r?.documentURL || r?.['document-uri'])} src=${String(src).slice(0, 120)} ${String(r?.disposition || '')}`);
+      }
+    }
+  } catch { /* malformed report: ignore */ }
   res.status(204).end();
 });
 

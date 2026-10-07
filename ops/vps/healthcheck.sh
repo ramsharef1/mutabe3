@@ -34,6 +34,8 @@ kv failed_units "${fu:-none}"
 kv health_backend "$(curl -s -o /dev/null -m 10 -w '%{http_code}' http://localhost:9080/api/health 2>/dev/null)"
 kv health_frontend "$(curl -s -o /dev/null -m 20 -w '%{http_code}' http://localhost:9100/ 2>/dev/null)"
 kv backend_err_24h "$(journalctl -u mutabe3-backend --since -24h --no-pager -o cat 2>/dev/null | grep -ci 'error')"
+# Pages the enforced CSP blocked something on (D-064) — browsers report to /api/csp-report, the API logs "[csp] …".
+kv csp_reports_24h "$(journalctl -u mutabe3-backend --since -24h --no-pager -o cat 2>/dev/null | grep -c '^\[csp\]')"
 
 # Backups (D-048): timer, last result, newest dump and whether it still restores.
 kv backup_timer "$(systemctl is-active mutabe3-backup.timer 2>/dev/null)"

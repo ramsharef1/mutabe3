@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { sendMail } from './email';
+import { audit } from './audit';
 
 // Newsletter delivery (D-043 Stage 4): render an issue, send it to active
 // subscribers in the background, and the optional automatic morning digest.
@@ -147,4 +148,5 @@ export async function autoDigestTick(prisma: PrismaClient) {
     data: { subject: `نشرة المتابع الصباحية — ${dateAr}`, intro: 'أبرز ما نشره موقع المتابع خلال الساعات الأربع والعشرين الماضية.', articleIds: top.map((t) => t.id), auto: true },
   });
   sendIssue(prisma, issue.id).catch((e) => console.error('auto digest:', e));
+  await audit(prisma, null, null, { action: 'newsletter.send', targetType: 'newsletter', targetId: issue.id, summary: `أرسل النظام النشرة الصباحية التلقائية (${top.length} مواد)`, meta: { auto: true, articleIds: issue.articleIds } });
 }

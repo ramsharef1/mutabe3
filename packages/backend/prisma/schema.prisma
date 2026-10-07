@@ -301,6 +301,29 @@ model PollVote {
   @@unique([pollId, voterHash])
 }
 
+// Append-only audit trail (SECURITY S-08/S-16, D-064): who changed content, people, ads and mail, and
+// staff sign-ins. No route updates or deletes a row; the scheduler drops entries older than 24 months
+// (retention per SECURITY §Audit log). No relation to User, so an entry outlives renames and role changes —
+// actorName/actorRole are the values at the time. Addresses are stored only as a salted fingerprint.
+model AuditLog {
+  id         String   @id @default(cuid())
+  at         DateTime @default(now())
+  actorId    String?  // null = the system (scheduler, automatic digest) or nobody (failed sign-in)
+  actorName  String?
+  actorRole  String?
+  action     String   // area.verb, e.g. article.publish, user.role, ads.update, auth.login.fail
+  targetType String?
+  targetId   String?
+  summary    String?  // one Arabic line for the dashboard
+  meta       Json?
+  ipHash     String?
+
+  @@index([at])
+  @@index([action, at])
+  @@index([actorId, at])
+  @@index([targetType, targetId])
+}
+
 // Ad delivery counts (D-057 / ANALYTICS-PLAN §5): one row per day × zone × banner, first-party and
 // consent-independent. Views are viewable impressions (≥50% visible for 1 s) reported once per
 // banner per page view; clicks are beaconed before the navigation. The media kit and advertiser

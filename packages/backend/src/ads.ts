@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { uploadRel, UPLOAD_URL } from './uploads';
 
 // Ad placements live in SiteSetting["ads"] (D-043 Stage 5). The site has four
 // zones; each one is off, the built-in demo creatives, the owner's own banners
@@ -53,8 +54,39 @@ const withMeta = (b: any, base: Omit<HouseBanner, 'id'>): HouseBanner => ({
   ...(iso(b?.endAt) ? { endAt: iso(b?.endAt) } : {}),
   ...base,
 });
-const IMAGE = /^(\/api\/uploads\/[\w./-]+|https:\/\/[^\s"'<>]+)$/;
-const HREF = /^(https?:\/\/|\/)[^\s"'<>]*$/;
+// SECURITY S-15 (D-064). Creatives must be files uploaded to this site: a remote image could track readers
+// through a third-party pixel or be swapped after the campaign was approved. An absolute URL on our own
+// origin is reduced to its path; anything else (other hosts, traversal, the cache dir) is refused.
+const OWN_HOSTS = new Set(['mutabe3.news', 'www.mutabe3.news']);
+export function localImage(v: unknown): string | null {
+  let s = String(v ?? '').trim();
+  if (!s || s.length > 500) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) {
+    let u: URL;
+    try { u = new URL(s); } catch { return null; }
+    if (u.protocol !== 'https:' || !OWN_HOSTS.has(u.hostname) || u.username || u.password || u.port) return null;
+    s = u.pathname;
+  }
+  if (!s.startsWith(`${UPLOAD_URL}/`) || s.includes('?') || s.includes('#')) return null;
+  const rel = uploadRel(s);
+  return rel ? `${UPLOAD_URL}/${rel}` : null;
+}
+
+// Click-through and breaking-news links: an internal path (one leading slash — `//host` and `/\host` are
+// other origins to a browser), or https with a real host name — no credentials, no IP literal, no odd port.
+export function safeHref(v: unknown): string | null {
+  const s = String(v ?? '').trim();
+  // eslint-disable-next-line no-control-regex -- control characters are exactly what must not pass
+  if (!s || s.length > 500 || /[\s"'<>\\\u0000-\u001f\u007f]/.test(s)) return null;
+  if (s.startsWith('/')) return s.startsWith('//') ? null : s;
+  let u: URL;
+  try { u = new URL(s); } catch { return null; }
+  if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443')) return null;
+  const h = u.hostname; // already normalised by URL: 0x7f.1 → 127.0.0.1, [::1] → [::1]
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.startsWith('[') || h.includes(':') || !h.includes('.') || h.endsWith('.')) return null;
+  return s;
+}
+
 const CLIENT = /^ca-pub-\d{10,20}$/;
 const UNIT = /^\d{4,20}$/;
 
@@ -70,8 +102,21 @@ function normalize(v: any): AdsSetting {
     d.zones[z] = {
       mode: MODES.includes(s.mode) ? s.mode : 'demo',
       unit: UNIT.test(s.unit) ? s.unit : '',
+      // Stored banners are re-checked on every read (D-064): one saved before the S-15 rules, or written to the
+      // database by hand, is never served with a remote image or an unsafe link.
       banners: Array.isArray(s.banners)
-        ? s.banners.filter((b: any) => b && IMAGE.test(b.image) && HREF.test(b.href)).slice(0, MAX_BANNERS).map((b: any) => withMeta(b, b))
+        ? s.banners
+            .filter((b: any) => b && localImage(b.image) && safeHref(b.href))
+            .slice(0, MAX_BANNERS)
+            .map((b: any) => {
+              const mobileImage = localImage(b.mobileImage);
+              const w = px(b.w), h = px(b.h), mw = px(b.mw), mh = px(b.mh);
+              return withMeta(b, {
+                image: localImage(b.image) as string, href: safeHref(b.href) as string, alt: str(b.alt, 120),
+                ...(w && h ? { w, h } : {}),
+                ...(mobileImage ? { mobileImage, ...(mw && mh ? { mw, mh } : {}) } : {}),
+              });
+            })
         : [],
     };
   }
@@ -120,12 +165,13 @@ export function parseAds(body: any): { ok: true; value: AdsSetting } | { ok: fal
     if (raw.length > MAX_BANNERS) return { ok: false, error: `${LABEL[z]}: حتى ${MAX_BANNERS} بانرات.` };
     const banners: HouseBanner[] = [];
     for (const b of raw) {
-      const image = str(b?.image, 500);
-      const mobileImage = str(b?.mobileImage, 500);
-      const href = str(b?.href, 500);
-      if (!IMAGE.test(image)) return { ok: false, error: `${LABEL[z]}: ارفع صورة البانر.` };
-      if (mobileImage && !IMAGE.test(mobileImage)) return { ok: false, error: `${LABEL[z]}: صورة الموبايل غير صالحة.` };
-      if (!HREF.test(href)) return { ok: false, error: `${LABEL[z]}: رابط البانر يجب أن يبدأ بـ https:// أو /` };
+      const image = localImage(b?.image);
+      const mobileRaw = str(b?.mobileImage, 500);
+      const mobileImage = mobileRaw ? localImage(mobileRaw) : null;
+      const href = safeHref(b?.href);
+      if (!image) return { ok: false, error: `${LABEL[z]}: ارفع صورة البانر إلى الموقع — لا تُقبل صور من مواقع أخرى.` };
+      if (mobileRaw && !mobileImage) return { ok: false, error: `${LABEL[z]}: صورة الموبايل يجب أن تُرفع إلى الموقع.` };
+      if (!href) return { ok: false, error: `${LABEL[z]}: رابط البانر يجب أن يبدأ بـ https:// (اسم نطاق، بلا عنوان IP أو بيانات دخول) أو أن يكون مساراً داخلياً يبدأ بـ /` };
       const w = px(b?.w), h = px(b?.h), mw = px(b?.mw), mh = px(b?.mh);
       const startAt = iso(b?.startAt), endAt = iso(b?.endAt);
       if (startAt && endAt && new Date(endAt) <= new Date(startAt)) return { ok: false, error: `${LABEL[z]}: تاريخ انتهاء البانر قبل تاريخ بدايته.` };

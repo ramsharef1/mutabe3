@@ -6,7 +6,8 @@ import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES, UPLOAD_URL, uplo
 import { hashPassword } from '../auth';
 import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
 import readerAdmin from './adminReaders';
-import { readAds, parseAds, writeAds, adStats } from '../ads';
+import { readAds, parseAds, writeAds, adStats, safeHref, AdsSetting, ZONES } from '../ads';
+import { audit, listAudit, q } from '../audit';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -65,6 +66,26 @@ const parseWhen = (v: unknown): Date | null | undefined => {
   const d = new Date(String(v));
   return isNaN(d.getTime()) ? undefined : d;
 };
+
+/* ───────────────────────────── audit helpers (D-064) ───────────────────────────── */
+
+// Summaries say «من … إلى …» with Arabic names: an arrow between two Latin words (house ← demo) forms one
+// left-to-right run inside the RTL page and reads backwards.
+const STATUS_AR: Record<string, string> = { DRAFT: 'مسودة', PUBLISHED: 'منشور', SCHEDULED: 'مجدول', ARCHIVED: 'مؤرشف' };
+const ROLE_AR: Record<string, string> = { ADMIN: 'مدير', EDITOR: 'محرر', JOURNALIST: 'صحفي', VIEWER: 'قارئ' };
+const MODE_AR: Record<string, string> = { off: 'متوقف', demo: 'تجريبي', house: 'بانرات مباشرة', adsense: 'AdSense' };
+const BACKDATE_SLACK_MS = 5 * 60_000;
+/** Which audit action a status transition is. */
+function articleAction(from: string | null, to: string | null): { action: string; verb: string } {
+  if (!to || to === from) return { action: 'article.edit', verb: 'عدّل' };
+  if (to === 'PUBLISHED') return { action: 'article.publish', verb: 'نشر' };
+  if (to === 'SCHEDULED') return { action: 'article.schedule', verb: 'جدول' };
+  if (to === 'ARCHIVED') return { action: 'article.archive', verb: 'أرشف' };
+  if (from === 'PUBLISHED') return { action: 'article.unpublish', verb: 'ألغى نشر' };
+  if (from === 'SCHEDULED') return { action: 'article.unschedule', verb: 'ألغى جدولة' };
+  return { action: 'article.edit', verb: 'عدّل' };
+}
+const fmtWhen = (d: Date | null | undefined) => (d ? new Date(d).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : '—');
 
 /* ───────────────────────────── articles ───────────────────────────── */
 
@@ -128,6 +149,13 @@ router.post('/articles', async (req: Request, res: Response) => {
         seoKeywords: Array.isArray(seoKeywords) ? seoKeywords : [],
       },
     });
+    const { action, verb } = st === 'DRAFT' ? { action: 'article.create', verb: 'أنشأ' } : articleAction(null, st);
+    const backdated = st === 'SCHEDULED' && !!when && when.getTime() < Date.now() - BACKDATE_SLACK_MS;
+    await audit(prisma, u, req, {
+      action, targetType: 'article', targetId: article.id,
+      summary: `${verb} ${q(article.title)}${st === 'SCHEDULED' ? ` لموعد ${fmtWhen(when)}${backdated ? ' — في الماضي (تأريخ رجعي)' : ''}` : ''}`,
+      meta: { created: true, status: st, kind: article.kind, ...(st === 'SCHEDULED' ? { scheduledPublishAt: when, backdated } : {}) },
+    });
     res.status(201).json({ success: true, data: article });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -174,6 +202,23 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
       data.scheduledPublishAt = when;
     }
     const article = await prisma.article.update({ where: { id: req.params.id }, data });
+    const changed = Object.keys(data).filter((k) => k !== 'publishedAt' && JSON.stringify((existing as any)[k]) !== JSON.stringify((article as any)[k]));
+    if (changed.length) {
+      const { action, verb } = articleAction(existing.status, data.status ?? null);
+      const at = article.scheduledPublishAt;
+      const backdated = article.status === 'SCHEDULED' && !!at && at.getTime() < Date.now() - BACKDATE_SLACK_MS && changed.includes('scheduledPublishAt');
+      const statusNote = existing.status !== article.status ? ` (من ${STATUS_AR[existing.status]} إلى ${STATUS_AR[article.status]})` : '';
+      await audit(prisma, u, req, {
+        action, targetType: 'article', targetId: article.id,
+        summary: `${verb} ${q(article.title)}${statusNote}${article.status === 'SCHEDULED' && changed.includes('scheduledPublishAt') ? ` لموعد ${fmtWhen(at)}${backdated ? ' — في الماضي (تأريخ رجعي)' : ''}` : ''}`,
+        meta: {
+          changed, from: existing.status, to: article.status,
+          ...(changed.includes('title') ? { oldTitle: existing.title } : {}),
+          ...(changed.includes('kind') ? { kindFrom: existing.kind, kindTo: article.kind } : {}),
+          ...(changed.includes('scheduledPublishAt') ? { scheduledFrom: existing.scheduledPublishAt, scheduledTo: at, backdated } : {}),
+        },
+      });
+    }
     res.json({ success: true, data: article });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -182,12 +227,17 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
 router.delete('/articles/:id', async (req: Request, res: Response) => {
   try {
     const u = who(req);
-    const existing = await prisma.article.findUnique({ where: { id: req.params.id }, select: { authorId: true, status: true } });
+    const existing = await prisma.article.findUnique({ where: { id: req.params.id }, select: { authorId: true, status: true, title: true, slug: true, publishedAt: true } });
     if (!existing) return res.status(404).json({ error: 'Not found' });
     if (!isEditor(u) && (existing.authorId !== u.id || existing.status !== 'DRAFT')) {
       return res.status(403).json({ error: 'الحذف هنا يتطلب صلاحية محرر' });
     }
     await prisma.article.delete({ where: { id: req.params.id } });
+    await audit(prisma, u, req, {
+      action: 'article.delete', targetType: 'article', targetId: req.params.id,
+      summary: `حذف ${q(existing.title)} (${STATUS_AR[existing.status]})`,
+      meta: { title: existing.title, slug: existing.slug, status: existing.status, publishedAt: existing.publishedAt },
+    });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -263,6 +313,11 @@ async function deleteMedia(req: Request, res: Response, input: string) {
     const r = deleteUpload(rel);
     if (!r) return res.status(404).json({ error: 'الملف غير موجود' });
     console.log(`[media] ${who(req).id} deleted ${rel} (${r.removed} files${used ? `, forced over ${used} references` : ''})`);
+    await audit(prisma, who(req), req, {
+      action: 'media.delete', targetType: 'media', targetId: rel,
+      summary: `حذف الصورة ${rel}${used ? ` رغم استخدامها في ${used} موضع` : ''}`,
+      meta: { removed: r.removed, forced: used > 0 && force, references: used ? { articles: refs.articles.map((a) => a.id), categories: refs.categories.map((c) => c.id), ads: refs.ads.length } : undefined },
+    });
     res.json({ success: true, url: `${UPLOAD_URL}/${rel}`, removed: r.removed, forced: used > 0 && force, ...(used ? { references: refs } : {}) });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 }
@@ -293,6 +348,7 @@ router.post('/categories', requireRole(...EDITOR_ROLES), async (req: Request, re
       data: { name: n, slug: s, description: description ? String(description).trim() : null, showInNav: showInNav !== false, displayOrder: (last._max.displayOrder || 0) + 1 },
       select: CATEGORY_SELECT,
     });
+    await audit(prisma, who(req), req, { action: 'category.create', targetType: 'category', targetId: data.id, summary: `أنشأ قسم ${q(n)} (/${s})` });
     res.status(201).json({ success: true, data });
   } catch (e) {
     if (isUniqueError(e)) return res.status(409).json({ error: 'الاسم أو المعرّف مستخدم لقسم آخر' });
@@ -307,6 +363,7 @@ router.put('/categories/order', requireRole(...EDITOR_ROLES), async (req: Reques
     if (!Array.isArray(ids) || !ids.every((x) => typeof x === 'string')) return res.status(400).json({ error: 'ids[] required' });
     await prisma.$transaction((ids as string[]).map((id, i) => prisma.category.update({ where: { id }, data: { displayOrder: i + 1 } })));
     const data = await prisma.category.findMany({ select: CATEGORY_SELECT, orderBy: { displayOrder: 'asc' } });
+    await audit(prisma, who(req), req, { action: 'category.reorder', targetType: 'category', summary: 'أعاد ترتيب الأقسام', meta: { order: data.map((c) => c.slug) } });
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -320,7 +377,16 @@ router.put('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Request,
     if (description !== undefined) data.description = description ? String(description).trim() : null;
     if (showInNav !== undefined) data.showInNav = !!showInNav;
     if (displayOrder !== undefined && Number.isFinite(Number(displayOrder))) data.displayOrder = Number(displayOrder);
+    const before = await prisma.category.findUnique({ where: { id: req.params.id }, select: { name: true, slug: true, description: true, showInNav: true, displayOrder: true } });
     const row = await prisma.category.update({ where: { id: req.params.id }, data, select: CATEGORY_SELECT });
+    const changed = Object.keys(data).filter((k) => before && JSON.stringify((before as any)[k]) !== JSON.stringify((row as any)[k]));
+    if (changed.length) {
+      await audit(prisma, who(req), req, {
+        action: 'category.update', targetType: 'category', targetId: row.id,
+        summary: `عدّل قسم ${q(row.name)}${changed.includes('slug') ? ` (المعرّف من /${before?.slug} إلى /${row.slug})` : ''}${changed.includes('showInNav') ? (row.showInNav ? ' — أظهره في القائمة' : ' — أخفاه من القائمة') : ''}`,
+        meta: { changed, ...(changed.includes('name') ? { oldName: before?.name } : {}), ...(changed.includes('slug') ? { oldSlug: before?.slug } : {}) },
+      });
+    }
     res.json({ success: true, data: row });
   } catch (e: any) {
     if (isUniqueError(e)) return res.status(409).json({ error: 'الاسم أو المعرّف مستخدم لقسم آخر' });
@@ -333,7 +399,8 @@ router.delete('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Reque
   try {
     const n = await prisma.article.count({ where: { categoryId: req.params.id } });
     if (n > 0) return res.status(409).json({ error: `لا يمكن حذف قسم يحتوي ${n} مقالاً — انقل مقالاته أولاً` });
-    await prisma.category.delete({ where: { id: req.params.id } });
+    const gone = await prisma.category.delete({ where: { id: req.params.id }, select: { id: true, name: true, slug: true } });
+    await audit(prisma, who(req), req, { action: 'category.delete', targetType: 'category', targetId: gone.id, summary: `حذف قسم ${q(gone.name)} (/${gone.slug})` });
     res.json({ success: true });
   } catch (e: any) {
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
@@ -366,6 +433,7 @@ router.post('/users', requireRole('ADMIN'), async (req: Request, res: Response) 
       data: { name: n, email: em, role: r as any, password: await hashPassword(pw), emailVerified: true },
       select: USER_SELECT,
     });
+    await audit(prisma, who(req), req, { action: 'user.create', targetType: 'user', targetId: data.id, summary: `أنشأ حساب ${data.name} بدور ${ROLE_AR[r] || r}`, meta: { email: em, role: r } });
     res.status(201).json({ success: true, data });
   } catch (e) {
     if (isUniqueError(e)) return res.status(409).json({ error: 'هذا البريد مستخدم بالفعل' });
@@ -394,7 +462,17 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
       data.role = role;
     }
     if (password !== undefined) { const pw = String(password); if (pw.length < 8) return res.status(400).json({ error: 'كلمة المرور 8 أحرف على الأقل' }); data.password = await hashPassword(pw); }
+    const before = await prisma.user.findUnique({ where: { id: req.params.id }, select: { name: true, role: true } });
     const row = await prisma.user.update({ where: { id: req.params.id }, data, select: USER_SELECT });
+    if (before && data.role !== undefined && before.role !== row.role) {
+      await audit(prisma, me, req, { action: 'user.role', targetType: 'user', targetId: row.id, summary: `غيّر دور ${row.name} من ${ROLE_AR[before.role] || before.role} إلى ${ROLE_AR[row.role] || row.role}`, meta: { from: before.role, to: row.role } });
+    }
+    if (before && data.name !== undefined && before.name !== row.name) {
+      await audit(prisma, me, req, { action: 'user.rename', targetType: 'user', targetId: row.id, summary: `غيّر اسم ${q(before.name)} إلى ${q(row.name)}`, meta: { from: before.name, to: row.name } });
+    }
+    if (data.password !== undefined) {
+      await audit(prisma, me, req, { action: 'user.password', targetType: 'user', targetId: row.id, summary: `عيّن كلمة مرور جديدة لـ ${row.name}` });
+    }
     res.json({ success: true, data: row });
   } catch (e: any) {
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
@@ -416,24 +494,45 @@ router.get('/homepage', requireRole(...EDITOR_ROLES), async (_req: Request, res:
 router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
   try {
     const { heroId, pickIds, breaking, demoBlocks } = req.body || {};
+    const prev = await readHomepageSetting(prisma);
     const next: HomepageSetting = {};
     next.heroId = heroId ? String(heroId) : null;
     // demoBlocks (D-052): omitted → keep the stored value; otherwise must be a boolean
-    if (demoBlocks === undefined) next.demoBlocks = (await readHomepageSetting(prisma)).demoBlocks;
+    if (demoBlocks === undefined) next.demoBlocks = prev.demoBlocks;
     else if (typeof demoBlocks === 'boolean') next.demoBlocks = demoBlocks;
     else return res.status(400).json({ error: 'demoBlocks must be true or false' });
     if (pickIds !== undefined) {
       if (!Array.isArray(pickIds) || !pickIds.every((x) => typeof x === 'string')) return res.status(400).json({ error: 'pickIds[] of ids' });
       if (pickIds.length > MAX_PICKS) return res.status(400).json({ error: `حتى ${MAX_PICKS} مختارات` });
       next.pickIds = Array.from(new Set(pickIds as string[]));
-    } else next.pickIds = (await readHomepageSetting(prisma)).pickIds;
+    } else next.pickIds = prev.pickIds;
     if (breaking && typeof breaking === 'object' && String(breaking.title || '').trim()) {
       const title = String(breaking.title).trim().slice(0, 200);
-      const href = String(breaking.href || '/').trim().slice(0, 300);
-      if (!/^(\/|https?:\/\/)/.test(href)) return res.status(400).json({ error: 'رابط العاجل يجب أن يبدأ بـ / أو https://' });
+      // Same rule as banner links (D-064): an internal path, or https without credentials or a raw IP.
+      const href = safeHref(String(breaking.href || '/').trim().slice(0, 300));
+      if (!href) return res.status(400).json({ error: 'رابط العاجل يجب أن يبدأ بـ / أو https:// (لا عناوين IP ولا بيانات دخول)' });
       next.breaking = { title, href, at: breaking.at && !isNaN(new Date(breaking.at).getTime()) ? new Date(breaking.at).toISOString() : new Date().toISOString() };
     } else next.breaking = null;
     const setting = await writeHomepageSetting(prisma, next);
+    const u = who(req);
+    const pb = prev.breaking || null, nb = setting.breaking || null;
+    if ((pb?.title || '') !== (nb?.title || '') || (pb?.href || '') !== (nb?.href || '')) {
+      await audit(prisma, u, req, {
+        action: 'homepage.breaking', targetType: 'homepage',
+        summary: nb ? `وضع خبراً عاجلاً: ${q(nb.title, 120)}` : `أزال الخبر العاجل ${q(pb?.title || '', 120)}`,
+        meta: { from: pb, to: nb },
+      });
+    }
+    const parts: string[] = [];
+    if ((prev.heroId || null) !== (setting.heroId || null)) parts.push('الخبر الرئيسي');
+    if (JSON.stringify(prev.pickIds || []) !== JSON.stringify(setting.pickIds || [])) parts.push('المختارات');
+    if (!!prev.demoBlocks !== !!setting.demoBlocks) parts.push(setting.demoBlocks ? 'أظهر الأقسام التوضيحية' : 'أخفى الأقسام التوضيحية');
+    if (parts.length) {
+      await audit(prisma, u, req, {
+        action: 'homepage.update', targetType: 'homepage', summary: `عدّل الصفحة الرئيسية: ${parts.join('، ')}`,
+        meta: { heroFrom: prev.heroId ?? null, heroTo: setting.heroId ?? null, picksFrom: prev.pickIds ?? [], picksTo: setting.pickIds ?? [], demoBlocks: setting.demoBlocks },
+      });
+    }
     res.json({ success: true, data: { setting, resolved: await resolveHomepage(prisma, setting) } });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -469,8 +568,64 @@ router.put('/ads', requireRole('ADMIN'), async (req: Request, res: Response) => 
   try {
     const parsed = parseAds(req.body);
     if (!parsed.ok) return res.status(400).json({ error: parsed.error });
-    res.json({ success: true, data: await writeAds(prisma, parsed.value) });
+    const prev = await readAds(prisma);
+    const saved = await writeAds(prisma, parsed.value);
+    const diff = adsDiff(prev, saved);
+    if (diff.lines.length) {
+      await audit(prisma, who(req), req, { action: 'ads.update', targetType: 'ads', summary: `عدّل الإعلانات: ${diff.lines.join(' · ')}`.slice(0, 300), meta: diff.meta });
+    }
+    res.json({ success: true, data: saved });
   } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// What an ads save changed, for the audit log: zone modes, banners added/removed/rescheduled, AdSense id, ads.txt.
+const ZONE_AR: Record<string, string> = { header: 'الترويسة', inline: 'بين الأقسام', article: 'داخل المقال', sidebar: 'العمود الجانبي' };
+function adsDiff(a: AdsSetting, b: AdsSetting) {
+  const lines: string[] = [];
+  const zones: Record<string, unknown> = {};
+  for (const z of ZONES) {
+    const pa = a.zones[z], pb = b.zones[z];
+    const ida = new Map(pa.banners.map((x) => [x.id, x])), idb = new Map(pb.banners.map((x) => [x.id, x]));
+    const added = pb.banners.filter((x) => !ida.has(x.id)), removed = pa.banners.filter((x) => !idb.has(x.id));
+    const changed = pb.banners.filter((x) => { const o = ida.get(x.id); return o && JSON.stringify(o) !== JSON.stringify(x); });
+    const bits: string[] = [];
+    if (pa.mode !== pb.mode) bits.push(`من ${MODE_AR[pa.mode] || pa.mode} إلى ${MODE_AR[pb.mode] || pb.mode}`);
+    if (added.length) bits.push(`+${added.length} بانر (${added.map((x) => x.label || x.alt || x.id).join('، ')})`);
+    if (removed.length) bits.push(`−${removed.length} بانر (${removed.map((x) => x.label || x.alt || x.id).join('، ')})`);
+    if (changed.length) bits.push(`تعديل ${changed.length}`);
+    if (pa.unit !== pb.unit) bits.push('وحدة AdSense');
+    if (bits.length) {
+      lines.push(`${ZONE_AR[z]}: ${bits.join('، ')}`);
+      zones[z] = {
+        modeFrom: pa.mode, modeTo: pb.mode,
+        added: added.map((x) => ({ id: x.id, label: x.label, href: x.href, startAt: x.startAt, endAt: x.endAt })),
+        removed: removed.map((x) => ({ id: x.id, label: x.label })),
+        changed: changed.map((x) => ({ id: x.id, label: x.label, href: x.href, startAt: x.startAt, endAt: x.endAt })),
+      };
+    }
+  }
+  if (a.adsense.client !== b.adsense.client || a.adsense.auto !== b.adsense.auto) lines.push('إعدادات AdSense');
+  if (a.adsTxt !== b.adsTxt) lines.push('ads.txt');
+  return { lines, meta: { zones, adsense: b.adsense, adsTxtChanged: a.adsTxt !== b.adsTxt } };
+}
+
+/* ───────────────────────────── audit log (admin, read-only) ───────────────────────────── */
+
+// GET /api/admin/audit?take=50&cursor=<id>&action=<prefix>&actor=<userId|system>&target=<id> — newest first (D-064).
+// There is deliberately no write, update or delete route for this table.
+router.get('/audit', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const s = (v: unknown, max: number) => (typeof v === 'string' && v.length <= max ? v.trim() : '');
+    const action = s(req.query.action, 40);
+    const r = await listAudit(prisma, {
+      take: parseInt(String(req.query.take || '50'), 10) || 50,
+      cursor: /^[a-z0-9]{10,40}$/.test(s(req.query.cursor, 40)) ? s(req.query.cursor, 40) : undefined,
+      action: /^[a-z.]+$/.test(action) ? action : undefined,
+      actorId: s(req.query.actor, 40) || undefined,
+      targetId: s(req.query.target, 200) || undefined,
+    });
+    res.json({ success: true, ...r });
+  } catch (e) { console.error('audit list:', e); res.status(500).json({ error: 'تعذّر تحميل السجل' }); }
 });
 
 export default router;

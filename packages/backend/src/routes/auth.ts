@@ -15,6 +15,10 @@ import {
 import { sendVerificationEmail } from '../email';
 import { authMiddleware } from '../middleware';
 import { allow } from '../ratelimit';
+import { audit } from '../audit';
+
+// Staff sign-ins (and failed attempts on staff accounts) go to the audit log (D-064); reader accounts do not.
+const STAFF = ['ADMIN', 'EDITOR', 'JOURNALIST'];
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -94,7 +98,12 @@ router.post('/login', async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { email: e } });
     // Always run the hash compare so a missing account takes as long as a wrong password.
     const passwordValid = await verifyPassword(password, user?.password ?? '$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinv');
-    if (!user || !user.emailVerified || !passwordValid) return res.status(401).json({ error: INVALID_CREDENTIALS });
+    if (!user || !user.emailVerified || !passwordValid) {
+      if (user && STAFF.includes(user.role)) {
+        await audit(prisma, null, req, { action: 'auth.login.fail', targetType: 'user', targetId: user.id, summary: `محاولة دخول فاشلة إلى حساب ${user.name}` });
+      }
+      return res.status(401).json({ error: INVALID_CREDENTIALS });
+    }
 
     const accessToken = generateJWT(user.id);
     const refreshToken = generateRefreshToken(user.id);
@@ -103,6 +112,7 @@ router.post('/login', async (req: Request, res: Response) => {
     });
     setAuthCookie(res, accessToken);
     setRefreshCookie(res, refreshToken);
+    if (STAFF.includes(user.role)) await audit(prisma, user, req, { action: 'auth.login', targetType: 'user', targetId: user.id, summary: 'تسجيل دخول' });
     res.json({ success: true, accessToken, refreshToken, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (error) {
     console.error('Login error:', error);
@@ -185,6 +195,7 @@ router.post('/change-password', authMiddleware, async (req: Request, res: Respon
       prisma.user.update({ where: { id: userId }, data: { password: await hashPassword(newPassword) } }),
       prisma.session.deleteMany({ where: keep ? { userId, NOT: { refreshToken: keep } } : { userId } }),
     ]);
+    if (STAFF.includes(user.role)) await audit(prisma, user, req, { action: 'auth.password', targetType: 'user', targetId: user.id, summary: 'غيّر كلمة مروره وأنهى جلساته الأخرى' });
     res.json({ success: true, revokedOtherSessions: true });
   } catch (error) {
     console.error('Change-password error:', error);
