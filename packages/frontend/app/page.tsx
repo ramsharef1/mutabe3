@@ -294,7 +294,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         )}
 
         <div className="two capfact">
-          <div className="sec" style={{ flex: '0 0 330px' }}><SecHd t="قناة المتابع" /><Capture /></div>
+          <div className="sec" id="newsletter" style={{ flex: '0 0 330px', scrollMarginTop: 80 }}><SecHd t="قناة المتابع" /><Capture /></div>
           {demo && <div className="sec"><SecHd t="تحقق المتابع" meta="نتحقق من الشائعات المنتشرة على فيسبوك وواتساب" /><FactCheck /></div>}
         </div>
 

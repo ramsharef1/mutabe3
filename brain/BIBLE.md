@@ -37,7 +37,7 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 ## Findings & recommendations
 | ID | Finding | Severity | Status |
 |---|---|---|---|
-| F-01 | Footer links to about/contact/advertise/privacy/terms are dead (`#`); no imprint, corrections or privacy page | High | proposed |
+| F-01 | Footer links to about/contact/advertise/privacy/terms are dead (`#`); no imprint, corrections or privacy page | High | **in-progress (D-053)** — seven pages live as counsel drafts with a visible banner; footer wired; needs names, mailboxes and counsel sign-off |
 | F-02 | ~20 homepage blocks, live strip, video, columnists and 19 articles are demo/invented data | High | in-progress — **switch built (D-052):** editors turn the illustrative blocks off from `/dashboard/homepage` once real content exists; demo articles stay by decision |
 | F-03 | No photo credit field; every cover captioned «تصوير: المتابع» | High | proposed |
 | F-04 | `dateModified` = `updatedAt`, bumped by every view → fake freshness signal | Medium | **done (D-052)** — raw increment, `updatedAt` moves only on edits |

@@ -2083,3 +2083,20 @@ button[type="submit"]:active, .btn-primary:active {
 .adm-editor label.adm-check{display:flex;align-items:flex-start;gap:8px;font-weight:400;line-height:1.6}
 .adm-editor .adm-check input{display:inline-block;width:auto;margin:4px 0 0;flex:none}
 .adm-pre{background:#f6f6f6;border:1px solid #e6e6e6;border-radius:6px;padding:10px 12px;margin:10px 0 0;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all;color:#333;text-align:left}
+
+/* ---- informational & legal pages (StaticPage, D-053) ---- */
+.static{max-width:760px;margin:12px auto 40px;padding:0 4px;font-family:var(--naskh);font-size:16.5px;line-height:1.85;color:var(--fg)}
+.static h1{font:700 26px/1.4 var(--kufi);margin:6px 0 10px;color:var(--fg)}
+.static h2{font:700 18px/1.5 var(--kufi);margin:26px 0 8px;padding-top:8px;border-top:1px solid var(--line2);color:var(--fg)}
+.static p{margin:0 0 12px}
+.static p.lead{font-size:17.5px;color:var(--fg2);border-right:4px solid var(--red);padding:8px 14px 8px 0;background:var(--bg2)}
+.static ul,.static ol{margin:0 0 14px;padding-right:22px}
+.static li{margin:0 0 6px}
+.static a{color:var(--red);text-decoration:underline;text-underline-offset:3px}
+.static table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:15px}
+.static th,.static td{border:1px solid var(--line2);padding:8px 10px;text-align:right;vertical-align:top}
+.static th{background:var(--bg2);font-family:var(--kufi);font-weight:700;white-space:nowrap}
+.static thead th{background:var(--bg3)}
+.counsel{margin:10px 0 16px;padding:10px 14px;border:1px dashed #c08a00;border-radius:6px;background:#fff8e6;color:#5a4300;font:14px/1.7 var(--kufi)}
+:root[data-theme=dark] .counsel{background:#2a2412;border-color:#8a6a1a;color:#ffd58a}
+@media (max-width:767px){.static{font-size:16px}.static h1{font-size:22px}.static table{display:block;overflow-x:auto}}

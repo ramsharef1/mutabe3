@@ -234,15 +234,16 @@ export function SiteFooter() {
           <div>
             <b>خدمات</b>
             <ul>
-              <li><a href="#">خدمة اخبار الجوال</a></li><li><a href="#">ارسل خبراً</a></li><li><a href="/category/obituaries">أخبار الوفيات</a></li>
-              <li><a href="#">خدمة RSS</a></li><li><a href="#">النشرة البريدية</a></li>
+              <li><a href="/about#app">خدمة اخبار الجوال</a></li><li><a href="/contact#tip">ارسل خبراً</a></li><li><a href="/category/obituaries">أخبار الوفيات</a></li>
+              <li><a href="/feed.xml">خدمة RSS</a></li><li><a href="/#newsletter">النشرة البريدية</a></li>
             </ul>
           </div>
           <div>
             <b>عن المتابع</b>
             <ul>
-              <li><a href="#">حول المتابع</a></li><li><a href="#">اتصل بنا</a></li><li><a href="#">أعلن معنا</a></li>
-              <li><a href="#">سياسة الخصوصية</a></li><li><a href="#">شروط الاستخدام</a></li>
+              <li><a href="/about">حول المتابع</a></li><li><a href="/contact">اتصل بنا</a></li><li><a href="/advertise">أعلن معنا</a></li>
+              <li><a href="/privacy">سياسة الخصوصية</a></li><li><a href="/terms">شروط الاستخدام</a></li>
+              <li><a href="/corrections">التصحيح وحق الرد</a></li><li><a href="/editorial-policy">السياسة التحريرية</a></li>
             </ul>
             <div className="social">
               <a href="#" title="فيسبوك" className="fb">{Ico.fb}</a>

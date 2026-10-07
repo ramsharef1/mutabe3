@@ -18,9 +18,12 @@ async function categorySlugs(): Promise<string[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [articles, cats] = await Promise.all([fetchArticles({ take: '100' }), categorySlugs()]);
+  // Informational and legal pages (D-053) — stable URLs, low churn.
+  const statics = ['about', 'contact', 'advertise', 'privacy', 'terms', 'corrections', 'editorial-policy'];
   return [
     { url: SITE_URL, changeFrequency: 'hourly', priority: 1 },
     ...cats.map((slug) => ({ url: `${SITE_URL}/category/${slug}`, changeFrequency: 'hourly' as const, priority: 0.8 })),
+    ...statics.map((p) => ({ url: `${SITE_URL}/${p}`, changeFrequency: 'monthly' as const, priority: 0.3 })),
     ...articles.map((a) => ({
       url: `${SITE_URL}/article/${a.id}`,
       lastModified: a.updatedAt || a.publishedAt,
