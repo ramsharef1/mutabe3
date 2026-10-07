@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { liveNow } from './content';
 import { AudioPill } from './blocks/jordan';
@@ -88,16 +88,19 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
   );
 }
 
-export function useArticles() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+/** Site-wide latest list for header/sidebar/related. Pages that fetched it on the server pass it as `initial`,
+ *  which skips the browser fetch (and the empty first paint it caused, D-070). */
+export function useArticles(initial?: Article[]) {
+  const [articles, setArticles] = useState<Article[]>(initial || []);
+  const [loading, setLoading] = useState(!initial);
   useEffect(() => {
+    if (initial) return;
     fetch('/api/articles')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setArticles(d.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [initial]);
   return { articles, loading };
 }
 
@@ -146,6 +149,10 @@ export function Nav({ compact = false }: { compact?: boolean }) {
 
 function StickyBar() {
   const [on, setOn] = useState(false);
+  // `inert` while hidden: aria-hidden alone left its links in the tab order (Lighthouse aria-hidden-focus, D-070).
+  // Set as a DOM property — React 18 has no boolean `inert` attribute.
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (bar.current) (bar.current as HTMLElement & { inert: boolean }).inert = !on; }, [on]);
   useEffect(() => {
     const f = () => setOn(window.scrollY > 320);
     f();
@@ -153,7 +160,7 @@ function StickyBar() {
     return () => window.removeEventListener('scroll', f);
   }, []);
   return (
-    <div className={`sticky ${on ? 'show' : ''}`} aria-hidden={!on}>
+    <div ref={bar} className={`sticky ${on ? 'show' : ''}`} aria-hidden={!on}>
       <div className="wrap">
         <a className="slogo" href="/"><img src="/logo.svg" alt="المتابع" /></a>
         <nav className="snav" aria-label="الأقسام"><Nav compact /></nav>

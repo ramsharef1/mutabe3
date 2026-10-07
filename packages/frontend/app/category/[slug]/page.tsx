@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchCategories, SITE_URL } from '../../lib/api';
+import { fetchCategories, fetchArticles, SITE_URL } from '../../lib/api';
 import { CAT_LABELS, CAT_DESC } from '../../components/util';
 import { collectionLd, breadcrumbLd, SITE_NAME } from '../../lib/seo';
 import JsonLd from '../../components/JsonLd';
@@ -44,10 +44,12 @@ export default async function CategoryPage({ params }: Props) {
   const c = await resolve(params.slug);
   if (!c) notFound();
   const url = `/category/${params.slug}`;
+  // Both lists on the server (D-070): the section used to render «جاري تحميل الأخبار» until two browser fetches returned.
+  const [latest, own] = await Promise.all([fetchArticles({}, 60), fetchArticles({ category: params.slug, take: '60' }, 60)]);
   return (
     <>
       <JsonLd data={[collectionLd({ name: c.name, description: c.description, url }), breadcrumbLd([{ name: 'الرئيسية', url: SITE_URL }, { name: c.name }])]} />
-      <CategoryView />
+      <CategoryView initialArticles={latest.length ? latest : undefined} initialList={latest.length ? own : undefined} />
     </>
   );
 }

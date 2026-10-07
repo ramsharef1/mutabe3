@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import { UPLOAD_DIR, UPLOAD_URL, IMG_URL, serveDerivative } from './uploads';
@@ -44,6 +45,10 @@ app.use((_req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   next();
 });
+
+// gzip for JSON/text answers (only compressible types; images are already compressed). The article list
+// alone was 18 KB uncompressed on every page that fetched it (Lighthouse uses-text-compression, D-070).
+app.use(compression({ threshold: 1024 }));
 
 // Middleware
 app.use(express.json({ limit: '2mb' }));

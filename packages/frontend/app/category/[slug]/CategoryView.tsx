@@ -37,10 +37,11 @@ const Rows = ({ list, page, cycle }: { list: Article[]; page: number; cycle: boo
   </>
 );
 
-export default function CategoryView() {
+export default function CategoryView({ initialArticles, initialList }: { initialArticles?: Article[]; initialList?: Article[] } = {}) {
   const { slug } = useParams<{ slug: string }>();
-  const { articles, loading } = useArticles(); // site-wide list: header, sidebar, thin-category fallback
-  const [catList, setCatList] = useState<Article[] | null>(null); // this category's own list, not capped by the homepage's 20
+  const { articles, loading } = useArticles(initialArticles); // site-wide list: header, sidebar, thin-category fallback
+  // this category's own list, not capped by the homepage's 20 — server-fetched since D-070 so the page arrives with its content
+  const [catList, setCatList] = useState<Article[] | null>(initialList ?? null);
   const navItem = useNav().find((n) => n.slug === slug); // name/description as managed in /dashboard/categories
   const [sort, setSort] = useState<'new' | 'top'>('new');
   const [sub, setSub] = useState<string | null>(null);
@@ -53,12 +54,13 @@ export default function CategoryView() {
   useEffect(() => { try { if (localStorage.getItem('catmode') === 'scroll') setMode('scroll'); } catch {} }, []);
 
   useEffect(() => {
+    if (initialList) return;
     setCatList(null);
     fetch(`/api/articles?category=${encodeURIComponent(slug)}&take=60`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setCatList(d.data || []))
       .catch(() => setCatList([]));
-  }, [slug]);
+  }, [slug, initialList]);
 
   // Infinite mode: append the next page when the sentinel scrolls into view (with a short delay so the spinner is visible).
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function CategoryView() {
               <>
                 <div className="catfeat2">
                   <a className="lead" href={link(feat.id)}>
-                    <div className="im"><Img src={feat.featuredImageUrl} /></div>
+                    <div className="im"><Img src={feat.featuredImageUrl} priority /></div>
                     <div className="cap"><Chip a={feat} /><h2>{feat.title}</h2><p>{excerpt(feat, 220)}</p><span className="tm">{Ico.clock}{ago(feat.publishedAt)}</span></div>
                   </a>
                   {subCards.length > 0 && (

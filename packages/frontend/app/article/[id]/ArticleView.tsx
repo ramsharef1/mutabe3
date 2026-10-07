@@ -13,7 +13,7 @@ import { Comments } from '../../components/comments';
 import { AuthorFace, authorHref } from '../../components/authors';
 
 // Article body font, loaded only on this route (B11).
-const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri', display: 'swap' });
+const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri', display: 'swap', preload: false }); // D-070: not ahead of the lead image
 
 const FILLER = [
   'وأكد المتحدث الرسمي أن الخطوات التنفيذية ستبدأ خلال الأسابيع المقبلة، مشيراً إلى أن الجهات المعنية أنهت الدراسات الفنية والمالية اللازمة، وأن العمل يجري بالتنسيق مع مختلف الشركاء لضمان تحقيق الأهداف المرسومة ضمن الجدول الزمني المحدد.',
@@ -44,8 +44,8 @@ function Progress() {
  * dashboard preview); the published list is still loaded client-side for the
  * header, sidebar, related items and prev/next, and never blocks the article.
  */
-export default function ArticleView({ article: a, preview = false, live: liveData = null }: { article: Article; preview?: boolean; live?: LiveData | null }) {
-  const { articles } = useArticles();
+export default function ArticleView({ article: a, preview = false, live: liveData = null, articles: initialArticles }: { article: Article; preview?: boolean; live?: LiveData | null; articles?: Article[] }) {
+  const { articles } = useArticles(initialArticles); // server-fetched by the page (D-070)
   const [size, setSize] = useState(0); // -1 / 0 / 1 / 2 → font-size steps
   const lb = useLightbox();
 

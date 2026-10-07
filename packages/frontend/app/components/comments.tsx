@@ -51,7 +51,7 @@ export function Comments({ articleId, enabled = true }: { articleId: string; ena
 
   return (
     <div className="comments" id="comments">
-      <h4>التعليقات <span>({list ? list.length : '…'})</span></h4>
+      <h2 className="cm-h">التعليقات <span>({list ? list.length : '…'})</span></h2>
       {list && list.length > 0 && (
         <ul className="clist">
           {list.map((c) => (
@@ -62,7 +62,7 @@ export function Comments({ articleId, enabled = true }: { articleId: string; ena
       {list && list.length === 0 && enabled && <p className="cempty">لا تعليقات بعد. كن أول من يعلّق.</p>}
       {enabled ? (
         <>
-          <h4>أضف تعليقك</h4>
+          <h2 className="cm-h">أضف تعليقك</h2>
           <form onSubmit={submit} noValidate>
             <div className="row2">
               <input placeholder="الاسم" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label="الاسم" required />

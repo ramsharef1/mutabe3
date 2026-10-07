@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchArticle, fetchLive, SITE_URL } from '../../lib/api';
+import { fetchArticle, fetchArticles, fetchLive, SITE_URL } from '../../lib/api';
 import { excerpt } from '../../components/util';
 import { newsArticleLd, liveBlogLd, videoLd, breadcrumbLd, articleImage } from '../../lib/seo';
 import JsonLd from '../../components/JsonLd';
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArticlePage({ params }: Props) {
   const article = await fetchArticle(params.id);
   if (!article) notFound();
-  const live = article.kind === 'LIVE' ? await fetchLive(article.id) : null;
+  const [live, latest] = await Promise.all([article.kind === 'LIVE' ? fetchLive(article.id) : Promise.resolve(null), fetchArticles({}, 60)]);
   const video = article.kind === 'VIDEO' ? videoLd(article) : null;
   const crumbs = [
     { name: 'الرئيسية', url: SITE_URL },
@@ -55,7 +55,7 @@ export default async function ArticlePage({ params }: Props) {
     <>
       {/* NewsArticle (LiveBlogPosting for live coverage, + VideoObject for video pieces, D-068) + breadcrumbs (D-043 Stage 5) */}
       <JsonLd data={[live ? liveBlogLd(article, live) : newsArticleLd(article), ...(video ? [video] : []), breadcrumbLd(crumbs)]} />
-      <ArticleView article={article} live={live} />
+      <ArticleView article={article} live={live} articles={latest.length ? latest : undefined} />
     </>
   );
 }
