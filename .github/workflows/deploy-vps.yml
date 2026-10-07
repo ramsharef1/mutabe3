@@ -41,6 +41,8 @@ jobs:
           ssh -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "IMAGES_BACKFILL=$IMAGES_BACKFILL bash -s" <<'REMOTE'
           set -euo pipefail
           cd /var/www/mutabe3/current/projects/mutabe3
+          # Build with the same runtime the units run on (D-055: Node 22 under /opt/node22; the shared global node is left alone).
+          [ -x /opt/node22/bin/node ] && export PATH=/opt/node22/bin:$PATH
 
           echo "== Fetching origin/main =="
           git fetch --quiet origin main

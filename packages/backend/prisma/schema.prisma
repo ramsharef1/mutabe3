@@ -25,6 +25,20 @@ enum ArticleStatus {
   ARCHIVED
 }
 
+// Editorial kind of an article (CONTENT-ARCHITECTURE §1, D-056). Drives templates in the editor and,
+// for SPONSORED, the «إعلان» label plus exclusion from news feeds (REVENUE-MAP §3).
+enum ArticleKind {
+  NEWS
+  OPINION
+  EXPLAINER
+  SPONSORED
+  LIVE
+  VIDEO
+  GALLERY
+  CARICATURE
+  NOTICE
+}
+
 enum CommentStatus {
   PENDING
   APPROVED
@@ -100,6 +114,8 @@ model Article {
   featuredImageUrl  String?
   coverCredit       String?  // «الصورة: …» — photographer/agency; shown only when set (D-054, F-03)
   coverCaption      String?  // caption under the lead image; falls back to the title
+  kind              ArticleKind @default(NEWS) // D-056
+  sponsorName       String?  // SPONSORED only: «محتوى مدفوع من ‹الجهة›»
 
   // Relations
   authorId          String

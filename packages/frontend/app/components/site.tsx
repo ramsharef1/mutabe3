@@ -61,10 +61,15 @@ export function Img({ src, alt = '', priority = false, sizes }: { src?: string; 
   );
 }
 
+// Sponsored material carries the law's word «إعلان» on every card (Press & Publications Law Art. 30(b); REVENUE-MAP §3, D-056).
 export const Chip = ({ a }: { a: Article }) =>
-  isLive(a.id)
-    ? <span className="chip islive"><i />مباشر</span>
-    : a.category ? <span className="chip" style={{ background: catColor(a.category.slug) }}>{a.category.name}</span> : null;
+  a.kind === 'SPONSORED'
+    ? <span className="chip sponsored">إعلان</span>
+    : a.kind === 'OPINION'
+      ? <span className="chip opinion">رأي</span>
+      : isLive(a.id)
+        ? <span className="chip islive"><i />مباشر</span>
+        : a.category ? <span className="chip" style={{ background: catColor(a.category.slug) }}>{a.category.name}</span> : null;
 
 /* ---------- theme (light = Ammon default; dark persisted in localStorage) ---------- */
 export function ThemeToggle({ className = '' }: { className?: string }) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import AdminNav, { Denied } from './components/AdminNav';
-import { adminFetch, useStaff, isEditorRole } from './components/staff';
+import { adminFetch, jsonInit, useStaff, isEditorRole } from './components/staff';
 
 interface Row {
   id: string;
@@ -52,6 +52,22 @@ export default function Dashboard() {
     else alert((await res.json().catch(() => ({}))).error || 'تعذّر الحذف.');
   };
 
+  // Duplicate (D-056): a new DRAFT with the same body, cover, kind and keywords — for follow-ups and recurring formats.
+  const dup = async (id: string) => {
+    const r = await adminFetch(`/api/admin/articles/${id}`);
+    if (!r.ok) { alert('تعذّر قراءة المقال.'); return; }
+    const a = (await r.json()).data;
+    const body = {
+      title: `نسخة من: ${a.title}`, summary: a.summary || '', content: a.content, categoryId: a.categoryId,
+      featuredImageUrl: a.featuredImageUrl || null, coverCredit: a.coverCredit || null, coverCaption: a.coverCaption || null,
+      kind: a.kind || 'NEWS', sponsorName: a.sponsorName || null, seoKeywords: a.seoKeywords || [], status: 'DRAFT',
+    };
+    const c = await adminFetch('/api/admin/articles', jsonInit('POST', body));
+    const j = await c.json().catch(() => ({}));
+    if (c.ok && j.data?.id) window.location.href = `/dashboard/article/${j.data.id}`;
+    else alert(j.error || 'تعذّر إنشاء النسخة.');
+  };
+
   const counts = rows.reduce<Record<string, number>>((m, r) => { m[r.status] = (m[r.status] || 0) + 1; return m; }, {});
   const shown = filter === 'ALL' ? rows : rows.filter((r) => r.status === filter);
 
@@ -99,6 +115,7 @@ export default function Dashboard() {
                     <td className="adm-date adm-hide-sm">{fmt(a.updatedAt)}</td>
                     <td className="adm-ops">
                       {(editor || a.status === 'DRAFT') && <a href={`/dashboard/article/${a.id}`}>تعديل</a>}
+                      {(editor || a.author?.id === me?.id) && <button type="button" onClick={() => dup(a.id)} title="إنشاء مسودة جديدة بنفس المحتوى">نسخ</button>}
                       {/* published → the live page; anything else → the admin-only preview (the public route 404s for drafts) */}
                       <a href={a.status === 'PUBLISHED' ? `/article/${a.id}` : `/dashboard/preview/${a.id}`} target="_blank" rel="noopener">معاينة</a>
                       {canDelete(a) && <button type="button" onClick={() => del(a.id, a.title)}>حذف</button>}

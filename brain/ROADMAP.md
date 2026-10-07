@@ -31,7 +31,8 @@ Stage 2 real-content foundation (☑ live 2026-10-06) → Stage 3 editorial ops 
 - ☑ **Scheduled publishing** — date/time in the editor; 60-second backend tick publishes due articles (D-043 Stage 3)
 - ☑ **Homepage curation** — `/dashboard/homepage`: lead story, ordered editor's picks, breaking bar; instant homepage refresh on save (D-043 Stage 3)
 - ☑ **Comments moderation** — `/dashboard/comments`: pending/approved/rejected, approve/reject/delete, pending badge in the nav (D-043 Stage 4)
-- ☐ **Analytics** — views per article, top content, trends ⚙️ (`viewsCount` exists)
+- ☑ **Editor speed** — article kinds (خبر/رأي/شرح/إعلان/…), templates per kind, Ctrl+S / Ctrl+Enter, remembered category, duplicate article; photo credit + caption fields (D-054, D-056)
+- ☐ **Analytics** — views per article, top content, trends ⚙️ (`viewsCount` exists); GA4/GTM + consent bar shipped dormant until the id (D-055)
 
 ### Later
 - ☐ Live-blog manager (live strip data is hardcoded) ⚙️

@@ -45,11 +45,11 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 | F-06 | No analytics, no consent layer; PDPL requires explicit consent | High | **in-progress (D-055)** — consent bar + GTM loader + first events shipped, dormant until `NEXT_PUBLIC_GTM_ID` is set from Rami's Google account |
 | F-07 | Newsletter single opt-in re-activates unsubscribed emails; inbox delivery blocked on DNS | Medium | **done (D-054)** — double opt-in with confirmation mail; DNS (SPF/DKIM) still Rami's |
 | F-08 | Banners have no dates or counts; no `/advertise`; no sponsored label | High (revenue) | proposed |
-| F-09 | Production Node 20 past EOL; Next 14 unsupported; no lockfile | High | in-progress — lockfile + `npm ci` done (D-051); **Node 22 switch script ready, run waits for Rami's go (D-055)**; Next 16 deferred |
+| F-09 | Production Node 20 past EOL; Next 14 unsupported; no lockfile | High | **mostly done** — lockfile + `npm ci` (D-051), **Node 22 live on both units (D-056)**; Next 16 deferred |
 | F-10 | Security S-01…S-10 (see SECURITY.md) | Critical/High | proposed (launch-critical subset in weeks 1–2) |
 | F-11 | Newsletter send stuck in `sending` if the backend restarts mid-send | Medium | **done (D-054)** — per-recipient delivery log, resumable re-send, 30-minute reaper |
 | F-12 | Every red on the site is Ammon legacy; logo has no red; dark-mode logo via CSS filter; OG card bakes the red bar | Medium | proposed (re-theme weeks 5–8) |
-| F-13 | 10+ articles/day target vs 1–3 editors | Risk | proposed (faster editor UX + templates) |
+| F-13 | 10+ articles/day target vs 1–3 editors | Risk | **done (D-056)** — templates per kind, Ctrl+S / Ctrl+Enter, remembered category, duplicate article; measure the desk's real output after launch |
 
 ## Roadmap (plan v2 — content first; effort S/M/L; gates in bold)
 | Weeks | Scope | Effort | Gate |

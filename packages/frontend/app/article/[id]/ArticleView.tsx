@@ -102,6 +102,8 @@ export default function ArticleView({ article: a, preview = false }: { article: 
 
             <div className="arthead">
               {live ? <LiveBadge /> : <Chip a={a} />}
+              {/* Paid material: the disclosure the Press & Publications Law asks for, above the headline (D-056) */}
+              {a.kind === 'SPONSORED' && <div className="sponsored-note">محتوى مدفوع{a.sponsorName ? ` من ${a.sponsorName}` : ''} — لا يعبّر عن رأي التحرير · <a href="/editorial-policy#sponsored">كيف نتعامل مع الإعلان</a></div>}
               <h1>{a.title}</h1>
               {a.summary && <p className="artsum">{a.summary}</p>}
               <div className="artmeta">

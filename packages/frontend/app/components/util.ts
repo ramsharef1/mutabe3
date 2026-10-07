@@ -15,6 +15,8 @@ export interface Article {
   featuredImageUrl?: string;
   coverCredit?: string | null;  // «الصورة: …» shown only when set (D-054)
   coverCaption?: string | null; // lead-image caption; falls back to the title
+  kind?: 'NEWS' | 'OPINION' | 'EXPLAINER' | 'SPONSORED' | 'LIVE' | 'VIDEO' | 'GALLERY' | 'CARICATURE' | 'NOTICE'; // D-056
+  sponsorName?: string | null;  // SPONSORED: «محتوى مدفوع من ‹الجهة›»
   seoKeywords?: string[];
   _count?: { comments?: number }; // approved reader comments (D-043 Stage 4)
 }

@@ -17,6 +17,7 @@ const STAFF_ROLES = ['ADMIN', 'EDITOR', 'JOURNALIST'];
 const EDITOR_ROLES = ['ADMIN', 'EDITOR'];
 const ROLES = ['ADMIN', 'EDITOR', 'JOURNALIST', 'VIEWER'];
 const STATUSES = ['DRAFT', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED'];
+const KINDS = ['NEWS', 'OPINION', 'EXPLAINER', 'SPONSORED', 'LIVE', 'VIDEO', 'GALLERY', 'CARICATURE', 'NOTICE']; // ArticleKind (D-056)
 
 type Staff = { id: string; name: string; role: string };
 const who = (req: Request) => (req as any).user as Staff;
@@ -99,7 +100,7 @@ router.get('/articles/:id', async (req: Request, res: Response) => {
 router.post('/articles', async (req: Request, res: Response) => {
   try {
     const u = who(req);
-    const { title, summary, content, categoryId, featuredImageUrl, coverCredit, coverCaption, status, seoKeywords, slug, scheduledPublishAt } = req.body || {};
+    const { title, summary, content, categoryId, featuredImageUrl, coverCredit, coverCaption, kind, sponsorName, status, seoKeywords, slug, scheduledPublishAt } = req.body || {};
     if (!title || !content || !categoryId) {
       return res.status(400).json({ error: 'title, content and categoryId are required' });
     }
@@ -117,6 +118,8 @@ router.post('/articles', async (req: Request, res: Response) => {
         featuredImageUrl: featuredImageUrl || null,
         coverCredit: String(coverCredit || '').trim().slice(0, 120) || null,
         coverCaption: String(coverCaption || '').trim().slice(0, 300) || null,
+        kind: KINDS.includes(kind) ? kind : 'NEWS',
+        sponsorName: kind === 'SPONSORED' ? String(sponsorName || '').trim().slice(0, 120) || null : null,
         categoryId,
         authorId: u.id,
         status: st,
@@ -139,8 +142,13 @@ router.put('/articles/:id', async (req: Request, res: Response) => {
       if (existing.authorId !== u.id) return res.status(403).json({ error: 'ليس لديك صلاحية على هذا المقال' });
       if (existing.status !== 'DRAFT') return res.status(403).json({ error: 'المقال غير المسوّد لا يعدّله إلا محرر' });
     }
-    const { title, summary, content, categoryId, featuredImageUrl, coverCredit, coverCaption, status, seoKeywords, scheduledPublishAt } = req.body || {};
+    const { title, summary, content, categoryId, featuredImageUrl, coverCredit, coverCaption, kind, sponsorName, status, seoKeywords, scheduledPublishAt } = req.body || {};
     const data: any = {};
+    if (kind !== undefined) {
+      if (!KINDS.includes(kind)) return res.status(400).json({ error: 'نوع المادة غير معروف' });
+      data.kind = kind;
+      data.sponsorName = kind === 'SPONSORED' ? String(sponsorName || '').trim().slice(0, 120) || null : null;
+    } else if (sponsorName !== undefined && existing.kind === 'SPONSORED') data.sponsorName = String(sponsorName || '').trim().slice(0, 120) || null;
     if (title !== undefined) data.title = title;
     if (summary !== undefined) data.summary = summary || null;
     if (content !== undefined) data.content = sanitizeArticleHtml(String(content));

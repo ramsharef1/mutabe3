@@ -8,6 +8,26 @@ import { adminFetch, jsonInit, useStaff, isEditorRole, ROLE_AR, refreshHomepage 
 import { isHtml, plain } from '../../../components/util';
 import { imgAt } from '../../../components/img';
 
+// Article kinds (ArticleKind, D-056) and the editor's templates per kind.
+type Kind = 'NEWS' | 'OPINION' | 'EXPLAINER' | 'SPONSORED' | 'LIVE' | 'VIDEO' | 'GALLERY' | 'CARICATURE' | 'NOTICE';
+const KIND_AR: Record<Kind, string> = {
+  NEWS: 'خبر', OPINION: 'رأي', EXPLAINER: 'شرح وتحليل', SPONSORED: 'محتوى مدفوع (إعلان)', LIVE: 'تغطية مباشرة',
+  VIDEO: 'فيديو', GALLERY: 'ألبوم صور', CARICATURE: 'كاريكاتير', NOTICE: 'إعلان مبوّب (وفيات/تهاني/عطاءات)',
+};
+interface Template { label: string; hint: string; kind: Kind; html: string }
+const TEMPLATES: Template[] = [
+  { label: 'عاجل', hint: 'جملة واحدة ثم ما ثبت حتى الآن', kind: 'NEWS',
+    html: '<p><strong>عاجل —</strong> [الخبر في جملة واحدة].</p><p>[التفاصيل المتوفرة حتى الآن، مع المصدر].</p><p><em>يُحدَّث الخبر تباعاً.</em></p>' },
+  { label: 'تقرير', hint: 'مقدمة، خلفية، تفاصيل، ردود فعل، ماذا بعد', kind: 'NEWS',
+    html: '<p>[المقدمة: من، ماذا، متى، أين، لماذا].</p><h2>الخلفية</h2><p>[…]</p><h2>التفاصيل</h2><p>[…]</p><h2>ردود الفعل</h2><p>[…]</p><h2>ماذا بعد؟</h2><p>[…]</p>' },
+  { label: 'تصريح', hint: 'من قال ماذا، الاقتباس، السياق', kind: 'NEWS',
+    html: '<p>قال [الاسم والصفة] إن [ملخّص التصريح]، وذلك في [المناسبة أو المكان] يوم [اليوم].</p><blockquote>[الاقتباس الحرفي]</blockquote><p>[السياق وما سبق التصريح].</p>' },
+  { label: 'شرح', hint: 'ما القصة، لماذا الآن، الأرقام، ماذا يعني لك', kind: 'EXPLAINER',
+    html: '<p>[لماذا يهم هذا الموضوع الآن].</p><h2>ما القصة؟</h2><p>[…]</p><h2>لماذا الآن؟</h2><p>[…]</p><h2>الأرقام الأساسية</h2><ul><li>[…]</li><li>[…]</li></ul><h2>ماذا يعني لك؟</h2><p>[…]</p>' },
+  { label: 'عمود رأي', hint: 'فكرة واحدة، حجج، خاتمة، توقيع الكاتب', kind: 'OPINION',
+    html: '<p>[الفكرة الرئيسية في فقرة].</p><p>[الحجة الأولى].</p><p>[الحجة الثانية].</p><p>[الخاتمة].</p><p><em>[اسم الكاتب] — كاتب في المتابع</em></p>' },
+];
+
 interface Cat { id: string; name: string }
 
 // <input type="datetime-local"> works in the browser's local time (Amman for the
@@ -36,6 +56,8 @@ export default function Editor() {
   const [featuredImageUrl, setImage] = useState('');
   const [coverCredit, setCoverCredit] = useState('');
   const [coverCaption, setCoverCaption] = useState('');
+  const [kind, setKind] = useState<Kind>('NEWS');
+  const [sponsorName, setSponsorName] = useState('');
   const [status, setStatus] = useState('DRAFT');
   const [loadedStatus, setLoadedStatus] = useState('DRAFT');
   const [when, setWhen] = useState(''); // datetime-local value for SCHEDULED
@@ -62,11 +84,15 @@ export default function Editor() {
         setContent(isHtml(c) ? c : textToHtml(c)); // seeded articles are plain text
         setCategoryId(a.categoryId || cl[0]?.id || ''); setImage(a.featuredImageUrl || '');
         setCoverCredit(a.coverCredit || ''); setCoverCaption(a.coverCaption || '');
+        setKind((KIND_AR[a.kind as Kind] ? a.kind : 'NEWS') as Kind); setSponsorName(a.sponsorName || '');
         setStatus(a.status || 'DRAFT'); setLoadedStatus(a.status || 'DRAFT');
         setWhen(toLocalInput(a.scheduledPublishAt));
         setKeywords((a.seoKeywords || []).join('، '));
       } else {
-        setCategoryId(cl[0]?.id || '');
+        // Remembered category (D-056): a desk mostly files to the same section run after run.
+        let remembered = '';
+        try { remembered = localStorage.getItem('lastCategoryId') || ''; } catch {}
+        setCategoryId(cl.some((c) => c.id === remembered) ? remembered : cl[0]?.id || '');
       }
     } catch { setErr('تعذّر التحميل.'); }
     finally { setLoading(false); }
@@ -90,6 +116,8 @@ export default function Editor() {
       featuredImageUrl: featuredImageUrl.trim() || null,
       coverCredit: coverCredit.trim() || null,
       coverCaption: coverCaption.trim() || null,
+      kind,
+      sponsorName: kind === 'SPONSORED' ? sponsorName.trim() || null : null,
       status: st,
       scheduledPublishAt,
       seoKeywords: keywords.split(/[,،]/).map((s) => s.trim()).filter(Boolean),
@@ -99,6 +127,7 @@ export default function Editor() {
       // Never navigate away on an auth failure: the article would be lost.
       if (res.status === 401) { setErr('انتهت الجلسة. افتح صفحة الدخول في نافذة أخرى، سجّل الدخول، ثم اضغط حفظ مجدداً — لن يضيع ما كتبته.'); setSaving(false); return; }
       if (!res.ok) { const j = await res.json().catch(() => ({})); setErr(j.error || 'تعذّر الحفظ.'); setSaving(false); return; }
+      try { localStorage.setItem('lastCategoryId', categoryId); } catch {}
       // Anything that is or was live changes the homepage; refresh it before leaving.
       if (editor && (st === 'PUBLISHED' || loadedStatus === 'PUBLISHED')) await refreshHomepage();
       router.replace('/dashboard');
@@ -113,11 +142,33 @@ export default function Editor() {
     finally { setImgBusy(false); }
   };
 
+  // Keyboard (D-056): Ctrl/Cmd+S saves a draft, Ctrl/Cmd+Enter publishes (editors). Hooks stay above the early
+  // returns below (hooks order); the latest handlers are reached through refs.
+  const saveRef = useRef(save); saveRef.current = save;
+  const lockRef = useRef(!editor && !isNew && loadedStatus !== 'DRAFT'); lockRef.current = !editor && !isNew && loadedStatus !== 'DRAFT';
+  const editorRef = useRef(editor); editorRef.current = editor;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key === 's' || e.key === 'S') { e.preventDefault(); if (!lockRef.current) saveRef.current(false); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (editorRef.current) saveRef.current(true); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   if (denied) return <div className="adm"><main className="adm-main"><div className="adm-err">ليس لديك صلاحية الوصول إلى لوحة التحكم.</div></main></div>;
   if (loading) return <div className="adm"><div className="adm-loading">جاري التحميل…</div></div>;
 
   // Journalists write and save drafts; publishing, scheduling and archiving are editors' calls.
   const lockedForJournalist = !editor && !isNew && loadedStatus !== 'DRAFT';
+
+  // Templates per article kind (D-056): a structured skeleton the desk fills in; replaces the body only after confirming.
+  const applyTemplate = (t: Template) => {
+    if (plain(content).trim() && !confirm('استبدال المحتوى الحالي بالقالب؟')) return;
+    setContent(t.html);
+    setKind(t.kind);
+  };
 
   return (
     <div className="adm">
@@ -126,9 +177,9 @@ export default function Editor() {
         <div className="adm-actions">
           {me && <span className="adm-user">{me.name} · {ROLE_AR[me.role]}</span>}
           {!isNew && <a className="adm-link" href={loadedStatus === 'PUBLISHED' ? `/article/${id}` : `/dashboard/preview/${id}`} target="_blank" rel="noopener">معاينة ↗</a>}
-          <button type="button" className="adm-logout" onClick={() => save(false)} disabled={saving || lockedForJournalist}>حفظ كمسودة</button>
+          <button type="button" className="adm-logout" title="Ctrl+S" onClick={() => save(false)} disabled={saving || lockedForJournalist}>حفظ كمسودة</button>
           {editor && status === 'SCHEDULED' && <button type="button" className="adm-logout" onClick={() => save()} disabled={saving}>{saving ? '…' : 'حفظ الجدولة'}</button>}
-          {editor && <button type="button" className="adm-new" onClick={() => save(true)} disabled={saving}>{saving ? '…' : 'نشر الآن'}</button>}
+          {editor && <button type="button" className="adm-new" title="Ctrl+Enter" onClick={() => save(true)} disabled={saving}>{saving ? '…' : 'نشر الآن'}</button>}
         </div>
       </header>
 
@@ -140,6 +191,26 @@ export default function Editor() {
 
         <label>العنوان<input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان المقال" /></label>
         <label>الملخّص<textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} placeholder="ملخّص قصير يظهر في القوائم ومعاينات المشاركة" /></label>
+
+        <div className="adm-row">
+          <label>نوع المادة
+            <select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
+              {(Object.keys(KIND_AR) as Kind[]).map((k) => <option key={k} value={k}>{KIND_AR[k]}</option>)}
+            </select>
+          </label>
+          {kind === 'SPONSORED' && (
+            <label>الجهة الممولة <small>(تظهر «إعلان» على البطاقة و«محتوى مدفوع من…» في المقال)</small>
+              <input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} maxLength={120} placeholder="اسم الجهة المعلِنة" />
+            </label>
+          )}
+        </div>
+
+        <div className="adm-field">
+          <span className="adm-lbl">ابدأ من قالب</span>
+          <div className="adm-templates">
+            {TEMPLATES.map((t) => <button key={t.label} type="button" onClick={() => applyTemplate(t)} title={t.hint}>{t.label}</button>)}
+          </div>
+        </div>
 
         <div className="adm-field">
           <span className="adm-lbl">المحتوى</span>
