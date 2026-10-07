@@ -2119,3 +2119,9 @@ button[type="submit"]:active, .btn-primary:active {
 .adm-templates{display:flex;flex-wrap:wrap;gap:8px}
 .adm-templates button{font:700 13px/1 var(--kufi);padding:9px 14px;border:1px solid #c9c9c9;border-radius:6px;background:#fff;color:#222;cursor:pointer}
 .adm-templates button:hover{border-color:#990000;color:#990000}
+
+/* ---- ads dashboard schedule badges (D-057) ---- */
+.adm-badge.s-always{background:#e9eef5;color:#1f3a5f}
+.adm-badge.s-scheduled{background:#fff3cd;color:#7a4b00}
+.adm-badge.s-active{background:#d8f3dc;color:#1b5e20}
+.adm-badge.s-ended{background:#eee;color:#666}

@@ -30,8 +30,9 @@ export async function writeHomepageSetting(prisma: PrismaClient, s: HomepageSett
 export async function resolveHomepage(prisma: PrismaClient, setting?: HomepageSetting) {
   const s = setting ?? (await readHomepageSetting(prisma));
   const ids = [s.heroId, ...(s.pickIds || [])].filter(Boolean) as string[];
+  // Paid material never becomes the lead story or an editor's pick (REVENUE-MAP §3, D-057).
   const rows = ids.length
-    ? await prisma.article.findMany({ where: { id: { in: ids }, status: 'PUBLISHED' }, include: ARTICLE_INCLUDE })
+    ? await prisma.article.findMany({ where: { id: { in: ids }, status: 'PUBLISHED', kind: { not: 'SPONSORED' } }, include: ARTICLE_INCLUDE })
     : [];
   const by = new Map(rows.map((a) => [a.id, a]));
   return {

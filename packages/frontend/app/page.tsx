@@ -109,7 +109,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   const demo = curated.demoBlocks; // illustrative data blocks — off from /dashboard/homepage once real content exists (F-02)
 
   // B1: every block draws from an exclusive pool so the fold never repeats a story.
-  const pool = new Pool(articles);
+  // Paid material (kind SPONSORED) stays out of the hero, lead list and ticker; it appears lower down, labelled «إعلان» (D-057).
+  const newsOnly = articles.filter((a) => a.kind !== 'SPONSORED');
+  const pool = new Pool([...newsOnly, ...articles.filter((a) => a.kind === 'SPONSORED')]);
   const hero = pool.take(1)[0];
   const leadMore = pool.take(3);
   const mid = pool.take(11);
@@ -220,10 +222,10 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         {demo ? (
           <div className="two">
             <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty /></div>
-            <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
+            <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} /></div>
           </div>
         ) : (
-          <div className="sec"><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
+          <div className="sec"><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} /></div>
         )}
 
         <AdBanner variant={1} className="adrow ad90" />
@@ -327,7 +329,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <AdBanner variant={2} className="adrow ad90" />
 
-        <MostDiscussed items={latestArticles} />
+        <MostDiscussed items={latestArticles.filter((a) => a.kind !== 'SPONSORED')} />
 
         {demo && <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>}
       </div>

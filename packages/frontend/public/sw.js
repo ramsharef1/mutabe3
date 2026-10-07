@@ -19,7 +19,7 @@ const IMAGES = `m3-img-${VERSION}`; // uploaded article photos
 const KEEP = [SHELL, STATIC, PAGES, API, IMAGES];
 const LIMIT = { [STATIC]: 300, [PAGES]: 60, [API]: 80, [IMAGES]: 150 };
 const OFFLINE = '/offline';
-const SKIP = /^\/(dashboard|auth|newsletter|api\/(admin|auth|newsletter))(\/|$)/; // newsletter: unsubscribe links carry a personal token
+const SKIP = /^\/(dashboard|auth|newsletter|api\/(admin|auth|newsletter|ads))(\/|$)/; // newsletter: unsubscribe links carry a personal token; ads: settings + delivery beacons must never be served stale (D-057)
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {

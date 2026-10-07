@@ -10,6 +10,21 @@ const MAX_BANNERS = 6;
 const MODES: AdMode[] = ['off', 'demo', 'house', 'adsense'];
 
 interface Uploaded { url: string; w?: number; h?: number }
+interface StatTotal { bannerId: string; zone: string; label: string; impressions: number; clicks: number; ctr: number; days: number }
+
+// Schedule helpers (D-057): the API stores ISO strings; the inputs want local wall-clock values.
+const pad = (n: number) => String(n).padStart(2, '0');
+const toLocal = (iso?: string) => { if (!iso) return ''; const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fromLocal = (v: string) => (v ? new Date(v).toISOString() : undefined);
+type Sched = 'always' | 'scheduled' | 'active' | 'ended';
+const scheduleState = (b: { startAt?: string; endAt?: string }): Sched => {
+  if (!b.startAt && !b.endAt) return 'always';
+  const now = Date.now();
+  if (b.startAt && new Date(b.startAt).getTime() > now) return 'scheduled';
+  if (b.endAt && new Date(b.endAt).getTime() <= now) return 'ended';
+  return 'active';
+};
+const SCHEDULE_AR: Record<Sched, string> = { always: 'دائم', scheduled: 'مجدول — لم يبدأ', active: 'نشط الآن', ended: 'منتهٍ — لا يظهر' };
 /** Pixel size of an uploaded image (stored with the banner so the site can reserve its space). */
 const measure = (url: string) => new Promise<Uploaded>((done) => {
   const im = new Image();
@@ -27,14 +42,24 @@ export default function Ads() {
   const [uploading, setUploading] = useState<string>('');
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
+  const [stats, setStats] = useState<Record<string, StatTotal>>({}); // bannerId → last-30-day delivery (D-057)
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await adminFetch('/api/admin/ads');
+    const [r, s] = await Promise.all([adminFetch('/api/admin/ads'), adminFetch('/api/admin/ads/stats?days=30')]);
     if (r.ok) setCfg((await r.json()).data as AdsConfig);
     else setErr('تعذّر تحميل إعدادات الإعلانات.');
+    if (s.ok) { const d = (await s.json()).data; setStats(Object.fromEntries((d.totals || []).map((t: StatTotal) => [t.bannerId, t]))); }
     setLoading(false);
   }, []);
+  const statsHref = `/api/admin/ads/stats.csv?days=30`;
+  const downloadCsv = async () => {
+    const r = await adminFetch(statsHref);
+    if (!r.ok) { setErr('تعذّر تنزيل التقرير.'); return; }
+    const url = URL.createObjectURL(await r.blob());
+    const a = document.createElement('a'); a.href = url; a.download = `mutabe3-ads-30d.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
   useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
 
   const setZone = (z: AdZone, patch: Partial<AdsConfig['zones'][AdZone]>) =>
@@ -77,6 +102,7 @@ export default function Ads() {
           <div className="adm-head">
             <h1>الإعلانات</h1>
             <div className="adm-actions">
+              <button type="button" className="adm-link" onClick={downloadCsv} title="أرقام الظهور والنقر لكل بانر، آخر 30 يوماً">تقرير CSV</button>
               <a className="adm-link" href="/" target="_blank" rel="noopener">عرض الموقع ↗</a>
               <button type="button" className="adm-new" onClick={save} disabled={busy || loading || !!uploading}>{busy ? '…' : 'حفظ'}</button>
             </div>
@@ -134,6 +160,16 @@ export default function Ads() {
                           {(b.w || b.mw) && <p className="adm-sub" dir="ltr">{[dims(b.w, b.h), b.mobileImage ? `mobile ${dims(b.mw, b.mh)}` : ''].filter(Boolean).join(' · ')}</p>}
                           <label>رابط الإعلان<input value={b.href} onChange={(e) => setBanner(z, i, { href: e.target.value.trim() })} placeholder="https://…" dir="ltr" /></label>
                           <label>اسم المعلن (نص بديل للصورة)<input value={b.alt} onChange={(e) => setBanner(z, i, { alt: e.target.value })} maxLength={120} /></label>
+                          {/* D-057: campaign label, schedule and delivery numbers */}
+                          <label>اسم الحملة / المعلن (للتقارير)<input value={b.label || ''} onChange={(e) => setBanner(z, i, { label: e.target.value })} maxLength={80} placeholder="مثال: بنك X — حملة تشرين" /></label>
+                          <div className="adm-inline wrap">
+                            <label>يبدأ<input type="datetime-local" value={toLocal(b.startAt)} onChange={(e) => setBanner(z, i, { startAt: fromLocal(e.target.value) })} /></label>
+                            <label>ينتهي<input type="datetime-local" value={toLocal(b.endAt)} onChange={(e) => setBanner(z, i, { endAt: fromLocal(e.target.value) })} /></label>
+                            <span className={`adm-badge s-${scheduleState(b)}`}>{SCHEDULE_AR[scheduleState(b)]}</span>
+                          </div>
+                          <p className="adm-sub">
+                            آخر 30 يوماً: {b.id && stats[b.id] ? <>ظهور <b>{stats[b.id].impressions.toLocaleString('en')}</b> · نقر <b>{stats[b.id].clicks.toLocaleString('en')}</b> · CTR <b>{stats[b.id].ctr}%</b></> : 'لا بيانات بعد — يبدأ العدّ مع أول ظهور على الموقع'}
+                          </p>
                           <div className="adm-inline wrap">
                             <label className="adm-logout">{uploading === `${z}-${i}` ? 'جاري الرفع…' : 'تغيير الصورة'}<input type="file" accept="image/*" hidden onChange={pick(`${z}-${i}`, (u) => setBanner(z, i, { image: u.url, w: u.w, h: u.h }))} /></label>
                             <label className="adm-logout">{uploading === `${z}-${i}-m` ? 'جاري الرفع…' : b.mobileImage ? 'تغيير صورة الموبايل' : 'صورة للموبايل (اختياري)'}<input type="file" accept="image/*" hidden onChange={pick(`${z}-${i}-m`, (u) => setBanner(z, i, { mobileImage: u.url, mw: u.w, mh: u.h }))} /></label>

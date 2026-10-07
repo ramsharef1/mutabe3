@@ -9,7 +9,8 @@ import { startScheduler } from './scheduler';
 import { resolveHomepage } from './homepage';
 import readerRoutes from './routes/readers';
 import { ensurePolls } from './polls';
-import { readAds } from './ads';
+import { readAds, recordAdEvents, flushAdStats } from './ads';
+import { allow } from './ratelimit';
 
 // Approved reader comments only (D-043 Stage 4) — pending/rejected rows and emails never leave the API
 const APPROVED_COMMENTS = { _count: { select: { comments: { where: { status: 'APPROVED' as const } } } } };
@@ -209,10 +210,22 @@ app.get('/api/homepage', async (_req: Request, res: Response) => {
 // Ad zones (off / demo / house banners / AdSense) — read by the Next layout and /ads.txt (D-043 Stage 5)
 app.get('/api/ads', async (_req: Request, res: Response) => {
   try {
-    res.json({ success: true, data: await readAds(prisma) });
+    res.json({ success: true, data: await readAds(prisma, { activeOnly: true }) }); // scheduled banners only while active (D-057)
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
+});
+
+// POST /api/ads/ev — delivery beacons from the page: {"events":[{zone,bannerId,type:"view"|"click"}]} (D-057).
+// sendBeacon posts text/plain, so parse the body here; bots and bursts are dropped; nothing identifies the reader.
+const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime/i;
+app.post('/api/ads/ev', express.text({ type: '*/*', limit: '8kb' }), (req: Request, res: Response) => {
+  try {
+    if (BOT_UA.test(String(req.headers['user-agent'] || ''))) return res.status(204).end();
+    if (!allow(`ae:${req.ip || 'unknown'}`, 120, 10 * 60_000)) return res.status(204).end();
+    recordAdEvents(typeof req.body === 'string' ? JSON.parse(req.body) : req.body);
+  } catch { /* malformed beacon: ignore */ }
+  res.status(204).end();
 });
 
 // Auth routes
@@ -275,9 +288,16 @@ app.listen(port, () => {
   startScheduler(prisma);
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down...');
+// Graceful shutdown (systemd sends SIGTERM on deploy; Ctrl-C sends SIGINT).
+// Ad beacons are counted in memory and written once a minute, so flush them before leaving.
+let shuttingDown = false;
+const shutdown = async (signal: string) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`\n🛑 ${signal}: shutting down...`);
+  try { await flushAdStats(prisma); } catch (e) { console.error('ad stats flush on shutdown:', e); }
   await prisma.$disconnect();
   process.exit(0);
-});
+};
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));

@@ -3,8 +3,9 @@
 
 export type AdZone = 'header' | 'inline' | 'article' | 'sidebar';
 export type AdMode = 'off' | 'demo' | 'house' | 'adsense';
-/** w/h (mw/mh for the mobile image): pixel size measured at upload, used to reserve space before the image loads. */
-export interface HouseBanner { image: string; mobileImage?: string; href: string; alt: string; w?: number; h?: number; mw?: number; mh?: number }
+/** w/h (mw/mh for the mobile image): pixel size measured at upload, used to reserve space before the image loads.
+ *  id/label/startAt/endAt (D-057): delivery counting id, advertiser or campaign name, optional schedule (ISO). */
+export interface HouseBanner { id?: string; label?: string; startAt?: string; endAt?: string; image: string; mobileImage?: string; href: string; alt: string; w?: number; h?: number; mw?: number; mh?: number }
 export interface ZoneSetting { mode: AdMode; unit: string; banners: HouseBanner[] }
 export interface AdsConfig {
   adsense: { client: string; auto: boolean };

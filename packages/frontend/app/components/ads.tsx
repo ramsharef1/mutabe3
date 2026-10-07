@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { AdsConfig, AdZone, DEFAULT_ADS, needsAdsense } from './adsConfig';
+import { AdsConfig, AdZone, DEFAULT_ADS, HouseBanner, needsAdsense } from './adsConfig';
 
 // Ad slots driven by /dashboard/ads (D-043 Stage 5). The root layout reads the
 // settings on the server and hands them down here, so the first HTML already
@@ -53,25 +53,58 @@ const DEMO = [
   { bg: 'linear-gradient(100deg,#0a3d91,#1e88e5)', mark: 'ج', markBg: '#fff', markFg: '#0d47a1', t: 'الجامعة الأهلية', s: 'التسجيل مفتوح للفصل الأول 2026/2027', cta: 'سجّل الآن' },
 ];
 
+/* ---------- delivery beacons (D-057 / ANALYTICS-PLAN §5) ----------
+ * One `view` per banner per page view once the slot has been ≥50% visible for a full second
+ * (the IAB/MRC viewability floor), one `click` per click. Sent with sendBeacon so navigation
+ * never waits; nothing about the reader travels with it. Never fired inside the dashboard. */
+function adBeacon(zone: AdZone, bannerId: string, type: 'view' | 'click') {
+  try {
+    const body = JSON.stringify({ events: [{ zone, bannerId, type }] });
+    if (!(navigator.sendBeacon && navigator.sendBeacon('/api/ads/ev', body))) fetch('/api/ads/ev', { method: 'POST', body, keepalive: true }).catch(() => {});
+  } catch {}
+}
+
+function HouseSlot({ zone, b, className, live }: { zone: AdZone; b: HouseBanner; className: string; live: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const seen = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !live || !b.id || seen.current || typeof IntersectionObserver === 'undefined') return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const io = new IntersectionObserver((entries) => {
+      const visible = entries[0]?.isIntersecting && document.visibilityState === 'visible';
+      if (visible && !timer) {
+        timer = setTimeout(() => { if (!seen.current) { seen.current = true; adBeacon(zone, b.id!, 'view'); io.disconnect(); } }, 1000);
+      } else if (!visible && timer) { clearTimeout(timer); timer = null; }
+    }, { threshold: 0.5 });
+    io.observe(el);
+    // A page opened in a background tab reports `hidden` on the first intersection; re-evaluate when it is shown.
+    const onVis = () => { if (document.visibilityState === 'visible' && !seen.current) { io.unobserve(el); io.observe(el); } };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { io.disconnect(); document.removeEventListener('visibilitychange', onVis); if (timer) clearTimeout(timer); };
+  }, [zone, b.id, live]);
+  return (
+    <div ref={ref} className={`adslot house ${className}`}>
+      <a href={b.href} target="_blank" rel="sponsored noopener" onClick={() => { if (live && b.id) adBeacon(zone, b.id, 'click'); }}>
+        <span className="tag">إعلان</span>
+        <picture>
+          {b.mobileImage && <source media="(max-width: 767px)" srcSet={b.mobileImage} width={b.mw} height={b.mh} />}
+          {/* width/height reserve the space; without them (older entries) load eagerly so the slot can't stay 0×0 */}
+          <img src={b.image} alt={b.alt || 'إعلان'} width={b.w} height={b.h} loading={b.w && zone !== 'header' ? 'lazy' : 'eager'} />
+        </picture>
+      </a>
+    </div>
+  );
+}
+
 /** Shared non-demo rendering for a zone: house banner or AdSense unit (null when off/unconfigured). */
 function ZoneAd({ zone, variant, className, fixed }: { zone: AdZone; variant: number; className: string; fixed?: [number, number] }) {
   const { config, live } = useContext(Ctx);
   const z = config.zones[zone];
   if (z.mode === 'house') {
     const b = z.banners.length ? z.banners[variant % z.banners.length] : null;
-    if (!b) return null;
-    return (
-      <div className={`adslot house ${className}`}>
-        <a href={b.href} target="_blank" rel="sponsored noopener">
-          <span className="tag">إعلان</span>
-          <picture>
-            {b.mobileImage && <source media="(max-width: 767px)" srcSet={b.mobileImage} width={b.mw} height={b.mh} />}
-            {/* width/height reserve the space; without them (older entries) load eagerly so the slot can't stay 0×0 */}
-            <img src={b.image} alt={b.alt || 'إعلان'} width={b.w} height={b.h} loading={b.w && zone !== 'header' ? 'lazy' : 'eager'} />
-          </picture>
-        </a>
-      </div>
-    );
+    if (!b) return null; // every scheduled banner of this zone is outside its dates → the slot collapses
+    return <HouseSlot zone={zone} b={b} className={className} live={live} />;
   }
   if (z.mode === 'adsense' && config.adsense.client && z.unit) {
     return (

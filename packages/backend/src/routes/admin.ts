@@ -6,7 +6,7 @@ import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES, UPLOAD_URL, uplo
 import { hashPassword } from '../auth';
 import { readHomepageSetting, writeHomepageSetting, resolveHomepage, MAX_PICKS, HomepageSetting } from '../homepage';
 import readerAdmin from './adminReaders';
-import { readAds, parseAds, writeAds } from '../ads';
+import { readAds, parseAds, writeAds, adStats } from '../ads';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -443,7 +443,24 @@ router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: 
 // Ad zones, AdSense ids and ads.txt (D-043 Stage 5). Admin only: this is the site's revenue setup.
 router.get('/ads', requireRole('ADMIN'), async (_req: Request, res: Response) => {
   try {
-    res.json({ success: true, data: await readAds(prisma) });
+    res.json({ success: true, data: await readAds(prisma) }); // all banners, scheduled or not
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
+// GET /api/admin/ads/stats?days=30 — delivery counts per banner (D-057); .csv for advertiser reports.
+const statDays = (q: unknown) => Math.min(365, Math.max(1, parseInt(String(q || '30'), 10) || 30));
+router.get('/ads/stats', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try { res.json({ success: true, data: await adStats(prisma, statDays(req.query.days)) }); }
+  catch (e) { res.status(500).json({ error: String(e) }); }
+});
+router.get('/ads/stats.csv', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const s = await adStats(prisma, statDays(req.query.days));
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = ['day,zone,bannerId,label,impressions,clicks', ...s.daily.map((r) => [r.day, r.zone, r.bannerId, s.totals.find((t) => t.bannerId === r.bannerId)?.label || '', r.impressions, r.clicks].map(esc).join(','))];
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="mutabe3-ads-${s.since}-${s.days}d.csv"`);
+    res.send('﻿' + lines.join('\r\n'));
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { PrismaClient, Prisma } from '@prisma/client';
 
 // Ad placements live in SiteSetting["ads"] (D-043 Stage 5). The site has four
@@ -14,7 +15,12 @@ export type Zone = (typeof ZONES)[number];
 export type Mode = (typeof MODES)[number];
 // w/h (and mw/mh for the mobile image) are the pixel sizes measured at upload, so
 // the page can reserve the banner's space before the image arrives.
-export interface HouseBanner { image: string; mobileImage?: string; href: string; alt: string; w?: number; h?: number; mw?: number; mh?: number }
+// id/label/startAt/endAt (D-057): a stable id for delivery counts, the advertiser or campaign name,
+// and an optional schedule — the public endpoint serves a banner only while it is active.
+export interface HouseBanner {
+  id: string; label?: string; startAt?: string; endAt?: string;
+  image: string; mobileImage?: string; href: string; alt: string; w?: number; h?: number; mw?: number; mh?: number;
+}
 export interface ZoneSetting { mode: Mode; unit: string; banners: HouseBanner[] }
 export interface AdsSetting {
   adsense: { client: string; auto: boolean };
@@ -32,6 +38,21 @@ export const defaultAds = (): AdsSetting => ({
 
 const str = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max);
 const px = (v: unknown) => { const n = Number(v); return Number.isInteger(n) && n > 0 && n <= 5000 ? n : undefined; };
+const ID_RE = /^[A-Za-z0-9_-]{4,32}$/;
+// RegExp.test() coerces undefined to the string "undefined" (which matches ID_RE), hence the type check.
+const isId = (v: unknown): v is string => typeof v === 'string' && ID_RE.test(v) && v !== 'undefined' && v !== 'null';
+export const newBannerId = () => crypto.randomBytes(6).toString('base64url');
+const iso = (v: unknown): string | undefined => { const s = str(v, 40); if (!s) return undefined; const t = new Date(s).getTime(); return Number.isNaN(t) ? undefined : new Date(t).toISOString(); };
+/** Active now = no schedule, or startAt ≤ now < endAt (either bound optional). */
+export const isActiveNow = (b: { startAt?: string; endAt?: string }, now = new Date()) =>
+  (!b.startAt || new Date(b.startAt) <= now) && (!b.endAt || now < new Date(b.endAt));
+const withMeta = (b: any, base: Omit<HouseBanner, 'id'>): HouseBanner => ({
+  id: isId(b?.id) ? b.id : newBannerId(),
+  ...(str(b?.label, 80) ? { label: str(b?.label, 80) } : {}),
+  ...(iso(b?.startAt) ? { startAt: iso(b?.startAt) } : {}),
+  ...(iso(b?.endAt) ? { endAt: iso(b?.endAt) } : {}),
+  ...base,
+});
 const IMAGE = /^(\/api\/uploads\/[\w./-]+|https:\/\/[^\s"'<>]+)$/;
 const HREF = /^(https?:\/\/|\/)[^\s"'<>]*$/;
 const CLIENT = /^ca-pub-\d{10,20}$/;
@@ -49,7 +70,9 @@ function normalize(v: any): AdsSetting {
     d.zones[z] = {
       mode: MODES.includes(s.mode) ? s.mode : 'demo',
       unit: UNIT.test(s.unit) ? s.unit : '',
-      banners: Array.isArray(s.banners) ? s.banners.filter((b: any) => b && IMAGE.test(b.image) && HREF.test(b.href)).slice(0, MAX_BANNERS) : [],
+      banners: Array.isArray(s.banners)
+        ? s.banners.filter((b: any) => b && IMAGE.test(b.image) && HREF.test(b.href)).slice(0, MAX_BANNERS).map((b: any) => withMeta(b, b))
+        : [],
     };
   }
   d.adsTxt = typeof v.adsTxt === 'string' ? v.adsTxt : '';
@@ -57,9 +80,18 @@ function normalize(v: any): AdsSetting {
   return d;
 }
 
-export async function readAds(prisma: PrismaClient): Promise<AdsSetting> {
+/** Stored settings. `activeOnly` (public endpoint) drops banners outside their schedule; the dashboard sees all. */
+export async function readAds(prisma: PrismaClient, opts: { activeOnly?: boolean } = {}): Promise<AdsSetting> {
   const row = await prisma.siteSetting.findUnique({ where: { key: ADS_KEY } });
-  return normalize(row?.value);
+  const s = normalize(row?.value);
+  // Banners saved before D-057 have no id: persist the ids normalize() just generated so counts stay attached to one banner.
+  const raw: any = row?.value;
+  if (raw && ZONES.some((z) => (raw?.zones?.[z]?.banners || []).some((b: any) => !isId(b?.id)))) await writeAds(prisma, s);
+  if (opts.activeOnly) {
+    const now = new Date();
+    for (const z of ZONES) s.zones[z].banners = s.zones[z].banners.filter((b) => isActiveNow(b, now));
+  }
+  return s;
 }
 
 /**
@@ -68,6 +100,8 @@ export async function readAds(prisma: PrismaClient): Promise<AdsSetting> {
  */
 export function parseAds(body: any): { ok: true; value: AdsSetting } | { ok: false; error: string } {
   const out = defaultAds();
+  // A body without `zones` would silently reset every zone to demo; the dashboard always sends the full object.
+  if (!body || typeof body !== 'object' || !body.zones || typeof body.zones !== 'object') return { ok: false, error: 'إعدادات الإعلانات غير مكتملة — أعد تحميل الصفحة وحاول مجدداً.' };
   const client = str(body?.adsense?.client, 40);
   if (client && !CLIENT.test(client)) return { ok: false, error: 'معرّف الناشر في AdSense يكون بالشكل ca-pub-1234567890123456' };
   out.adsense = { client, auto: !!body?.adsense?.auto };
@@ -93,11 +127,13 @@ export function parseAds(body: any): { ok: true; value: AdsSetting } | { ok: fal
       if (mobileImage && !IMAGE.test(mobileImage)) return { ok: false, error: `${LABEL[z]}: صورة الموبايل غير صالحة.` };
       if (!HREF.test(href)) return { ok: false, error: `${LABEL[z]}: رابط البانر يجب أن يبدأ بـ https:// أو /` };
       const w = px(b?.w), h = px(b?.h), mw = px(b?.mw), mh = px(b?.mh);
-      banners.push({
+      const startAt = iso(b?.startAt), endAt = iso(b?.endAt);
+      if (startAt && endAt && new Date(endAt) <= new Date(startAt)) return { ok: false, error: `${LABEL[z]}: تاريخ انتهاء البانر قبل تاريخ بدايته.` };
+      banners.push(withMeta(b, {
         image, href, alt: str(b?.alt, 120),
         ...(w && h ? { w, h } : {}),
         ...(mobileImage ? { mobileImage, ...(mw && mh ? { mw, mh } : {}) } : {}),
-      });
+      }));
     }
     if (mode === 'house' && !banners.length) return { ok: false, error: `${LABEL[z]}: أضف بانراً واحداً على الأقل أو اختر وضعاً آخر.` };
     out.zones[z] = { mode, unit: mode === 'adsense' ? unit : UNIT.test(unit) ? unit : '', banners };
@@ -116,4 +152,66 @@ export async function writeAds(prisma: PrismaClient, s: AdsSetting): Promise<Ads
   const json = value as unknown as Prisma.InputJsonObject;
   await prisma.siteSetting.upsert({ where: { key: ADS_KEY }, update: { value: json }, create: { key: ADS_KEY, value: json } });
   return value;
+}
+
+/* ───────────────────────────── delivery counts (D-057) ─────────────────────────────
+ * The page beacons one `view` per banner per page view (viewable: ≥50% for 1 s) and one `click`
+ * per click. Events are aggregated in memory and flushed to AdStatDaily by the scheduler tick,
+ * so a burst of readers costs one upsert per banner per minute, not one write per event. */
+export type AdEventType = 'view' | 'click';
+export interface AdEvent { zone: Zone; bannerId: string; type: AdEventType }
+const pending = new Map<string, { day: string; zone: Zone; bannerId: string; impressions: number; clicks: number }>();
+const dayKey = (d = new Date()) => d.toISOString().slice(0, 10);
+
+/** Validate and queue a batch of events from one request (at most 20; unknown zones/ids dropped). */
+export function recordAdEvents(raw: unknown): number {
+  const events = Array.isArray((raw as any)?.events) ? (raw as any).events.slice(0, 20) : [];
+  let n = 0;
+  for (const e of events) {
+    const zone = e?.zone, bannerId = e?.bannerId, type = e?.type;
+    if (!ZONES.includes(zone) || !isId(bannerId) || (type !== 'view' && type !== 'click')) continue;
+    const day = dayKey();
+    const k = `${day}|${zone}|${bannerId}`;
+    const row = pending.get(k) || { day, zone, bannerId, impressions: 0, clicks: 0 };
+    if (type === 'view') row.impressions++; else row.clicks++;
+    pending.set(k, row);
+    n++;
+  }
+  return n;
+}
+
+/** Write queued counts to the daily table. Called by the scheduler every minute. */
+export async function flushAdStats(prisma: PrismaClient) {
+  if (!pending.size) return 0;
+  const rows = [...pending.values()];
+  pending.clear();
+  for (const r of rows) {
+    const day = new Date(`${r.day}T00:00:00.000Z`);
+    await prisma.adStatDaily.upsert({
+      where: { day_zone_bannerId: { day, zone: r.zone, bannerId: r.bannerId } },
+      update: { impressions: { increment: r.impressions }, clicks: { increment: r.clicks } },
+      create: { day, zone: r.zone, bannerId: r.bannerId, impressions: r.impressions, clicks: r.clicks },
+    });
+  }
+  return rows.length;
+}
+
+/** Last `days` days of counts per banner, joined with the banner's current label/zone for the dashboard and the CSV. */
+export async function adStats(prisma: PrismaClient, days = 30) {
+  const since = new Date(Date.now() - days * 24 * 60 * 60_000); since.setUTCHours(0, 0, 0, 0);
+  const rows = await prisma.adStatDaily.findMany({ where: { day: { gte: since } }, orderBy: [{ day: 'asc' }] });
+  const settings = await readAds(prisma);
+  const meta = new Map<string, { zone: Zone; label: string; alt: string; startAt?: string; endAt?: string; active: boolean }>();
+  for (const z of ZONES) for (const b of settings.zones[z].banners) meta.set(b.id, { zone: z, label: b.label || '', alt: b.alt, startAt: b.startAt, endAt: b.endAt, active: isActiveNow(b) });
+  const totals = new Map<string, { bannerId: string; zone: string; label: string; impressions: number; clicks: number; days: number }>();
+  for (const r of rows) {
+    const t = totals.get(r.bannerId) || { bannerId: r.bannerId, zone: r.zone, label: meta.get(r.bannerId)?.label || meta.get(r.bannerId)?.alt || '', impressions: 0, clicks: 0, days: 0 };
+    t.impressions += r.impressions; t.clicks += r.clicks; t.days++;
+    totals.set(r.bannerId, t);
+  }
+  return {
+    since: since.toISOString().slice(0, 10), days,
+    daily: rows.map((r) => ({ day: r.day.toISOString().slice(0, 10), zone: r.zone, bannerId: r.bannerId, impressions: r.impressions, clicks: r.clicks })),
+    totals: [...totals.values()].map((t) => ({ ...t, ctr: t.impressions ? +(100 * t.clicks / t.impressions).toFixed(2) : 0, ...(meta.get(t.bannerId) || {}) })),
+  };
 }

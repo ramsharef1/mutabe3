@@ -300,3 +300,19 @@ model PollVote {
 
   @@unique([pollId, voterHash])
 }
+
+// Ad delivery counts (D-057 / ANALYTICS-PLAN §5): one row per day × zone × banner, first-party and
+// consent-independent. Views are viewable impressions (≥50% visible for 1 s) reported once per
+// banner per page view; clicks are beaconed before the navigation. The media kit and advertiser
+// reports read these rows; GA4 is only the second source.
+model AdStatDaily {
+  id          String   @id @default(cuid())
+  day         DateTime @db.Date
+  zone        String
+  bannerId    String
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+
+  @@unique([day, zone, bannerId])
+  @@index([bannerId, day])
+}
