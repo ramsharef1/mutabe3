@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · web push for عاجل (D-072)
+
+- **Deployed off (743d2b7):** opt-in button (footer + عاجل bar), service-worker alerts, `/dashboard/push` with confirm + 10-minute gap, keys sealed in the DB, endpoints limited to real push services.
+- **Verified:** delivery through the real send code to an HTTPS fake push service, payload decrypted; production endpoints answer «off».
+- **Waiting:** Rami switches it on and tests on a real phone (PLAN Q11).
+
+---
+
 ## 2026-10-08 · Claude Code · Arabic search (D-071)
 
 - **Shipped (8acfd6f):** normalised search text per article, prefix-aware stems, relevance ranking, «هل تقصد…». No database extension needed.

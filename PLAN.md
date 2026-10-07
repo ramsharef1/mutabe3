@@ -30,7 +30,7 @@ Build order chosen by Rami 2026-10-08 ("everything"), one slice at a time, each 
 1. **Real people and data:** ✅ author profiles live (D-067, opt-in by job title). Demo data blocks are already behind the demo switch (D-052); sourcing live feeds (FX, roads, obituaries) not started.
 2. **Content types:** ✅ video, caricature and live blog live (D-068).
 3. **Ops:** ~~weekly conditional kernel reboot~~ — dropped 2026-10-08; reboots on request (Q8).
-4. **Weeks 9–12 · grow:** ✅ in-admin analytics (D-069), ✅ Lighthouse pass (D-070: mobile 95–97, accessibility 97–100), ✅ Arabic search (D-071); next: web push for عاجل.
+4. **Weeks 9–12 · grow:** ✅ in-admin analytics (D-069), ✅ Lighthouse pass (D-070: mobile 95–97, accessibility 97–100), ✅ Arabic search (D-071), ✅ web push for عاجل built, off until Q11 (D-072).
 5. **Remaining security:** Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02), non-root deploy user + pinned host key (S-07).
 Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design answers (Q10).
 
@@ -46,9 +46,10 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 - **Q8 · Kernel reboots** — **changed 2026-10-08: on request.** The Sunday digest shows «إعادة تشغيل مطلوبة نعم/لا» with the kernel versions; when it says yes, Rami asks and a session runs the `reboot` ops action with the D-062 pre-flight and checks from outside. No unattended reboot while there is no real-time uptime alert (Q7); revisit once one exists.
 - **Q9 · Demo articles** — **answered 2026-10-08: after ~20 real articles** are published, then delete the 19 demo articles and switch the demo blocks off.
 - **Q10 · Ink & Signal sign-off** — **answered 2026-10-08: Rami shares the review page** (https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6) with the client and passes on their answers to the three questions. *Yes → merge `worktree-ink-skin` and make ink the default.*
+- **Q11 · Web push for «عاجل»** — built and deployed **off** (D-072). *Rami:* open `/dashboard/push` → «تشغيل التنبيهات», tap «فعّل تنبيهات عاجل» in the site footer on a phone (Android Chrome, or the installed app on iPhone), then send one test alert from the dashboard. Switching it on shows the opt-in button to all readers; nobody is prompted automatically.
 
 ## Resume point
 
-Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 statistics, D-070 Lighthouse pass and D-071 Arabic search live. Next: web push for عاجل (last of item 4), then item 5 (remaining security). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
+Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 statistics, D-070 Lighthouse pass, D-071 Arabic search live; D-072 web push deployed and off (Q11). Next: item 5 (remaining security). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
 **Last updated:** 2026-10-08 (answers to Q2–Q4, Q7–Q10) (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
