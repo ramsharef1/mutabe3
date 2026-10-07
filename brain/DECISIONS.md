@@ -2,6 +2,11 @@
 
 ## 2026-10-07
 
+**D-063: Postgres reachable only from the server itself**
+- **Decided by:** Rami 2026-10-07 ("close the port"), after the post-reboot probe of D-062.
+- **How (ops action `restrict-postgres`):** refuse if any client outside the server is connected now (pg_stat_activity, established TCP) or firewalld is off / a zone accepts everything; otherwise remove the `postgresql` service and any `5432` port from firewalld's active zones, runtime and permanent, without `--reload` (fail2ban's runtime bans stay). Postgres is not restarted and its config is untouched; loopback is never filtered, so every local app keeps its connection. Zone and `pg_hba.conf` copies under `/root/ops-backups/D-063-<ts>/`; rollback printed.
+- **Status:** in progress · 2026-10-07
+
 **D-062: Reboot of the shared VPS into kernel 687.54.1**
 - **Decided by:** Rami 2026-10-07 ("reboot now"), choosing *now* over the 04:30 Amman window proposed in D-061.
 - **How (ops actions `reboot` then `post-reboot-check`):** pre-flight aborts without rebooting if the boot default is not the newest kernel, a running service is not enabled at boot, a long-lived process lives in a login session (nohup/screen — would not come back), a docker container lacks a restart policy, or dnf/rpm/pg_dump/tar/certbot/a backup unit is mid-run. It saves the running-service list to `/root/ops-backups/D-062-<ts>/running-before.txt` and schedules `systemctl reboot` 20 s out (`systemd-run`) so the SSH session ends cleanly. The previous kernel stays in the boot menu (fallback through the hPanel console). Baseline from outside before the reboot: mutabe3.news, okath.news, convertec.cloud, euroarabs.com, dawoodcenter.com, mafhomhub.com, webhubteam.com, questionnaires/touresim.convertec.cloud 200; wbsjo.org 307.
