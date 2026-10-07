@@ -3,8 +3,12 @@ import { Noto_Kufi_Arabic, Noto_Naskh_Arabic } from 'next/font/google';
 import { fetchAds } from './lib/ads';
 import { AdsProvider } from './components/ads';
 import { PwaRegister } from './components/pwa';
-import { Analytics, GTM_ID } from './components/analytics';
+import { Analytics } from './components/analytics';
 import './globals.css';
+
+// Read the id here on the server: importing a value from a 'use client' module into a server component
+// yields a client-reference object (always truthy), which would emit the consent snippet unconditionally.
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || '';
 
 // Self-hosted via next/font (B11). Amiri is loaded only by the article page.
 const kufi = Noto_Kufi_Arabic({ subsets: ['arabic'], weight: ['700'], variable: '--font-kufi', display: 'swap' });
