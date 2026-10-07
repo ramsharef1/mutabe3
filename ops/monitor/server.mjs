@@ -4,7 +4,7 @@
 // heartbeat: if the Sunday mail stops arriving, the schedule itself has stopped.
 //   node ops/monitor/server.mjs facts.txt        env: SSH_OK=0|1  TLS_DAYS=<n>  WEEKLY=1  DRY_RUN=1
 import fs from 'node:fs';
-import { api, raise, resolve, openIssue, ensureLabels, footer, summary, today, days, hours } from './lib.mjs';
+import { api, raise, resolve, openIssue, ensureLabels, footer, summary, today, days, hours, count } from './lib.mjs';
 
 const T = { diskPct: 90, diskClearPct: 85, dumpAgeH: 30, dumpMinKb: 10, uploadsArchiveD: 10, tlsDays: 14 };
 const DAILY = 20 * 60; // reminder cadence (minutes) for issues that stay open across daily runs
@@ -126,8 +126,8 @@ const rows = has
       ['الخدمات', `backend ${v('unit_backend')} · frontend ${v('unit_frontend')} · nginx ${v('unit_nginx')} · postgres ${v('unit_postgres')} · إعادات تشغيل ${v('restarts_backend')}/${v('restarts_frontend')}`],
       ['القرص', `${mountRows || '—'} · inodes ${v('inode_root_pct')}%`],
       ['الذاكرة', `${v('mem_avail_mb')} MB متاحة من ${v('mem_total_mb')} · swap ${v('swap_used_mb')} MB`],
-      ['الحمل', `${v('load1')} على ${v('cpus')} أنوية · الخادم يعمل منذ ${v('uptime_days')} يوم`],
-      ['النسخ الاحتياطي', `${v('dump_newest')} · منذ ${v('dump_age_h')} س · ${v('dump_size_kb')} KB · ${f.dump_valid === 'yes' ? 'صالحة' : 'غير صالحة'} · ${v('dump_count')} نسخة · ${v('backups_total')} · المؤقّت ${v('backup_timer')} · التالي ${v('backup_next')}`],
+      ['الحمل', `${v('load1')} على ${count(num('cpus'), ['نواة واحدة', 'نواتين', 'أنوية', 'نواة'])} · الخادم يعمل منذ ${v('uptime_days')} يوم`],
+      ['النسخ الاحتياطي', `${v('dump_newest')} · منذ ${hours(num('dump_age_h'))} · ${v('dump_size_kb')} KB · ${f.dump_valid === 'yes' ? 'صالحة' : 'غير صالحة'} · ${count(num('dump_count'), ['نسخة واحدة', 'نسختان', 'نسخ', 'نسخة'])} · ${v('backups_total')} · المؤقّت ${v('backup_timer')} · التالي ${v('backup_next')}`],
       ['أرشيف الرفع', `منذ ${f.uploads_archive_age_d === 'none' ? '— (لا أرشيف)' : days(num('uploads_archive_age_d'))} · الوسائط ${v('uploads_total')}`],
       ['قاعدة البيانات', `${v('db_size_mb')} MB · ${v('articles_published')} مادة منشورة · +${v('articles_7d')} خلال 7 أيام`],
       ['الشهادة', Number.isFinite(tlsDays) ? `تنتهي بعد ${days(tlsDays)}` : '—'],
