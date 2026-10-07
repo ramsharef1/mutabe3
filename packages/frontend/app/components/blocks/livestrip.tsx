@@ -30,13 +30,13 @@ export function LiveStrip({ current }: { current?: CurrentLive | null }) {
     return () => clearInterval(t);
   }, [id]);
 
-  // Client-only: relative timestamps make SSR/hydration diverge, so render after
-  // mount. This also means the recency check and Date.now() run only on the client.
-  if (!mounted || !entries?.length) return null;
+  // Rendered on the server (D-070): inserting it after mount pushed the page down by ~160 px (CLS 0.11).
+  // Only the relative "منذ …" text waits for mount — it is inline, so filling it in moves nothing.
+  if (!entries?.length) return null;
   const latest = entries[0];
-  // "Live" must mean recent — hide the banner once the last update ages out
-  // (real editorial cadence decides this; 6h is a safe demo window).
-  const ageMin = (Date.now() - new Date(latest.at).getTime()) / 60000;
+  // "Live" must mean recent — real coverage is already limited to 12 h by /api/live/current; the demo
+  // story is generated relative to load time. The check stays client-side for a page left open for hours.
+  const ageMin = mounted ? (Date.now() - new Date(latest.at).getTime()) / 60000 : 0;
   if (ageMin > 6 * 60) return null;
 
   const toggle = () => {
@@ -54,9 +54,9 @@ export function LiveStrip({ current }: { current?: CurrentLive | null }) {
         <span className="badge"><i />مباشر</span>
         <span className="txt">
           <span className="ttl">{current ? title : `تطور القصة: ${title}`}</span>
-          <span className="upd"><time>{fmtTime(latest.at)}</time>{latest.title || latest.text}</span>
+          <span className="upd"><time suppressHydrationWarning>{fmtTime(latest.at)}</time>{latest.title || latest.text}</span>
         </span>
-        <span className="meta">{count} تحديثات · {ago(latest.at)}</span>
+        <span className="meta">{count} تحديثات{mounted ? ` · ${ago(latest.at)}` : ''}</span>
       </a>
       <button type="button" className={`follow ${following ? 'on' : ''}`} onClick={toggle} aria-pressed={following}>
         {following ? '✓ تتابع' : '+ تابِع'}

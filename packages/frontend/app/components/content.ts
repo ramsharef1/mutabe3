@@ -66,7 +66,7 @@ export const isLive = (id?: string) => !!(id && LIVE[id]);
 /** Coverage running now: a LIVE article not yet ended (D-068), or the demo story while it is seeded. */
 export const liveNow = (a?: { id?: string; kind?: string; liveEndedAt?: string | null } | null) =>
   !!a && ((a.kind === 'LIVE' && !a.liveEndedAt) || isLive(a.id));
-export const fmtTime = (d: string) => {
-  const x = new Date(d);
-  return `${String(x.getHours()).padStart(2, '0')}:${String(x.getMinutes()).padStart(2, '0')}`;
-};
+// Newsroom clock (Amman), the same on the server and in every reader's browser — so server-rendered
+// times hydrate without a mismatch (D-070) and readers abroad see the desk's time, as the dashboard does.
+const AMMAN_HM = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Amman' });
+export const fmtTime = (d: string) => AMMAN_HM.format(new Date(d));
