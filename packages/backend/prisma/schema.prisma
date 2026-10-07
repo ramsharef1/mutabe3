@@ -385,3 +385,31 @@ model ArticleViewDaily {
   @@unique([day, articleId])
   @@index([articleId, day])
 }
+
+// Web push for «عاجل» (D-072): one row per browser that opted in. Only what the push service needs —
+// no user id, no IP; the endpoint is personal data under PDPL (data map) and is deleted when the push
+// service answers 404/410 (subscription gone) or after 5 failures in a row.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  failures  Int      @default(0)
+  createdAt DateTime @default(now())
+  lastOkAt  DateTime?
+}
+
+// One row per alert sent from the dashboard (D-072): what, by whom, and how delivery went.
+model PushSend {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  actorId   String?
+  total     Int      @default(0)
+  sent      Int      @default(0)
+  failed    Int      @default(0)
+  removed   Int      @default(0)
+  status    String   @default("sending") // sending, done
+  createdAt DateTime @default(now())
+  doneAt    DateTime?
+}

@@ -12,6 +12,7 @@ import { sendError } from '../errors';
 import { freeSlug, parseProfile } from '../authors';
 import { plainText, LIVE_TEXT_MAX, LIVE_TITLE_MAX } from '../live';
 import { siteStats } from '../stats';
+import { readPush, setPushEnabled, sendAlert, SEND_GAP_MS } from '../push';
 import { reindexArticle } from '../search';
 import { RejectedImage } from '../images';
 
@@ -582,6 +583,47 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
     sendError(res, e);
   }
+});
+
+/* ───────────────────────────── web push for «عاجل» (D-072) ───────────────────────────── */
+
+// GET /api/admin/push — switch state, subscriber count, the last 10 alerts (editors)
+router.get('/push', requireRole(...EDITOR_ROLES), async (_req: Request, res: Response) => {
+  try {
+    const cfg = await readPush(prisma);
+    const [subscribers, recent] = await Promise.all([
+      prisma.pushSubscription.count(),
+      prisma.pushSend.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
+    ]);
+    res.json({ success: true, data: { enabled: !!cfg?.enabled, subscribers, recent, gapMinutes: SEND_GAP_MS / 60_000 } });
+  } catch (e) { sendError(res, e); }
+});
+
+// PUT /api/admin/push { enabled } — admins only; the first switch-on generates the key pair
+router.put('/push', requireRole('ADMIN'), async (req: Request, res: Response) => {
+  try {
+    if (typeof req.body?.enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be true or false' });
+    const before = await readPush(prisma);
+    const cfg = await setPushEnabled(prisma, req.body.enabled);
+    if (!!before?.enabled !== cfg.enabled) {
+      await audit(prisma, who(req), req, { action: cfg.enabled ? 'push.enable' : 'push.disable', targetType: 'push', summary: cfg.enabled ? 'شغّل تنبيهات المتصفح للعاجل' : 'أوقف تنبيهات المتصفح للعاجل' });
+    }
+    res.json({ success: true, data: { enabled: cfg.enabled } });
+  } catch (e) { sendError(res, e); }
+});
+
+// POST /api/admin/push/send { title, url } — editors; one alert per 10 minutes
+router.post('/push/send', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const title = String(req.body?.title || '').replace(/<[^>]*>/g, '').trim().slice(0, 140);
+    if (title.length < 5) return res.status(400).json({ error: 'نص التنبيه قصير جداً' });
+    const url = safeHref(String(req.body?.url || '/').trim().slice(0, 300));
+    if (!url) return res.status(400).json({ error: 'الرابط يجب أن يبدأ بـ / أو https://' });
+    const r = await sendAlert(prisma, { title, url }, who(req).id);
+    if (!r.ok) return res.status(r.status).json({ error: r.error });
+    await audit(prisma, who(req), req, { action: 'push.send', targetType: 'push', targetId: r.send.id, summary: `أرسل تنبيه عاجل إلى ${r.send.total} متصفحاً: ${q(title, 120)}`, meta: { url, total: r.send.total } });
+    res.status(202).json({ success: true, data: r.send });
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────────────────────── statistics (editors, D-069) ───────────────────────────── */

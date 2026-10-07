@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Article, Img, Ico, ago, Chip, WRITERS, face } from '../site';
 import { MARKET, PICKS, OBITS, SIXTY, BreakingItem } from '../feeds';
 import { usePoll, pct, votesAr, PollOpt } from '../polls';
+import { PushToggle } from '../push';
 
 const link = (a: Article) => `/article/${a.id}`;
 
@@ -17,6 +18,7 @@ export function BreakingBar({ item }: { item?: BreakingItem | null }) {
       <a href={item.href}><b>{item.title}</b></a>
       <span className="tm" suppressHydrationWarning>{Ico.clock}{ago(item.at)}</span>
       <a className="go" href={item.href}>تابع التغطية ›</a>
+      <PushToggle compact />
       <button type="button" className="x" onClick={() => setOpen(false)} aria-label="إخفاء">×</button>
     </div>
   );

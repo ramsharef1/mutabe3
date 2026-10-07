@@ -17,6 +17,7 @@ export default function AdminNav({ me }: { me: Me | null }) {
     { href: '/dashboard', label: 'المقالات', show: true },
     { href: '/dashboard/comments', label: 'التعليقات', badge: pending, show: editor },
     { href: '/dashboard/stats', label: 'الإحصاءات', show: editor },
+    { href: '/dashboard/push', label: 'التنبيهات', show: editor },
     { href: '/dashboard/homepage', label: 'الصفحة الرئيسية', show: editor },
     { href: '/dashboard/polls', label: 'الاستطلاعات', show: editor },
     { href: '/dashboard/newsletter', label: 'النشرة', show: editor },

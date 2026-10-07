@@ -6,6 +6,7 @@ import { liveNow } from './content';
 import { AudioPill } from './blocks/jordan';
 import { AdBanner, AdBox } from './ads';
 import { InstallApp } from './pwa';
+import { PushToggle } from './push';
 
 export * from './util';
 import { Article, NAV, WRITERS, face, ago, catColor } from './util';
@@ -232,6 +233,7 @@ export function SiteFooter() {
               <a href="#" className="ficon" key={t}><i /><span>{t}</span></a>
             ))}
             <InstallApp />
+            <PushToggle />
             <a href="#" className="ficon"><i /><span>Almutabe3 English</span></a>
           </div>
         </div>

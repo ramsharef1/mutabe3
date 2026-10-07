@@ -19,7 +19,7 @@ const IMAGES = `m3-img-${VERSION}`; // uploaded article photos
 const KEEP = [SHELL, STATIC, PAGES, API, IMAGES];
 const LIMIT = { [STATIC]: 300, [PAGES]: 60, [API]: 80, [IMAGES]: 150 };
 const OFFLINE = '/offline';
-const SKIP = /^\/(dashboard|auth|newsletter|api\/(admin|auth|newsletter|ads))(\/|$)/; // newsletter: unsubscribe links carry a personal token; ads: settings + delivery beacons must never be served stale (D-057)
+const SKIP = /^\/(dashboard|auth|newsletter|api\/(admin|auth|newsletter|ads|push))(\/|$)/; // newsletter: unsubscribe links carry a personal token; ads: settings + delivery beacons must never be served stale (D-057)
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -119,4 +119,31 @@ self.addEventListener('fetch', (event) => {
   if (req.mode === 'navigate') return event.respondWith(page(event, key));
   if (/\.(svg|png|ico|webp|jpg)$/.test(url.pathname)) return event.respondWith(staleWhileRevalidate(event, STATIC, key));
   // everything else (RSC payloads, feeds, manifest, sitemaps) goes straight to the network
+});
+
+/* ---- web push for «عاجل» (D-072): show the alert, open the story on tap ---- */
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch { d = { body: event.data && event.data.text() }; }
+  const url = typeof d.url === 'string' && d.url.startsWith('/') ? d.url : '/';
+  event.waitUntil(self.registration.showNotification(d.title || 'عاجل · المتابع', {
+    body: d.body || '',
+    icon: '/brand/icon-192.png',
+    badge: '/brand/icon-192.png',
+    dir: 'rtl',
+    lang: 'ar',
+    tag: d.tag || 'breaking', // a newer alert replaces the previous one instead of stacking
+    renotify: true,
+    data: { url },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) if (w.url === url && 'focus' in w) return w.focus();
+    return self.clients.openWindow(url);
+  })());
 });
