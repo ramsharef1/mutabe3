@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · newsroom statistics (D-069)
+
+- **Q8 changed:** reboots on request when the Sunday digest says so.
+- **Shipped and verified (92fd034):** `ArticleViewDaily` (daily reads per article, Amman days) and «الإحصاءات» for editors — reads per day, most read, sections, writers, desk output vs 10/day, newsletter, comments, ads.
+- **Status:** ✅ nothing in flight · next: Lighthouse pass, Arabic search, web push.
+
+---
+
 ## 2026-10-08 · Claude Code · video, caricature, live blog (D-068)
 
 - **Shipped and verified (b9422b1 + d6ffe55):** live-blog entries with an editor panel, self-refreshing live blog with LiveBlogPosting, real homepage live strip; video section from VIDEO articles with VideoObject; caricature block and uncropped page; templates for the three kinds; `?kind=` list filter.
