@@ -2134,3 +2134,29 @@ button[type="submit"]:active, .btn-primary:active {
 .adm-at{white-space:nowrap;color:#555;font-size:13px}
 .adm-audit .adm-ops{margin-top:4px}
 .adm-meta{background:#f6f6f6;border:1px solid #e5e5e5;border-radius:6px;padding:8px 10px;margin:6px 0 0;font-size:12px;line-height:1.5;max-width:560px;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word;text-align:left}
+
+/* ---- author page + real writers band (D-067). Brand colours use the --k-<role> fallbacks of the Ink & Signal branch. ---- */
+.authorhead{display:flex;align-items:center;gap:16px;padding:14px 16px;margin:10px 0 16px;background:var(--bg2);border-right:6px solid var(--k-edge,var(--red))}
+.authorhead .face{width:96px;height:96px;flex:none;border-radius:50%;overflow:hidden;background:var(--bg3);border:2px solid var(--line3);display:flex;align-items:center;justify-content:center}
+.authorhead .face img{width:100%;height:100%;object-fit:cover}
+.authorhead .face .au-init{width:100%;height:100%;font-size:40px;line-height:96px;border-radius:50%}
+.authorhead .who{flex:1;min-width:0}
+.authorhead h1{font-family:var(--kufi);font-size:22px;margin:0;color:var(--fg);line-height:1.35}
+.authorhead .role{margin:2px 0 0;font-family:var(--naskh);font-size:14px;color:var(--muted)}
+.authorhead .bio{margin:8px 0 0;font-family:var(--naskh);font-size:15px;line-height:1.75;color:var(--fg2);white-space:pre-line}
+.pager a,.pager span{min-width:30px;height:31px;line-height:29px;padding:0 8px;border:1px solid var(--line);background:var(--bg2);font-weight:bold;font-size:13px;text-align:center;font-family:var(--naskh);color:var(--fg2)}
+.pager a:hover{border-color:var(--k-edge,var(--red));color:var(--k-text,var(--red));background:var(--bg)}
+.pager span.on{background:var(--k-btn,var(--red));color:#fff;border-color:var(--k-btn,var(--red))}
+nav.pager{margin:16px 0;flex-wrap:wrap}
+.writers.real .ph .au-init{width:100%;height:100%;font-size:26px;line-height:51px;border-radius:2px}
+.writers.real .t .tm{display:block;margin-top:2px}
+a.au:hover b{color:var(--k-text,var(--red))}
+@media (max-width:767px){.authorhead{flex-wrap:wrap;gap:12px}.authorhead .face{width:72px;height:72px}.authorhead .face .au-init{font-size:30px;line-height:72px}.authorhead .catnum{display:none}}
+.adm-profile{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #e5e5e5}
+.adm-hint{display:block;color:#666;font-size:13px;margin:4px 0 12px}
+.adm-photo{display:flex;gap:14px;align-items:center;margin:8px 0 16px}
+.adm-photo .face{width:84px;height:84px;border-radius:50%;overflow:hidden;flex:none;background:#eee;display:flex;align-items:center;justify-content:center}
+.adm-photo .face img{width:100%;height:100%;object-fit:cover}
+.adm-photo .face .au-init{width:100%;height:100%;font-size:34px;border:0}
+.adm-photo small{display:block;color:#666;font-size:12px;margin-top:4px}
+.adm-profile textarea{width:100%;font:inherit;padding:8px;border:1px solid #ccc;border-radius:4px;resize:vertical}

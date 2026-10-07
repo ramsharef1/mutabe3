@@ -17,6 +17,8 @@ import { MostDiscussed } from './components/blocks/discussed';
 import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSeason, wxText, BreakingItem } from './components/feeds';
 import JsonLd from './components/JsonLd';
 import { websiteLd } from './lib/seo';
+import { fetchAuthors } from './lib/api';
+import { WritersBand } from './components/authors';
 
 export const revalidate = 60;
 
@@ -96,7 +98,7 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
 );
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
-  const [latestArticles, wx, curated] = await Promise.all([getArticles(), fetchWeather(), getCuration()]);
+  const [latestArticles, wx, curated, writers] = await Promise.all([getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION')]);
   // A curated lead story goes first (and is removed from its newest-first slot) so the pool hands it to the hero.
   const articles = curated.hero ? [curated.hero, ...latestArticles.filter((a) => a.id !== curated.hero!.id)] : latestArticles;
   if (!articles.length) {
@@ -200,7 +202,8 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <Cards items={jordan} /><Smalls items={jordanS} /><More slug="politics" />
         </div>
 
-        {demo && (
+        {/* real columnists (newest opinion piece each) replace the illustrative band as soon as one exists (D-067) */}
+        {writers.length ? <WritersBand authors={writers} className="writers mob" /> : demo && (
           <div className="writers mob">
             {WRITERS.slice(0, 8).map((w, k) => (
               <a key={w} className="writer" href="/category/writers"><div className="ph"><Img src={face(k)} /></div><div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات', 'المناخ ليس ترفاً', 'الإعلام الرقمي', 'كرة القدم كقوة ناعمة'][k]}</div></a>
@@ -249,8 +252,10 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <AdBanner variant={3} className="adrow ad90" />
 
-        {/* opinion — portraits and columns are placeholders until real columnists exist (F-02) */}
-        {demo && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
+        {/* opinion — real columnists when the desk has published opinion pieces (D-067); otherwise the
+            illustrative portraits and columns while the demo switch is on (F-02) */}
+        {writers.length > 0 && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · مقالات مختارة" /><WritersBand authors={writers} /><More slug="writers" /></div>}
+        {!writers.length && demo && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
           <div className="writers desk">
             {WRITERS.slice(0, 8).map((w, k) => (
               <a key={w} className="writer" href="/category/writers">

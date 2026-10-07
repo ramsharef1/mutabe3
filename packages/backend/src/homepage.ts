@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import { AUTHOR_PUBLIC } from './authors';
 
 // Homepage curation lives in SiteSetting["homepage"]. Editors pick the hero,
 // an ordered list of picks and an optional breaking item; the public endpoint
@@ -12,7 +13,7 @@ export interface Breaking { title: string; href: string; at: string }
 // switches them off from /dashboard/homepage (BIBLE F-02 / D-052). Default ON = today's behaviour.
 export interface HomepageSetting { heroId?: string | null; pickIds?: string[]; breaking?: Breaking | null; demoBlocks?: boolean }
 
-const ARTICLE_INCLUDE = { author: { select: { id: true, name: true } }, category: true } as const;
+const ARTICLE_INCLUDE = { author: { select: AUTHOR_PUBLIC }, category: true } as const;
 
 export async function readHomepageSetting(prisma: PrismaClient): Promise<HomepageSetting> {
   const row = await prisma.siteSetting.findUnique({ where: { key: HOMEPAGE_KEY } });

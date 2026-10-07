@@ -61,6 +61,15 @@ model User {
   // Preferences
   preferences Json @default("{}")
 
+  // Public author profile at /author/<slug> (D-067). Shown only for staff with a published article;
+  // the email and role never leave the API. slug is set once from the name and kept stable after renames.
+  // Unique by code (authors.ts freeSlug/parseProfile), not @unique: adding a unique constraint makes the
+  // deploy's plain `prisma db push` stop at a data-loss prompt.
+  slug      String?
+  jobTitle  String?
+  bio       String?
+  photoUrl  String?  // an upload on this site (localImage), or null → monogram
+
   // Relations
   articles  Article[]
   comments  Comment[]
@@ -72,6 +81,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([slug])
 }
 
 model Session {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ProfileForm from './ProfileForm';
 
 export default function Account() {
   const router = useRouter();
@@ -43,7 +44,8 @@ export default function Account() {
       <header className="adm-top">
         <div className="adm-brand"><a href="/dashboard" className="adm-back">‹ لوحة التحكم</a></div>
       </header>
-      <main className="adm-main adm-editor" style={{ maxWidth: 460 }}>
+      <main className="adm-main adm-editor" style={{ maxWidth: 560 }}>
+        <ProfileForm />
         <h1>تغيير كلمة المرور</h1>
         {msg && <div className="adm-ok">{msg}</div>}
         {err && <div className="adm-err">{err}</div>}

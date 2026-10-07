@@ -23,8 +23,9 @@ export const articleImage = (a: Article) => absUrl(a.featuredImageUrl?.replace('
 export function newsArticleLd(a: Article) {
   const url = `${SITE_URL}/article/${a.id}`;
   // CMS articles carry their real author; the seeded demo set is credited to the newsroom.
+  // A Person with a profile page links it (Google uses author.url to tell same-name writers apart, D-067).
   const author = isHtml(a.content) && a.author?.name
-    ? { '@type': 'Person', name: a.author.name }
+    ? { '@type': 'Person', name: a.author.name, ...(a.author.slug && a.author.jobTitle ? { url: authorUrl(a.author.slug) } : {}) }
     : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL };
   const body = plain(a.content);
   return {
@@ -47,6 +48,32 @@ export function newsArticleLd(a: Article) {
     wordCount: body ? body.split(/\s+/).length : undefined,
     inLanguage: 'ar',
     isAccessibleForFree: true,
+  };
+}
+
+/** Absolute URL of an author page; the Arabic slug is percent-encoded once. */
+export const authorUrl = (slug: string) => `${SITE_URL}/author/${encodeURIComponent(slug)}`;
+
+/** Author page: ProfilePage whose mainEntity is the Person (D-067, CONTENT-ARCHITECTURE "Columnist + author page"). */
+export function profileLd(p: { name: string; slug: string; jobTitle?: string | null; bio?: string | null; photoUrl?: string | null }) {
+  const url = authorUrl(p.slug);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    '@id': url,
+    url,
+    inLanguage: 'ar',
+    isPartOf: { '@id': `${SITE_URL}/#website` },
+    mainEntity: {
+      '@type': 'Person',
+      '@id': `${url}#person`,
+      name: p.name,
+      url,
+      ...(p.jobTitle ? { jobTitle: p.jobTitle } : {}),
+      ...(p.bio ? { description: p.bio } : {}),
+      ...(p.photoUrl ? { image: absUrl(p.photoUrl) } : {}),
+      worksFor: { '@id': `${SITE_URL}/#publisher` },
+    },
   };
 }
 

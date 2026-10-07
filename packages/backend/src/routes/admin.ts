@@ -9,6 +9,7 @@ import readerAdmin from './adminReaders';
 import { readAds, parseAds, writeAds, adStats, safeHref, AdsSetting, ZONES } from '../ads';
 import { audit, listAudit, q } from '../audit';
 import { sendError } from '../errors';
+import { freeSlug, parseProfile } from '../authors';
 import { RejectedImage } from '../images';
 
 const router = Router();
@@ -414,7 +415,8 @@ router.delete('/categories/:id', requireRole(...EDITOR_ROLES), async (req: Reque
 
 /* ───────────────────────────── users (admin) ───────────────────────────── */
 
-const USER_SELECT = { id: true, name: true, email: true, role: true, emailVerified: true, createdAt: true, _count: { select: { articles: true } } } as const;
+const USER_SELECT = { id: true, name: true, email: true, role: true, emailVerified: true, createdAt: true, slug: true, jobTitle: true, bio: true, photoUrl: true, _count: { select: { articles: true } } } as const;
+const PROFILE_AR: Record<string, string> = { jobTitle: 'الصفة', bio: 'النبذة', photoUrl: 'الصورة', slug: 'رابط الصفحة' };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 router.get('/users', requireRole('ADMIN'), async (_req: Request, res: Response) => {
@@ -434,7 +436,7 @@ router.post('/users', requireRole('ADMIN'), async (req: Request, res: Response) 
     if (pw.length < 8) return res.status(400).json({ error: 'كلمة المرور 8 أحرف على الأقل' });
     const r = ROLES.includes(role) ? role : 'JOURNALIST';
     const data = await prisma.user.create({
-      data: { name: n, email: em, role: r as any, password: await hashPassword(pw), emailVerified: true },
+      data: { name: n, email: em, role: r as any, password: await hashPassword(pw), emailVerified: true, slug: await freeSlug(prisma, n) },
       select: USER_SELECT,
     });
     await audit(prisma, who(req), req, { action: 'user.create', targetType: 'user', targetId: data.id, summary: `أنشأ حساب ${data.name} بدور ${ROLE_AR[r] || r}`, meta: { email: em, role: r } });
@@ -466,8 +468,15 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
       data.role = role;
     }
     if (password !== undefined) { const pw = String(password); if (pw.length < 8) return res.status(400).json({ error: 'كلمة المرور 8 أحرف على الأقل' }); data.password = await hashPassword(pw); }
+    const prof = await parseProfile(prisma, req.body, req.params.id);
+    if (!prof.ok) return res.status(prof.status).json({ error: prof.error });
+    Object.assign(data, prof.data);
     const before = await prisma.user.findUnique({ where: { id: req.params.id }, select: { name: true, role: true } });
     const row = await prisma.user.update({ where: { id: req.params.id }, data, select: USER_SELECT });
+    const changedProfile = Object.keys(prof.data);
+    if (before && changedProfile.length) {
+      await audit(prisma, me, req, { action: 'user.profile', targetType: 'user', targetId: row.id, summary: `عدّل الملف العام لـ ${row.name} (${changedProfile.map((k) => PROFILE_AR[k] || k).join('، ')})`, meta: { fields: changedProfile } });
+    }
     if (before && data.role !== undefined && before.role !== row.role) {
       await audit(prisma, me, req, { action: 'user.role', targetType: 'user', targetId: row.id, summary: `غيّر دور ${row.name} من ${ROLE_AR[before.role] || before.role} إلى ${ROLE_AR[row.role] || row.role}`, meta: { from: before.role, to: row.role } });
     }
@@ -482,6 +491,29 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
     sendError(res, e);
   }
+});
+
+/* ───────────────────────────── own public profile (any staff, D-067) ───────────────────────────── */
+
+// GET/PUT /api/admin/profile { jobTitle?, bio?, photoUrl?, slug? } — the signed-in staff member's /author page
+router.get('/profile', async (req: Request, res: Response) => {
+  try {
+    const u = await prisma.user.findUnique({ where: { id: who(req).id }, select: { id: true, name: true, slug: true, jobTitle: true, bio: true, photoUrl: true } });
+    if (!u) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true, data: u });
+  } catch (e) { sendError(res, e); }
+});
+
+router.put('/profile', async (req: Request, res: Response) => {
+  try {
+    const me = who(req);
+    const prof = await parseProfile(prisma, req.body, me.id);
+    if (!prof.ok) return res.status(prof.status).json({ error: prof.error });
+    const fields = Object.keys(prof.data);
+    const u = await prisma.user.update({ where: { id: me.id }, data: prof.data, select: { id: true, name: true, slug: true, jobTitle: true, bio: true, photoUrl: true } });
+    if (fields.length) await audit(prisma, me, req, { action: 'user.profile', targetType: 'user', targetId: u.id, summary: `عدّل ملفه العام (${fields.map((k) => PROFILE_AR[k] || k).join('، ')})`, meta: { fields } });
+    res.json({ success: true, data: u });
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────────────────────── homepage curation (editors) ───────────────────────────── */

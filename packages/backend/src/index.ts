@@ -12,6 +12,7 @@ import { ensurePolls } from './polls';
 import { readAds, recordAdEvents, flushAdStats } from './ads';
 import { allow, isLoopback } from './ratelimit';
 import { sendError } from './errors';
+import { authorRoutes, ensureAuthorSlugs, AUTHOR_PUBLIC } from './authors';
 
 // Crawlers, link previews and monitors: never counted as reads or ad deliveries.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
@@ -137,7 +138,7 @@ app.get('/api/articles', async (req: Request, res: Response) => {
     }
     const articles = await prisma.article.findMany({
       where,
-      include: { author: { select: { id: true, name: true } }, category: true, ...APPROVED_COMMENTS },
+      include: { author: { select: AUTHOR_PUBLIC }, category: true, ...APPROVED_COMMENTS },
       orderBy: { publishedAt: 'desc' },
       take,
     });
@@ -192,7 +193,7 @@ app.get('/api/articles/:id', async (req: Request, res: Response) => {
     const article = await prisma.article.findFirst({
       where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
       // was `comments: true`, which returned every comment row incl. pending/rejected and emails
-      include: { author: { select: { id: true, name: true } }, category: true, ...APPROVED_COMMENTS },
+      include: { author: { select: AUTHOR_PUBLIC }, category: true, ...APPROVED_COMMENTS },
     });
 
     if (!article) {
@@ -281,6 +282,9 @@ app.use('/api/admin', adminRoutes);
 // Public reader routes: comments, polls, newsletter (D-043 Stage 4)
 app.use('/api', readerRoutes);
 
+// Public author profiles: /api/authors, /api/authors/:slug (D-067)
+app.use('/api', authorRoutes(prisma));
+
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
   res.json({
@@ -326,6 +330,7 @@ app.listen(port, () => {
   // One-time category seeding + the scheduled-publishing tick (D-043 Stage 3)
   ensureCategories(prisma).catch((e) => console.error('categories seed:', e));
   ensurePolls(prisma).catch((e) => console.error('polls seed:', e));
+  ensureAuthorSlugs(prisma).catch((e) => console.error('author slugs:', e));
   startScheduler(prisma);
 });
 

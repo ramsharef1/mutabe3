@@ -7,7 +7,7 @@ export interface Article {
   summary?: string;
   content: string;
   category?: { name: string; slug: string };
-  author?: { id: string; name: string };
+  author?: { id: string; name: string; slug?: string | null; jobTitle?: string | null; photoUrl?: string | null }; // public profile (D-067)
   status?: string;
   publishedAt?: string;
   updatedAt?: string;

@@ -9,6 +9,7 @@ import { track } from '../../lib/track';
 import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
 import { LiveBlog, LiveBadge } from '../../components/live';
 import { Comments } from '../../components/comments';
+import { AuthorFace, authorHref } from '../../components/authors';
 
 // Article body font, loaded only on this route (B11).
 const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri', display: 'swap' });
@@ -89,7 +90,9 @@ export default function ArticleView({ article: a, preview = false }: { article: 
   const wi = hashIdx(a.id, WRITERS.length);
   const author = cmsAuthor || WRITERS[wi];
   const views = a.viewsCount ?? 0;
-  const Avatar = () => (cmsAuthor ? <span className="au-init" aria-hidden>{cmsAuthor.trim()[0]}</span> : <img src={face(wi)} alt="" />);
+  const Avatar = () => (cmsAuthor ? <AuthorFace name={cmsAuthor} photoUrl={a.author?.photoUrl} /> : <img src={face(wi)} alt="" />);
+  const authorSlug = cmsAuthor && a.author?.jobTitle ? a.author?.slug : null; // page exists only for opted-in profiles (D-067)
+  const authorLine = (cmsAuthor && a.author?.jobTitle) || `المتابع - ${catName}`;
 
   return (
     <div className={`am ${amiri.variable}`}>
@@ -107,8 +110,11 @@ export default function ArticleView({ article: a, preview = false }: { article: 
               <h1>{a.title}</h1>
               {a.summary && <p className="artsum">{a.summary}</p>}
               <div className="artmeta">
+                {/* real authors link to their page (D-067); the seeded demo set keeps its illustrative byline */}
                 {cmsAuthor
-                  ? <span className="au"><Avatar /><span><b>{author}</b><small>المتابع - {catName}</small></span></span>
+                  ? authorSlug
+                    ? <a className="au" href={authorHref(authorSlug)} rel="author"><Avatar /><span><b>{author}</b><small>{authorLine}</small></span></a>
+                    : <span className="au"><Avatar /><span><b>{author}</b><small>{authorLine}</small></span></span>
                   : <a className="au" href="/category/writers"><Avatar /><span><b>{author}</b><small>المتابع - {catName}</small></span></a>}
                 <span title={fmtDate(a.publishedAt)}>{Ico.clock}{a.publishedAt ? ago(a.publishedAt) : 'غير منشور'}</span>
                 <span>{Ico.eye}{views} مشاهدة</span>

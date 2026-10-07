@@ -50,3 +50,34 @@ export async function fetchCategories(): Promise<Category[]> {
     return [];
   }
 }
+
+/** A public author (D-067): staff with at least one published article. */
+export interface AuthorCard {
+  id: string; name: string; slug: string; jobTitle?: string | null; photoUrl?: string | null; bio?: string | null; count: number;
+  latest: (Pick<Article, 'id' | 'slug' | 'title' | 'summary' | 'featuredImageUrl' | 'publishedAt' | 'kind' | 'category'>) | null;
+}
+export interface AuthorPage extends Omit<AuthorCard, 'latest'> { page: number; pages: number; articles: Article[] }
+
+/** Authors with a published piece, newest piece first (`kind=OPINION` for the «كتاب المتابع» band); [] when none or the API is down. */
+export async function fetchAuthors(kind?: 'OPINION', take = 8): Promise<AuthorCard[]> {
+  try {
+    const u = new URL(`${API_BASE}/api/authors`);
+    if (kind) u.searchParams.set('kind', kind);
+    u.searchParams.set('take', String(take));
+    const r = await fetch(u, { next: { revalidate: 60 } });
+    if (!r.ok) return [];
+    return ((await r.json()).data || []) as AuthorCard[];
+  } catch {
+    return [];
+  }
+}
+
+/** One author page by slug (Arabic slugs may arrive percent-encoded), or null → 404. Throws when the API is down. */
+export async function fetchAuthor(slug: string, page = 1): Promise<AuthorPage | null> {
+  let key = slug;
+  try { key = decodeURIComponent(slug); } catch {}
+  const r = await fetch(`${API_BASE}/api/authors/${encodeURIComponent(key)}?page=${page}`, { cache: 'no-store' });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`authors ${r.status}`);
+  return ((await r.json()).data || null) as AuthorPage | null;
+}
