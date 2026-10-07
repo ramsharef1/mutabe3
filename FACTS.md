@@ -20,7 +20,7 @@
 | Backend | Express 4 + Prisma 5, compiled to `dist/` — `packages/backend` | 2026-10-07 ✅ |
 | Database | PostgreSQL 13 on the VPS, db `mutabe3`; reachable from the server only (D-063) | 2026-10-07 ✅ |
 | Runtime | Node 22 under `/opt/node22` for build and both units (D-056); the VPS's global Node 20 is left for other sites | 2026-10-07 ✅ |
-| Not used | Strapi, Vercel, Meilisearch, Redis, Sentry, Docker (all from the September plan, dropped) | 2026-10-07 ✅ |
+| Not used | Strapi, Vercel, Meilisearch, Redis (dependency removed D-065), Sentry, Docker (all from the September plan, dropped) | 2026-10-07 ✅ |
 
 ## Host & services
 
@@ -32,6 +32,7 @@
 | nginx | server blocks in the shared `/etc/nginx/conf.d/all-domains.conf`; `/api/` → :9080, `/` → :9100; appends `X-Forwarded-For` (D-064) | 2026-10-07 ✅ |
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` | 2026-10-07 ✅ |
 | Env files | `/etc/mutabe3/backend.env` (root, 0600) · optional `/etc/mutabe3/frontend.env` (build-time `NEXT_PUBLIC_*`) | 2026-10-07 ✅ |
+| CORS | API allows `https://mutabe3.news` + `https://www.mutabe3.news` (code default; optional `CORS_ORIGINS` unset); backend runs with `NODE_ENV=production` — localhost origin refused (D-065) | 2026-10-07 ✅ |
 | Uploads | `/var/www/mutabe3/uploads` → `/api/uploads/*`, WebP derivatives `/api/img/<w>/*` | 2026-10-07 ✅ |
 | Security updates | `dnf-automatic` installs security packages daily, never reboots; Apache excluded (conflicts with AdminBolt's suexec) | 2026-10-07 ✅ |
 

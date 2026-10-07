@@ -13,21 +13,22 @@
 - **Stack:** Next 14 + Express/Prisma/Postgres on the shared Hostinger VPS, Node 22, CI deploys from `main` (D-039, D-049, D-051, D-056).
 - **Demo articles stay public until real content exists** — removal is asked separately.
 - **Alerts are GitHub Issues that mail Rami** (D-059); no mail server until SPF/DKIM exist.
-- **Security baseline** (D-051, D-054, D-063, D-064): auth guards and throttling, refresh rotation, double opt-in, audit log, local-only ad creatives, per-reader limits, enforced CSP, Postgres local-only.
+- **Security baseline** (D-051, D-054, D-063, D-064, D-065): auth guards and throttling, refresh rotation, double opt-in, audit log, local-only ad creatives, per-reader limits, enforced CSP, Postgres local-only, generic error responses, uploads decided by content, links cut from comments.
 
 ## Verified state
 
-As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-064):
+As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 - **Weeks 1–2 done:** demo-block switch, honest dates and counts, photo credit/caption, seven legal pages as counsel drafts, Google News readiness, double opt-in newsletter with delivery log, launch-critical security, Node 22 + lockfile, faster editor with templates per article kind, GTM + consent bar (dormant).
 - **Weeks 3–4 done:** banner dates + impression/click counts + CSV (D-057), search-engine titles for list pages (D-058), alerts + weekly digest (D-059).
 - **Ops 2026-10-07:** shared-VPS failed units cleared (D-060), security packages current with dnf-automatic healthy (D-061), rebooted into the patched kernel with nginx now enabled at boot (D-062), Postgres closed to the internet (D-063).
 - **Security slice live (D-064):** audit log at `/dashboard/audit`, banner creatives local-only, search 90/min and counted views capped per reader, CSP enforced with a report endpoint.
+- **Security slice 2 live (D-065):** generic Arabic error responses with stable codes (S-12), uploads typed by their bytes and always re-encoded (S-11), CORS without the raw IP (S-17), links cut from reader comments (S-13), unused redis removed (S-19).
 
 ## Priorities
 
 1. **Rami's gates** (Open questions Q1–Q6) — they block the imprint, analytics, newsletter delivery and the legal go-ahead.
 2. **Real uptime alerts** (Q7) — an external checker on `/` and `/api/health`.
-3. **Remaining smaller security items** — S-12 error text leaks, S-11 upload type check, S-17 CORS raw IP, S-19 unused redis, comment URL stripping.
+3. **Remaining security items** — Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02, ops), non-root deploy user + pinned host key (S-07); Next 16 with the deferred upgrade.
 4. **Weeks 5–8 · brand:** Ink & Signal re-theme as a skin toggle in a worktree, screenshots on real content, client sign-off.
 5. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass, paid-notices pilot if wanted.
 
@@ -45,6 +46,6 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-064):
 
 ## Resume point
 
-Last session 2026-10-07 (Claude Code): D-057 … D-064 shipped and verified on production; everything pushed. Nothing is in flight. The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (smaller security fixes) is the next code slice that needs nobody.
+Last session 2026-10-07 (Claude Code): D-057 … D-065 shipped and verified on production; everything pushed. Nothing is in flight. The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
 **Last updated:** 2026-10-07 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)

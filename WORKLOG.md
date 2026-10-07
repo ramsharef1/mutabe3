@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-07 · Claude Code · security slice 2 (D-065)
+
+- **Shipped and verified on production (cb47c6f, run 37682500545):** generic Arabic error responses with stable codes through one `sendError()` (S-12, 52 sites); uploads typed by their bytes, always re-encoded to WebP, failures refused, `nosniff` checked (S-11); CORS without the raw IP, `CORS_ORIGINS` optional (S-17); links cut from reader comments (S-13); unused `redis` removed (S-19). Evidence in `brain/DECISIONS.md` D-065.
+- **Not verified on production:** GIF / truncated-image uploads and a forced 5xx (local only).
+- **Status:** ✅ nothing in flight · still open: Prisma 5 / tsx 3 upgrades.
+
+---
+
 ## 2026-10-07 · Claude Code · weeks 3–4, VPS housekeeping, security slice, Classic refresh
 
 - **Shipped and verified on production:** D-057 ad basics · D-058 list-page titles · D-059 alerts as GitHub Issues + Sunday digest · D-060 shared-VPS failed units cleared · D-061 security packages (vim; Apache held) · D-062 reboot into kernel 687.54.1, nginx enabled at boot · D-063 Postgres closed to the internet · D-064 audit log, local-only ad creatives, per-reader search/view limits, CSP enforced. Evidence per item in `brain/DECISIONS.md`.
