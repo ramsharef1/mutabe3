@@ -131,6 +131,7 @@ const rows = has
       ['أرشيف الرفع', `منذ ${f.uploads_archive_age_d === 'none' ? '— (لا أرشيف)' : days(num('uploads_archive_age_d'))} · الوسائط ${v('uploads_total')}`],
       ['قاعدة البيانات', `${v('db_size_mb')} MB · ${v('articles_published')} مادة منشورة · +${v('articles_7d')} خلال 7 أيام`],
       ['الشهادة', Number.isFinite(tlsDays) ? `تنتهي بعد ${days(tlsDays)}` : '—'],
+      ['التحديثات التلقائية', `آخر تشغيل ${f.auto_updates_result === 'success' ? 'ناجح' : v('auto_updates_result')} (${v('auto_updates_last')})`],
       ['النظام', `حزم أمنية بانتظار التثبيت ${v('security_updates')} · إعادة تشغيل مطلوبة ${{ yes: 'نعم', no: 'لا' }[f.reboot_required] || '—'}` +
         `${f.reboot_required === 'yes' && f.kernel_installed ? ` (النواة ${v('kernel_running')} → ${v('kernel_installed')})` : ''}` +
         ` · وحدات فاشلة ${f.failed_units === 'none' ? 'لا يوجد' : v('failed_units')}`],

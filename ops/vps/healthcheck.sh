@@ -70,7 +70,11 @@ fi
 if dnf needs-restarting --help >/dev/null 2>&1; then
   if dnf -q needs-restarting -r >/dev/null 2>&1; then kv reboot_required no; else kv reboot_required yes; fi
 fi
-upd=$(dnf -q -C check-update --security 2>/dev/null); rc=$?
+# Count what dnf-automatic itself would install, i.e. with its own excludes (Apache is held back, D-061).
+EX=$(awk -F= '/^[[:space:]]*excludepkgs[[:space:]]*=/{print $2}' /etc/dnf/automatic.conf 2>/dev/null | xargs | tr ' ' ',')
+upd=$(dnf -q -C ${EX:+--setopt=excludepkgs="$EX"} check-update --security 2>/dev/null); rc=$?
 if [ "$rc" = 0 ] || [ "$rc" = 100 ]; then kv security_updates "$(printf '%s\n' "$upd" | awk 'NF==3 && $1 ~ /\./ {print $1}' | sort -u | grep -c .)"; fi
+kv auto_updates_result "$(systemctl show dnf-automatic.service -p Result --value 2>/dev/null)"
+kv auto_updates_last "$(systemctl show dnf-automatic.service -p ExecMainExitTimestamp --value 2>/dev/null)"
 kv kernel_running "$(uname -r)"
 kv kernel_installed "$(rpm -q kernel --last 2>/dev/null | awk 'NR==1{sub(/^kernel-/, "", $1); print $1}')"
