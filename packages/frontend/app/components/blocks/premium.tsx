@@ -8,9 +8,10 @@ export function PremiumSpotlight({ items }: { items: Article[] }) {
     <div className="sec prem">
       <div className="label">اختيارات المحرر</div>
       <div className="cards">
-        {items.slice(0, 3).map((a) => (
+        {items.slice(0, 3).map((a, i) => (
           <a key={a.id} className="card" href={`/article/${a.id}`}>
-            <div className="im"><Img src={a.featuredImageUrl} /><Chip a={a} /></div>
+            {/* the first card is the largest image above the fold on phones: load it eagerly, high priority (D-070) */}
+            <div className="im"><Img src={a.featuredImageUrl} priority={i === 0} /><Chip a={a} /></div>
             <div className="t">{a.title}</div>
             <span className="tm">{ago(a.publishedAt)}</span>
           </a>
