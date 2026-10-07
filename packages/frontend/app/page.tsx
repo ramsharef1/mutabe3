@@ -33,15 +33,16 @@ async function getArticles(): Promise<Article[]> {
 }
 
 // Editor curation from /dashboard/homepage (D-043 Stage 3). Saving there revalidates '/'.
-interface Curated { hero: Article | null; picks: Article[]; breaking: BreakingItem | null }
+// demoBlocks: the illustrative data blocks stay on until an editor switches them off (BIBLE F-02 / D-052).
+interface Curated { hero: Article | null; picks: Article[]; breaking: BreakingItem | null; demoBlocks: boolean }
 async function getCuration(): Promise<Curated> {
   try {
     const r = await fetch(`${API}/api/homepage`, { next: { revalidate: 60 } });
     if (!r.ok) throw new Error(String(r.status));
     const d = (await r.json()).data || {};
-    return { hero: d.hero || null, picks: d.picks || [], breaking: d.breaking || null };
+    return { hero: d.hero || null, picks: d.picks || [], breaking: d.breaking || null, demoBlocks: d.demoBlocks !== false };
   } catch {
-    return { hero: null, picks: [], breaking: null };
+    return { hero: null, picks: [], breaking: null, demoBlocks: true };
   }
 }
 
@@ -105,6 +106,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   const prayers = prayerTimes(now);
   const season = searchParams?.season === 'all' ? 'all' : currentSeason(now);
   const amman = wx[0];
+  const demo = curated.demoBlocks; // illustrative data blocks — off from /dashboard/homepage once real content exists (F-02)
 
   // B1: every block draws from an exclusive pool so the fold never repeats a story.
   const pool = new Pool(articles);
@@ -134,10 +136,10 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
 
         <BreakingBar item={curated.breaking} />
-        <MetAlert />
+        {demo && <MetAlert />}
         <Ticker items={ticker} hot={!!curated.breaking} />
-        <LiveStrip />
-        <MarketStrip updated={ammanTime(now)} />
+        {demo && <LiveStrip />}
+        {demo && <MarketStrip updated={ammanTime(now)} />}
         <Missed articles={articles} />
 
         {/* Premium Spotlight */}
@@ -178,7 +180,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <div className="desk">
           <div className="two" style={{ marginTop: 12 }}>
             <div className="sec"><PicksBox articles={articles} picks={curated.picks} /></div>
-            <div className="sec"><ObitsBox /></div>
+            {demo && <div className="sec"><ObitsBox /></div>}
           </div>
         </div>
 
@@ -196,14 +198,16 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <Cards items={jordan} /><Smalls items={jordanS} /><More slug="politics" />
         </div>
 
-        <div className="writers mob">
-          {WRITERS.slice(0, 8).map((w, k) => (
-            <a key={w} className="writer" href="/category/writers"><div className="ph"><Img src={face(k)} /></div><div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات', 'المناخ ليس ترفاً', 'الإعلام الرقمي', 'كرة القدم كقوة ناعمة'][k]}</div></a>
-          ))}
-        </div>
+        {demo && (
+          <div className="writers mob">
+            {WRITERS.slice(0, 8).map((w, k) => (
+              <a key={w} className="writer" href="/category/writers"><div className="ph"><Img src={face(k)} /></div><div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات', 'المناخ ليس ترفاً', 'الإعلام الرقمي', 'كرة القدم كقوة ناعمة'][k]}</div></a>
+            ))}
+          </div>
+        )}
 
         {/* ────────── ZONE 4 · CORE NEWS (contiguous, native ads woven in) ────────── */}
-        <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>
+        {demo && <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>}
 
         <TrendingNow items={trending} />
 
@@ -213,32 +217,38 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         </div>
 
         {/* today's digest */}
-        <div className="two">
-          <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty /></div>
-          <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
-        </div>
+        {demo ? (
+          <div className="two">
+            <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty /></div>
+            <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
+          </div>
+        ) : (
+          <div className="sec"><SecHd t="الأكثر قراءة" /><MostRead articles={articles} /></div>
+        )}
 
         <AdBanner variant={1} className="adrow ad90" />
 
         <div className="two">
-          <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} /><div style={{ marginTop: 10 }}><Timeline /></div></div>
+          <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} />{demo && <div style={{ marginTop: 10 }}><Timeline /></div>}</div>
           <div className="sec"><SecHd t="العالم" slug="world" /><BigText a={world[0]} more={world.slice(1)} /><More slug="world" /></div>
         </div>
 
-        <div className="two">
-          <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta="جلسة الثلاثاء · 14 قراراً" /><Decisions /><More slug="parliament" /></div>
-          <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" meta="من محاضر مجلس النواب" /><VoteTracker /></div>
-        </div>
+        {demo && (<>
+          <div className="two">
+            <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta="جلسة الثلاثاء · 14 قراراً" /><Decisions /><More slug="parliament" /></div>
+            <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" meta="من محاضر مجلس النواب" /><VoteTracker /></div>
+          </div>
 
-        <div className="two">
-          <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" meta="حيّ · من الاتحاد الأردني" /><Sports /></div>
-          <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora /></div>
-        </div>
+          <div className="two">
+            <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" meta="حيّ · من الاتحاد الأردني" /><Sports /></div>
+            <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora /></div>
+          </div>
+        </>)}
 
         <AdBanner variant={3} className="adrow ad90" />
 
-        {/* opinion */}
-        <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
+        {/* opinion — portraits and columns are placeholders until real columnists exist (F-02) */}
+        {demo && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
           <div className="writers desk">
             {WRITERS.slice(0, 8).map((w, k) => (
               <a key={w} className="writer" href="/category/writers">
@@ -247,7 +257,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
               </a>
             ))}
           </div>
-          <WritersRail articles={pool.take(4)} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>
+          <WritersRail articles={pool.take(4)} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>}
 
         <div className="two">
           <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>
@@ -263,38 +273,46 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <AdBanner variant={6} className="adrow ad90 adbillboard" />
 
-        {/* ────────── ZONE 5 · SERVICES & TOOLS ────────── */}
-        <div className="three">
-          <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
-          <div className="sec"><SecHd t="الطرق الآن" meta="مباشر" /><Roads /></div>
-          <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta="من الجهات الرسمية" /><Services /></div>
-        </div>
+        {/* ────────── ZONE 5 · SERVICES & TOOLS (illustrative data until sourced — F-02) ────────── */}
+        {demo && (<>
+          <div className="three">
+            <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
+            <div className="sec"><SecHd t="الطرق الآن" meta="مباشر" /><Roads /></div>
+            <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta="من الجهات الرسمية" /><Services /></div>
+          </div>
 
-        <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
+          <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
+        </>)}
 
-        <div className="two">
-          <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta="ديوان الخدمة المدنية · دائرة العطاءات" /><Jobs /><More slug="jobs" /></div>
+        {demo ? (
+          <div className="two">
+            <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta="ديوان الخدمة المدنية · دائرة العطاءات" /><Jobs /><More slug="jobs" /></div>
+            <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
+          </div>
+        ) : (
           <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
-        </div>
+        )}
 
         <div className="two capfact">
           <div className="sec" style={{ flex: '0 0 330px' }}><SecHd t="قناة المتابع" /><Capture /></div>
-          <div className="sec"><SecHd t="تحقق المتابع" meta="نتحقق من الشائعات المنتشرة على فيسبوك وواتساب" /><FactCheck /></div>
+          {demo && <div className="sec"><SecHd t="تحقق المتابع" meta="نتحقق من الشائعات المنتشرة على فيسبوك وواتساب" /><FactCheck /></div>}
         </div>
 
         <AdBanner variant={0} className="adrow ad90" />
 
-        {/* ────────── ZONE 6 · COMMUNITY & LIGHTER ────────── */}
-        <CommunityBand />
+        {/* ────────── ZONE 6 · COMMUNITY & LIGHTER (illustrative until sourced — F-02) ────────── */}
+        {demo && (<>
+          <CommunityBand />
 
-        <div className="three">
-          <div className="sec"><SecHd t="عين المواطن" meta="محتوى القراء · مُراجَع" /><Ugc /></div>
-          <div className="sec"><SecHd t="تهاني ومبروك" meta="إعلانات مبوبة" /><Greetings /></div>
-          <div className="sec"><SecHd t="ذاكرة الأردن" meta="يومياً" /><Memory /></div>
-        </div>
+          <div className="three">
+            <div className="sec"><SecHd t="عين المواطن" meta="محتوى القراء · مُراجَع" /><Ugc /></div>
+            <div className="sec"><SecHd t="تهاني ومبروك" meta="إعلانات مبوبة" /><Greetings /></div>
+            <div className="sec"><SecHd t="ذاكرة الأردن" meta="يومياً" /><Memory /></div>
+          </div>
 
-        {/* J13–J15 seasonal (in season or ?season=all) */}
-        <Seasonal season={season} />
+          {/* J13–J15 seasonal (in season or ?season=all) */}
+          <Seasonal season={season} />
+        </>)}
 
         <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>
 
@@ -311,7 +329,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <MostDiscussed items={latestArticles} />
 
-        <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>
+        {demo && <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>}
       </div>
 
       <SiteFooter />

@@ -400,12 +400,16 @@ router.get('/homepage', requireRole(...EDITOR_ROLES), async (_req: Request, res:
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-// PUT /api/admin/homepage { heroId?, pickIds?, breaking?: { title, href } | null }
+// PUT /api/admin/homepage { heroId?, pickIds?, breaking?: { title, href } | null, demoBlocks?: boolean }
 router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
   try {
-    const { heroId, pickIds, breaking } = req.body || {};
+    const { heroId, pickIds, breaking, demoBlocks } = req.body || {};
     const next: HomepageSetting = {};
     next.heroId = heroId ? String(heroId) : null;
+    // demoBlocks (D-052): omitted → keep the stored value; otherwise must be a boolean
+    if (demoBlocks === undefined) next.demoBlocks = (await readHomepageSetting(prisma)).demoBlocks;
+    else if (typeof demoBlocks === 'boolean') next.demoBlocks = demoBlocks;
+    else return res.status(400).json({ error: 'demoBlocks must be true or false' });
     if (pickIds !== undefined) {
       if (!Array.isArray(pickIds) || !pickIds.every((x) => typeof x === 'string')) return res.status(400).json({ error: 'pickIds[] of ids' });
       if (pickIds.length > MAX_PICKS) return res.status(400).json({ error: `حتى ${MAX_PICKS} مختارات` });

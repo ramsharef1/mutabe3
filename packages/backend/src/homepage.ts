@@ -7,18 +7,21 @@ export const HOMEPAGE_KEY = 'homepage';
 export const MAX_PICKS = 8;
 
 export interface Breaking { title: string; href: string; at: string }
-export interface HomepageSetting { heroId?: string | null; pickIds?: string[]; breaking?: Breaking | null }
+// demoBlocks: the homepage's illustrative data blocks (markets, roads, parliament votes, jobs,
+// video ids, columnist portraits…) stay visible until the desk has real content, then an editor
+// switches them off from /dashboard/homepage (BIBLE F-02 / D-052). Default ON = today's behaviour.
+export interface HomepageSetting { heroId?: string | null; pickIds?: string[]; breaking?: Breaking | null; demoBlocks?: boolean }
 
 const ARTICLE_INCLUDE = { author: { select: { id: true, name: true } }, category: true } as const;
 
 export async function readHomepageSetting(prisma: PrismaClient): Promise<HomepageSetting> {
   const row = await prisma.siteSetting.findUnique({ where: { key: HOMEPAGE_KEY } });
   const v = (row?.value || {}) as HomepageSetting;
-  return { heroId: v.heroId || null, pickIds: Array.isArray(v.pickIds) ? v.pickIds : [], breaking: v.breaking && v.breaking.title ? v.breaking : null };
+  return { heroId: v.heroId || null, pickIds: Array.isArray(v.pickIds) ? v.pickIds : [], breaking: v.breaking && v.breaking.title ? v.breaking : null, demoBlocks: v.demoBlocks !== false };
 }
 
 export async function writeHomepageSetting(prisma: PrismaClient, s: HomepageSetting) {
-  const value: HomepageSetting = { heroId: s.heroId || null, pickIds: (s.pickIds || []).slice(0, MAX_PICKS), breaking: s.breaking && s.breaking.title ? { ...s.breaking } : null };
+  const value: HomepageSetting = { heroId: s.heroId || null, demoBlocks: s.demoBlocks !== false, pickIds: (s.pickIds || []).slice(0, MAX_PICKS), breaking: s.breaking && s.breaking.title ? { ...s.breaking } : null };
   const json = value as unknown as Prisma.InputJsonObject; // plain JSON object; Prisma's Json input type wants an index signature
   await prisma.siteSetting.upsert({ where: { key: HOMEPAGE_KEY }, update: { value: json }, create: { key: HOMEPAGE_KEY, value: json } });
   return value;
@@ -35,5 +38,6 @@ export async function resolveHomepage(prisma: PrismaClient, setting?: HomepageSe
     hero: s.heroId ? by.get(s.heroId) || null : null,
     picks: (s.pickIds || []).map((id) => by.get(id)).filter(Boolean),
     breaking: s.breaking || null,
+    demoBlocks: s.demoBlocks !== false,
   };
 }

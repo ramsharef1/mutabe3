@@ -5,7 +5,7 @@ import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS, refreshHomepage } from '../components/staff';
 
 interface A { id: string; title: string; status: string; publishedAt?: string | null; category?: { name: string } | null }
-interface Setting { heroId: string | null; pickIds: string[]; breaking: { title: string; href: string; at: string } | null }
+interface Setting { heroId: string | null; pickIds: string[]; breaking: { title: string; href: string; at: string } | null; demoBlocks?: boolean }
 
 const MAX_PICKS = 8;
 
@@ -21,6 +21,7 @@ export default function Homepage() {
   const [brkTitle, setBrkTitle] = useState('');
   const [brkHref, setBrkHref] = useState('');
   const [brkAt, setBrkAt] = useState<string | undefined>();
+  const [demoOn, setDemoOn] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -38,6 +39,7 @@ export default function Homepage() {
       setBrkTitle(s.breaking?.title || '');
       setBrkHref(s.breaking?.href || '');
       setBrkAt(s.breaking?.at);
+      setDemoOn(s.demoBlocks !== false);
     } else setErr('تعذّر تحميل إعدادات الصفحة الرئيسية.');
     setLoading(false);
   }, []);
@@ -56,6 +58,7 @@ export default function Homepage() {
       pickIds,
       // keep the original time when the same breaking item is re-saved; a new title starts a new clock
       breaking: brkOn ? { title: brkTitle.trim(), href: brkHref.trim() || '/', at: brkAt } : null,
+      demoBlocks: demoOn,
     };
     const r = await adminFetch('/api/admin/homepage', jsonInit('PUT', body));
     const j = await r.json().catch(() => ({}));
@@ -120,6 +123,13 @@ export default function Homepage() {
                   <button type="button" className="adm-logout" disabled={!addPick} onClick={() => { setPickIds((x) => [...x, addPick]); setAddPick(''); }}>إضافة</button>
                 </div>
               )}
+            </section>
+
+            <section className="adm-card">
+              <h2>الكتل التوضيحية</h2>
+              <p className="adm-note">أقسام الصفحة الرئيسية التي تعرض بيانات توضيحية (الأسواق، الطرق والمعابر، تصويت النواب، الوظائف والعطاءات، الذاكرة، الفيديو، صور الكتّاب…). اتركها ظاهرة حتى يصبح المحتوى الحقيقي كافياً، ثم أوقفها بنقرة واحدة؛ الأخبار والمختارات والنشرة لا تتأثر.</p>
+              <label className="adm-check"><input type="checkbox" checked={demoOn} onChange={(e) => setDemoOn(e.target.checked)} /> إظهار الكتل التوضيحية على الصفحة الرئيسية</label>
+              {!demoOn && <p className="adm-note">عند الحفظ تختفي الكتل التوضيحية فوراً من الموقع.</p>}
             </section>
 
             <section className="adm-card">

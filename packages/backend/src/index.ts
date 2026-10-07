@@ -148,12 +148,12 @@ app.post('/api/articles/:id/view', async (req: Request, res: Response) => {
     if (last && now - last < 30 * 60 * 1000) return res.json({ success: true, counted: false });
     if (recentViews.size > 50000) recentViews.clear();
     recentViews.set(key, now);
-    const a = await prisma.article.update({
-      where: { id: req.params.id },
-      data: { viewsCount: { increment: 1 } },
-      select: { viewsCount: true },
-    });
-    res.json({ success: true, counted: true, viewsCount: a.viewsCount });
+    // Raw increment so Prisma's @updatedAt is NOT bumped: updatedAt feeds dateModified in the
+    // article JSON-LD and must only move on editorial edits (BIBLE F-04, CONTENT-ARCHITECTURE §0).
+    const rows = await prisma.$queryRaw<{ viewsCount: number }[]>`
+      UPDATE "Article" SET "viewsCount" = "viewsCount" + 1 WHERE id = ${req.params.id} RETURNING "viewsCount"`;
+    if (!rows.length) return res.status(404).json({ error: 'Article not found' });
+    res.json({ success: true, counted: true, viewsCount: rows[0].viewsCount });
   } catch {
     res.status(404).json({ error: 'Article not found' });
   }
