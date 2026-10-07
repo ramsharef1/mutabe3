@@ -27,7 +27,7 @@ As of 2026-10-07 (details and evidence: `brain/DECISIONS.md` D-051 … D-065):
 ## Priorities
 
 Build order chosen by Rami 2026-10-08 ("everything"), one slice at a time, each verified locally then on production:
-1. **Real people and data:** columnist/author pages from staff accounts (monogram without a photo) replacing the invented writers; demo data blocks (roads, FX, obituaries, jobs, MP votes, fact-check) sourced or hidden.
+1. **Real people and data:** ✅ author profiles live (D-067, opt-in by job title). Demo data blocks are already behind the demo switch (D-052); sourcing live feeds (FX, roads, obituaries) not started.
 2. **Content types:** video, caricature and live-blog pages on the existing article kinds, replacing the hard-coded sections.
 3. **Ops:** weekly conditional kernel reboot (Q8).
 4. **Weeks 9–12 · grow:** in-admin analytics, web push for عاجل, Arabic trigram search, Lighthouse pass.
@@ -49,6 +49,6 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 
 ## Resume point
 
-Last session 2026-10-08 (Claude Code): D-057 … D-065 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
+Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). Next: Priorities item 2 (video, caricature, live-blog pages). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
 **Last updated:** 2026-10-08 (answers to Q2–Q4, Q7–Q10) (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)

@@ -6,6 +6,15 @@
 
 ---
 
+## 2026-10-08 · Claude Code · author profiles (D-067)
+
+- **Answers recorded** (PLAN): Q2 Rami's Google account, Q3 forwarding, Q4 no legal review for now, Q7 leave, Q8 weekly conditional reboot, Q9 after ~20 real articles, Q10 Rami shares the review page; build order "everything".
+- **Shipped and verified (277d6ef, run 37691423229):** opt-in `/author/<slug>` pages, real «كتاب المتابع» band, linked bylines, «ملفي العام» in the dashboard. No reader-visible change until a writer fills in الصفة.
+- **Caught before deploy:** a `@unique` slug would have stopped the deploy's `db push`; without opt-in the shared «مسؤول» account would have got a public page.
+- **Status:** ✅ nothing in flight · next: video / caricature / live-blog pages.
+
+---
+
 ## 2026-10-08 · Claude Code · Ink & Signal skin (D-066)
 
 - **Built (branch `worktree-ink-skin`, 523600f, not deployed):** brand reds and font stacks read `--k-<role>` variables with the classic value as fallback; `skin-ink.css` defines them from `tokens.json`; `?skin=ink` previews per browser. Classic proven unchanged (computed styles, 9 page/mode combinations, 0 differences). Density measured and fixed (Naskh 700 list titles, nav 13 px, root line-height).
