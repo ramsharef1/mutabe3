@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma/client';
 
 // The site's navigation as built in D-034 (measured from ammonnews.net). The DB
 // held only politics/economy/sports until Stage 3; this seeds the rest ONCE and

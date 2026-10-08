@@ -4,7 +4,7 @@
 // tashkeel, hamza forms, ى/ي and ة/ه never get in the way. Matches are ranked: title over summary over
 // body, all words in the title or the exact phrase score extra, newer wins ties. With no match, a
 // «هل تقصد…» suggestion is built from headline vocabulary (edit distance 1–2) and kept only if it finds something.
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client';
 
 const TASHKEEL = /[ؐ-ًؚ-ٰٟۖ-ۭ]/g;
 const TATWEEL = /ـ/g;

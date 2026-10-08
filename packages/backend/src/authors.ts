@@ -3,7 +3,7 @@
 // at least one published article — shared desk accounts (e.g. «مسؤول») never get a page by accident;
 // email, role and password never leave this module. Photos must be uploads on this site (localImage).
 import { Router, Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client';
 import { localImage } from './ads';
 import { sendError } from './errors';
 

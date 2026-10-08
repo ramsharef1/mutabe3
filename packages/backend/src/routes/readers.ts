@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { newPrismaClient } from '../db';
 import { allow, fingerprint } from '../ratelimit';
 import { activePolls, pollDto } from '../polls';
 import { newToken, SITE_URL } from '../newsletter';
@@ -9,7 +9,7 @@ import { stripLinks } from '../sanitize';
 
 // Public reader endpoints (D-043 Stage 4), mounted at /api.
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const ip = (req: Request) => req.ip || 'unknown';

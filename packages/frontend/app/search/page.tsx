@@ -6,11 +6,12 @@ import SearchView from './SearchView';
 // results stay in the client SearchView.
 export const dynamic = 'force-dynamic';
 
-type Props = { searchParams: { q?: string | string[] } };
+type Props = { searchParams: Promise<{ q?: string | string[] }> };
 
-const qOf = (sp: Props['searchParams']) => String((Array.isArray(sp.q) ? sp.q[0] : sp.q) || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+const qOf = (sp: Awaited<Props['searchParams']>) => String((Array.isArray(sp.q) ? sp.q[0] : sp.q) || '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
-export function generateMetadata({ searchParams }: Props): Metadata {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const searchParams = await props.searchParams;
   const q = qOf(searchParams || {});
   return {
     title: q ? `بحث: «${q}» | المتابع` : 'بحث | المتابع',

@@ -13,7 +13,7 @@ import { AuthorFace, authorHref } from '../../components/authors';
 // Server-rendered so the title, canonical and ProfilePage + Person JSON-LD are in the HTML.
 export const dynamic = 'force-dynamic';
 
-type Props = { params: { slug: string }; searchParams?: { page?: string } };
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ page?: string }> };
 const pageOf = (sp?: { page?: string }) => Math.min(Math.max(Number(sp?.page) || 1, 1), 500);
 
 async function load(slug: string, page: number): Promise<AuthorPage | null | 'down'> {
@@ -23,7 +23,9 @@ async function load(slug: string, page: number): Promise<AuthorPage | null | 'do
 const describe = (a: AuthorPage) =>
   (a.bio && a.bio.replace(/\s+/g, ' ').slice(0, 155)) || `مقالات ${a.name}${a.jobTitle ? `، ${a.jobTitle}` : ''} على ${SITE_NAME}`;
 
-export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const a = await load(params.slug, pageOf(searchParams));
   if (a === 'down') return { title: 'المتابع' };
   if (!a) return { title: 'الكاتب غير موجود | المتابع', robots: { index: false } };
@@ -38,7 +40,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-export default async function AuthorPageView({ params, searchParams }: Props) {
+export default async function AuthorPageView(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const page = pageOf(searchParams);
   const [a, side] = await Promise.all([load(params.slug, page), fetchArticles({}, 60)]);
   if (a === 'down') {

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { newPrismaClient } from '../db';
 import {
   hashPassword,
   verifyPassword,
@@ -21,7 +21,7 @@ import { audit } from '../audit';
 const STAFF = ['ADMIN', 'EDITOR', 'JOURNALIST'];
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 
 // ───────────────────────────── guards (SECURITY S-03/S-04, D-051) ─────────────────────────────
 // Request bodies are JSON: a value meant to be a string could arrive as an object and would

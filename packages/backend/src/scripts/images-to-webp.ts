@@ -11,7 +11,7 @@
 // reused, rows already pointing at .webp are left alone. gif/svg/webp masters are never touched.
 import path from 'path';
 import fs from 'fs';
-import { PrismaClient } from '@prisma/client';
+import { newPrismaClient } from '../db';
 import { UPLOAD_DIR } from '../uploads';
 import { MASTER_MAX_WIDTH, MASTER_QUALITY, toWebp } from '../images';
 
@@ -87,7 +87,7 @@ async function main() {
   const ready = new Map<string, string>();
   for (const j of jobs) if (DRY ? j.state !== 'failed' : j.state === 'converted' || j.state === 'reused') ready.set(j.rel, j.newRel);
 
-  const prisma = new PrismaClient();
+  const prisma = newPrismaClient();
   let articles = 0, featured = 0, inline = 0, categories = 0;
   try {
     const arts = await prisma.article.findMany({

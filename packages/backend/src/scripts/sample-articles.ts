@@ -4,11 +4,12 @@
 // whole set can be hidden from /dashboard/homepage in one click. The 19 seeded demo articles of 2026-09-16
 // are flagged as samples too. Idempotent (slugs sample-<section>-<n>).
 //   npx tsx packages/backend/src/scripts/sample-articles.ts [--dry]
-import { PrismaClient, ArticleKind } from '@prisma/client';
+import { ArticleKind } from '../generated/prisma/client';
+import { newPrismaClient } from '../db';
 import { sanitizeArticleHtml } from '../sanitize';
 import { reindexArticle } from '../search';
 
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 const DRY = process.argv.includes('--dry');
 const img = (id: number) => `https://picsum.photos/id/${id}/500/350`;
 const p = (...xs: string[]) => xs.map((x) => `<p>${x}</p>`).join('');

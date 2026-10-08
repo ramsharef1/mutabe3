@@ -1,7 +1,7 @@
 // Live blogs (D-068): public reads of a LIVE article's updates and of the coverage running now.
 // Writing happens in routes/admin.ts (editors, or a journalist on their own draft).
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma/client';
 import { sendError } from './errors';
 
 export const LIVE_TEXT_MAX = 3000;

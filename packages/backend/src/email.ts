@@ -1,7 +1,8 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import dns from 'dns';
 import fs from 'fs';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from './generated/prisma/client';
+import { newPrismaClient } from './db';
 import { seal, open, needsReseal } from './secretbox';
 
 // Mail transport (D-043 Stage 4, dashboard settings D-044). Precedence:
@@ -10,7 +11,7 @@ import { seal, open, needsReseal } from './secretbox';
 // 3. SMTP_HOST env                 → that server (SMTP_PORT default 587, SMTP_SECURE, SMTP_USER/PASSWORD).
 // 4. Fallback                      → the VPS's own Postfix on localhost:25 (relays for
 //                                    127.0.0.1 without auth; self-signed STARTTLS ok for localhost only).
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 const DRY = process.env.MAIL_DRY_RUN === '1';
 export const SMTP_KEY = 'mail.smtp';
 const DEFAULT_FROM = { name: 'المتابع', address: 'noreply@mutabe3.news' };

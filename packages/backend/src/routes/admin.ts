@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { newPrismaClient } from '../db';
 import { authMiddleware, drainRequest } from '../middleware';
 import { sanitizeArticleHtml } from '../sanitize';
 import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES, UPLOAD_URL, uploadRel, uploadExists, deleteUpload } from '../uploads';
@@ -18,7 +18,7 @@ import { reindexArticle } from '../search';
 import { RejectedImage } from '../images';
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 
 // Roles (D-043 Stage 3): ADMIN everything · EDITOR all content + categories +
 // homepage · JOURNALIST own drafts only, no publishing · VIEWER no dashboard.

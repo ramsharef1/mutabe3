@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma/client';
 import { autoDigestTick, reapStuckSends } from './newsletter';
 import { flushAdStats } from './ads';
 import { flushViewStats } from './stats';

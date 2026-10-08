@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { newPrismaClient } from '../db';
 import { drainRequest } from '../middleware';
 import { pollDto } from '../polls';
 import { sendMail, mailStatus, readSmtp, writeSmtp, verifySmtp, sealPassword, passwordReadable, SmtpSettings } from '../email';
@@ -11,7 +11,7 @@ import { sendError } from '../errors';
 // Reader-facing admin (D-043 Stage 4): comment moderation, polls, newsletter.
 // Mounted inside routes/admin.ts AFTER its auth + staff check, so req.user is set.
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 
 type Staff = { id: string; name: string; role: string };
 const who = (req: Request) => (req as any).user as Staff;

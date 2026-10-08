@@ -3,7 +3,7 @@
 // queued here and written to ArticleViewDaily once a minute by the scheduler — one upsert per article per
 // minute, not one write per read. Days are Amman calendar days. GA4 stays the audience-proof layer;
 // these numbers are consent-independent and never identify a reader.
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma/client';
 
 const AMMAN = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Amman', year: 'numeric', month: '2-digit', day: '2-digit' });
 /** YYYY-MM-DD in Amman. */

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client';
 import { uploadRel, UPLOAD_URL } from './uploads';
 
 // Ad placements live in SiteSetting["ads"] (D-043 Stage 5). The site has four

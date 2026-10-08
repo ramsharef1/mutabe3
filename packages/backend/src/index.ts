@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { newPrismaClient } from './db';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import authRoutes from './routes/auth';
@@ -36,7 +36,7 @@ const APPROVED_COMMENTS = { _count: { select: { comments: { where: { status: 'AP
 
 const app = express();
 const port = process.env.PORT || 8080;
-const prisma = new PrismaClient();
+const prisma = newPrismaClient();
 
 // nginx sits in front on the same host; honour X-Forwarded-For so req.ip is the reader's IP.
 app.set('trust proxy', 'loopback');

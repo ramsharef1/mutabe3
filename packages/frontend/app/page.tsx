@@ -102,7 +102,8 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
   </>
 );
 
-export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
+export default async function Home(props: { searchParams?: Promise<{ season?: string }> }) {
+  const searchParams = await props.searchParams;
   const [latestArticles, wx, curated, writers, videoArts, caricatureArts, liveNowItem, data, bySection] = await Promise.all([
     getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION'),
     fetchArticles({ kind: 'VIDEO', take: '7' }, 60), fetchArticles({ kind: 'CARICATURE', take: '4' }, 60), fetchCurrentLive(), fetchData(),

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma/client';
 
 // Reader polls (D-043 Stage 4). The two widgets that existed as client-only demos
 // (the community poll and the "وجهان" debate) are seeded once as real polls so

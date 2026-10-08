@@ -10,7 +10,7 @@ import TagView from './TagView';
 // stays in the client TagView.
 export const dynamic = 'force-dynamic';
 
-type Props = { params: { tag: string } };
+type Props = { params: Promise<{ tag: string }> };
 
 /** Route params for Arabic tags may arrive still percent-encoded; normalise whitespace and bound the length. */
 function tagOf(raw: string) {
@@ -26,7 +26,8 @@ async function countFor(tag: string) {
 
 const describe = (tag: string) => `كل ما نشره المتابع حول «${tag}»`;
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const tag = tagOf(params.tag);
   if (!tag) return { title: 'كلمة مفتاحية غير موجودة | المتابع', robots: { index: false } };
   const n = await countFor(tag);
@@ -41,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function TagPage({ params }: Props) {
+export default async function TagPage(props: Props) {
+  const params = await props.params;
   const tag = tagOf(params.tag);
   const url = `/tag/${encodeURIComponent(tag)}`;
   return (

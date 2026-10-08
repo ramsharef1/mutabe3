@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client';
 import { AUTHOR_PUBLIC } from './authors';
 
 // Homepage curation lives in SiteSetting["homepage"]. Editors pick the hero,

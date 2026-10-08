@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'auth check failed' }, { status: 502 });
   }
   if (ads) {
-    revalidateTag('ads');
+    revalidateTag('ads', { expire: 0 }); // Next 16 needs a profile; expire 0 = purge now, as the one-arg call did in 14 (D-084)
     revalidatePath('/', 'layout');
     return Response.json({ success: true, revalidated: ['ads', 'layout'] });
   }

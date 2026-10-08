@@ -93,3 +93,6 @@ strapi.log
 
 # Editor image uploads (local dev; prod uses UPLOAD_DIR outside the checkout)
 packages/backend/uploads/
+
+# Prisma 7 generated client (D-084) — rebuilt by `prisma generate`
+packages/backend/src/generated/

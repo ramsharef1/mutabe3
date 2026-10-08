@@ -4,7 +4,7 @@
 // is public only while fresh (its own rule below); otherwise the homepage falls back to the illustrative version
 // while the demo switch is on, or hides it. Exchange rates come live from ExchangeRate-API (attribution shown).
 import { Router, Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client';
 import { localImage, safeHref } from './ads';
 import { sendError } from './errors';
 

@@ -3,7 +3,7 @@
 // password) — no server environment change. Readers opt in from a button (never an automatic prompt); an
 // editor sends each alert explicitly, at most one per 10 minutes, and every send is audited and logged.
 import { Router, Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client';
 import webpush from 'web-push';
 import { seal, open, needsReseal } from './secretbox';
 import { allow } from './ratelimit';

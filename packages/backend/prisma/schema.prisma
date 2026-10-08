@@ -1,13 +1,17 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// Prisma 7 (D-084): the TypeScript client is generated into src/generated/prisma (gitignored, rebuilt by
+// `prisma generate` on every deploy) as CommonJS for the tsc build, and talks to Postgres through the
+// pg driver adapter (src/db.ts). The connection URL moved to prisma.config.ts.
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // Enums

@@ -12,7 +12,7 @@ import CategoryView from './CategoryView';
 // filters and pager stay in the client CategoryView.
 export const dynamic = 'force-dynamic';
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 const SLUG = /^[a-z0-9-]{1,40}$/;
 
 async function resolve(slug: string) {
@@ -26,7 +26,8 @@ async function resolve(slug: string) {
   return null; // unknown slug = 404 (CONTENT-ARCHITECTURE)
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const c = await resolve(params.slug);
   if (!c) return { title: 'القسم غير موجود | المتابع', robots: { index: false } };
   const url = `/category/${params.slug}`;
@@ -40,7 +41,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage(props: Props) {
+  const params = await props.params;
   const c = await resolve(params.slug);
   if (!c) notFound();
   const url = `/category/${params.slug}`;

@@ -12,9 +12,10 @@ import ArticleView from './ArticleView';
 // previews. The interactive body lives in the client ArticleView (D-043 Stage 2).
 export const dynamic = 'force-dynamic';
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const a = await fetchArticle(params.id);
   if (!a) return { title: 'المقال غير موجود | المتابع', robots: { index: false } };
   const description = a.summary || excerpt(a, 160);
@@ -42,7 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ArticlePage({ params }: Props) {
+export default async function ArticlePage(props: Props) {
+  const params = await props.params;
   const article = await fetchArticle(params.id);
   if (!article) notFound();
   const [live, latest] = await Promise.all([article.kind === 'LIVE' ? fetchLive(article.id) : Promise.resolve(null), fetchArticles({}, 60)]);

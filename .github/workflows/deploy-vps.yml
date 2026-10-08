@@ -72,10 +72,13 @@ jobs:
           # refuses anything that would lose data, so a destructive schema change fails
           # the deploy here instead of silently breaking the API.
           # Subshell so the backend's env (PORT, NODE_ENV, …) never leaks into the frontend build.
+          # Prisma 7 (D-084): the URL and schema path live in packages/backend/prisma.config.ts (which reads
+          # DATABASE_URL from this env), `--skip-generate` is gone because db push no longer generates, and the
+          # client is generated into packages/backend/src/generated/prisma, which the backend build compiles.
           (
             set -a; . /etc/mutabe3/backend.env; set +a
-            npx prisma db push --schema=packages/backend/prisma/schema.prisma --skip-generate
-            npx prisma generate --schema=packages/backend/prisma/schema.prisma
+            npx prisma db push --config=packages/backend/prisma.config.ts
+            npx prisma generate --config=packages/backend/prisma.config.ts
           )
 
           echo "== Building backend (tsc → packages/backend/dist, D-049) =="

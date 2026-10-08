@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic';
 const PASS_REQ = ['authorization', 'content-type', 'accept', 'cookie', 'x-forwarded-for'];
 const PASS_RES = ['content-type', 'cache-control', 'set-cookie', 'etag', 'last-modified'];
 
-async function proxy(request: NextRequest, { params }: { params: { path: string[] } }) {
+async function proxy(request: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  const params = await ctx.params; // Next 15+ hands route params over as a Promise (D-084)
   const target = `${VPS_API}/api/${(params.path || []).join('/')}${new URL(request.url).search}`;
   const headers = new Headers();
   PASS_REQ.forEach((h) => { const v = request.headers.get(h); if (v) headers.set(h, v); });

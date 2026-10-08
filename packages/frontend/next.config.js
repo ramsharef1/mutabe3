@@ -1,7 +1,7 @@
 // Security headers (D-051 / SECURITY S-02). The CSP ran in Report-Only from D-051; on 2026-10-07 seventeen
 // production pages (public + dashboard, editor and media library exercised) produced no violation of it, so
 // the same policy is now enforced (D-064), with `object-src 'none'` added and reports sent to /api/csp-report.
-// 'unsafe-inline' for scripts stays: Next 14 inlines its flight data and a nonce would force every page to
+// 'unsafe-inline' for scripts stays: Next inlines its flight data and a nonce would force every page to
 // render per request. Adding GTM tags, AdSense or another embed means adding its hosts here first.
 const DEV = process.env.NODE_ENV !== 'production'; // `next dev` needs eval (React Refresh) and its HMR websocket
 const CSP = [
@@ -32,8 +32,7 @@ const SECURITY_HEADERS = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
+  reactStrictMode: true, // swcMinify left the config in Next 15 (SWC minifies by default) — D-084
   output: 'standalone',
   poweredByHeader: false,
   images: { unoptimized: true }, // we serve our own WebP derivatives (/api/img); keeps /_next/image off the attack surface
