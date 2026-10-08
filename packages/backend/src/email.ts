@@ -1,5 +1,6 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import dns from 'dns';
+import fs from 'fs';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { seal, open, needsReseal } from './secretbox';
 
@@ -31,6 +32,20 @@ type Source = 'dry-run' | 'dashboard' | 'env' | 'local';
 interface Conf { source: Source; host: string; port: number; secure: boolean; user?: string; pass?: string; from: { name: string; address: string }; error?: string }
 
 const isLocal = (h: string) => h === 'localhost' || h === '127.0.0.1' || h === '::1';
+
+// DKIM (PLAN Q5): the VPS's Postfix is shared and does not sign, so mail we hand to it is signed here
+// with a mutabe3-only key (DKIM_KEY_FILE, selector DKIM_SELECTOR, public half in the mutabe3.news zone).
+// Only for the local route and only when the sender is @mutabe3.news; external providers sign themselves.
+const DKIM_SELECTOR = process.env.DKIM_SELECTOR || 'm3';
+let dkimKey: string | null | undefined;
+function dkimFor(c: Pick<Conf, 'host' | 'from'>) {
+  const domain = c.from.address.split('@')[1]?.toLowerCase();
+  if (!isLocal(c.host) || domain !== 'mutabe3.news' || !process.env.DKIM_KEY_FILE) return undefined;
+  if (dkimKey === undefined) {
+    try { dkimKey = fs.readFileSync(process.env.DKIM_KEY_FILE, 'utf8'); } catch (e: any) { dkimKey = null; console.error(`DKIM key unreadable: ${e?.code || e}`); }
+  }
+  return dkimKey ? { domainName: domain, keySelector: DKIM_SELECTOR, privateKey: dkimKey } : undefined;
+}
 
 function parseEnvFrom(v?: string) {
   if (!v) return DEFAULT_FROM;
@@ -83,7 +98,7 @@ async function effectiveConf(): Promise<Conf> {
   return { source: 'local', host: 'localhost', port: 25, secure: false, from: parseEnvFrom(process.env.SMTP_FROM) };
 }
 
-function build(c: Pick<Conf, 'host' | 'port' | 'secure' | 'user' | 'pass'>, pool: boolean): Transporter {
+function build(c: Pick<Conf, 'host' | 'port' | 'secure' | 'user' | 'pass'> & { from?: Conf['from'] }, pool: boolean): Transporter {
   const local = isLocal(c.host);
   return nodemailer.createTransport({
     host: c.host,
@@ -95,6 +110,7 @@ function build(c: Pick<Conf, 'host' | 'port' | 'secure' | 'user' | 'pass'>, pool
     connectionTimeout: 15_000,
     greetingTimeout: 10_000,
     socketTimeout: 30_000,
+    dkim: c.from ? dkimFor({ host: c.host, from: c.from }) : undefined,
     ...(pool ? { pool: true, maxConnections: 2, rateDelta: 1000, rateLimit: 5 } : {}), // ≤5 msgs/s
   } as any);
 }
@@ -147,7 +163,7 @@ export async function mailStatus() {
   const conf = await effectiveConf();
   const domain = (conf.from.address.split('@')[1] || 'mutabe3.news').toLowerCase();
   const txt = async (name: string) => { try { return (await dns.promises.resolveTxt(name)).map((r) => r.join('')); } catch { return []; } };
-  const [root, dmarc] = await Promise.all([txt(domain), txt(`_dmarc.${domain}`)]);
+  const [root, dmarc, dkimTxt] = await Promise.all([txt(domain), txt(`_dmarc.${domain}`), txt(`${DKIM_SELECTOR}._domainkey.${domain}`)]);
   return {
     mode: DRY ? 'dry-run' : 'smtp',
     source: conf.source,
@@ -157,6 +173,7 @@ export async function mailStatus() {
     domain,
     spf: root.some((r) => r.toLowerCase().startsWith('v=spf1')),
     dmarc: dmarc.some((r) => r.toLowerCase().startsWith('v=dmarc1')),
+    dkim: !DRY && !!dkimFor(conf) && dkimTxt.some((r) => /p=[A-Za-z0-9+/]{100,}/.test(r)),
     error: conf.error || null,
   };
 }
