@@ -2,6 +2,16 @@
 
 ## 2026-10-08
 
+**D-080: Sample material for every section, labelled and kept out of search (PLAN Q9)**
+- **Asked by:** Rami 2026-10-08 ("go with 7" → asked what to do with 0 real articles → "lets create demo articles for each section instead").
+- **Found:** all 19 published articles were the 2026-09-16 demo set; 11 of 14 sections were empty.
+- **Done:** `Article.isSample` (additive column). Sample pieces carry «مادة تجريبية» (amber chip, ahead of any other label) on cards and a note on the page, a «فريق المتابع» byline, `noindex, follow`, breadcrumbs only (no NewsArticle/VideoObject), and stay out of the sitemap, Google News sitemap and RSS. `/dashboard/homepage` → «المواد التجريبية»: one click hides all samples (→ DRAFT, publishedAt kept, nothing deleted) or restores them; audited `samples.hide`/`samples.publish`; `GET/POST /api/admin/samples` (editors). `scripts/sample-articles.ts` (idempotent, via ops `sample-articles`) flagged the 19 demo articles and added 33 samples — 3 per empty section (east-west, education, world, palestine, parliament, panorama, writers [OPINION], nights, health, caricature [CARICATURE], video [VIDEO]); evergreen guides/features only, no invented events or quotes from real people; Picsum photos credited «صورة توضيحية».
+- **Verified:** local — noindex + note + byline, 0 samples in sitemap/RSS/news sitemap, hide→0 public / restore→33, 400 on bad body, 401 without token, audited; production (dc22987) — 52 public articles all samples, every section has content, sample page noindex with note, sitemap 0 articles, RSS 0 items.
+- **Next:** when the desk publishes real pieces, «إخفاء كل المواد التجريبية» retires the set in one click (Q9 unchanged: around 20 real articles). Note: until then the sitemap lists no articles and RSS is empty — intended.
+- **Status:** ✅ LIVE · 2026-10-08
+
+---
+
 **D-079: Deploys as an unprivileged user; separate seal and fingerprint secrets (PLAN Q12, SECURITY S-07 + S-05)**
 - **Asked by:** Rami 2026-10-08 (Q12 "yes, do it now"; "do the mail cert first then q12").
 - **Deploy user (`setup-deploy-user`):** `mutabe3-deploy` (password locked, group `mutabe3` to read the env files, key `ops/vps/keys/mutabe3-deploy.pub` with `restrict`) owns the checkout; `deploy-vps.yml` logs in with the new secrets `VPS_DEPLOY_USER`/`VPS_DEPLOY_SSH_KEY` (key generated on Rami's Mac, private half stored straight into the GitHub `production` environment and deleted locally) and refuses to run as root. git, `npm ci`, prisma and both builds run unprivileged; the only sudo is `/usr/local/sbin/mutabe3-deploy-helper prepare|finish` (`.next` ownership, restart of the two mutabe3 units) — other arguments and any other command are refused (tested). One-time config and the D-045 image backfill left the deploy (both applied; ops can re-run them).

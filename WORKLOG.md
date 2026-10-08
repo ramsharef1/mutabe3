@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · sample material for every section (D-080)
+
+- **Live:** 33 new labelled samples (3 per empty section) + the 19 demo articles flagged; «مادة تجريبية» label, noindex, out of sitemaps/RSS; one-click hide/restore in /dashboard/homepage.
+
+---
+
 ## 2026-10-08 · Claude Code · deploy user + separate secrets (D-079)
 
 - **Live:** deploys as `mutabe3-deploy` (own key, no root; sudo only for the prepare/finish helper); SEAL_SECRET + FINGERPRINT_SALT separate from JWT_SECRET. First unprivileged deploy green, 0 permission errors, ISR cache writes fine.

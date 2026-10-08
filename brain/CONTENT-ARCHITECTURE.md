@@ -1,5 +1,5 @@
 # CONTENT-ARCHITECTURE — mutabe3
-Status: approved with plan v2 (D-050). Lengths are house defaults — Google sets none ([title links](https://developers.google.com/search/docs/appearance/title-link), [snippets](https://developers.google.com/search/docs/appearance/snippet)). Owner decisions: editors write in the dashboard (no import/feed), target 10+ articles/day, demo articles stay until real content exists, editor speed via faster UX + templates per kind.
+Status: approved with plan v2 (D-050). Lengths are house defaults — Google sets none ([title links](https://developers.google.com/search/docs/appearance/title-link), [snippets](https://developers.google.com/search/docs/appearance/snippet)). Owner decisions: editors write in the dashboard (no import/feed), target 10+ articles/day, demo articles stay until real content exists (since D-080 as labelled, noindexed sample material in every section, retired in one click), editor speed via faster UX + templates per kind.
 
 ## 0. Launch-integrity issues (fix in weeks 1–2)
 1. Footer links are `#` — about, contact, privacy… do not exist (`components/site.tsx:244`).
