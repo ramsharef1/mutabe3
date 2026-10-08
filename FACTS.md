@@ -58,7 +58,7 @@
 |---|---|---|
 | Articles | 19 published, all demo (stay until real content exists — removal is a separate Rami gate) | 2026-10-07 ✅ |
 | Ads | all four zones on demo; house banners with dates, first-party counts, CSV report ready (D-057) | 2026-10-07 ✅ |
-| Analytics | GTM + consent bar built, dormant until `NEXT_PUBLIC_GTM_ID` is set | 2026-10-07 ✅ |
+| Analytics | GA4 measurement id G-YH1LGW1B1D (web stream 16067707038, Rami's Google account) behind the consent bar, basic consent; first-party stats at /dashboard/stats (D-069, D-074) | 2026-10-08 ✅ |
 
 ## Credentials (paths and names only)
 
@@ -75,7 +75,7 @@
 |---|---|
 | Client legal name · editor-in-chief (imprint) | ⬜ |
 | Counsel (identity, review of the seven legal pages) | ⬜ |
-| GTM container id (Google account) | ⬜ |
+| GA4 property (Google account) | ✅ G-YH1LGW1B1D, Rami's account (2026-10-08) |
 | Mailboxes editor@ ads@ corrections@ privacy@ | ⬜ |
 | Original logo artwork file | ⬜ |
 | External uptime checker | ⬜ none (Better Stack dropped 2026-10-08) |

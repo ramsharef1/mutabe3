@@ -63,3 +63,5 @@ Looker Studio: operator view (sessions, active campaigns, fill rate), newsroom v
 
 ## Open
 GA4/GTM owner account (Rami) · counsel on PDPL stance for anonymous analytics/GA4 transfer (A1 vs A2) · advertiser metric definitions acceptable (viewable 50%/1s, CTR on viewable)?
+
+**Update 2026-10-08 (D-074):** GA4 is loaded directly (G-YH1LGW1B1D) instead of through a GTM container, with **basic** consent (no Google request before «موافق») instead of advanced — PDPL is consent-only. Events in §2 are sent with `gtag('event', …)`; staff browsers carry `traffic_type=internal`. GTM remains possible via `NEXT_PUBLIC_GTM_ID`.

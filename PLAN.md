@@ -37,7 +37,7 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 ## Open questions
 
 - **Q1 · Imprint names** — client legal name and editor-in-chief. *Needed for the about page, imprint and licence records.*
-- **Q2 · GTM container id** — **answered 2026-10-08: Rami's own Google account** owns GA4, GTM and Search Console (ownership can move to the client later). *Waiting on Rami: the `GTM-XXXX` id; analytics and the consent bar switch on with it.*
+- **Q2 · Analytics** — **done 2026-10-08 (D-074):** GA4 G-YH1LGW1B1D live behind the consent bar. *Rami, in GA4:* activate the «Internal Traffic» data filter, set retention to 14 months; connect Search Console when convenient.
 - **Q3 · Mailboxes** — **answered 2026-10-08: forwarding** of editor@, ads@, corrections@, privacy@ to the editors' existing inboxes. *Waiting on Rami: MX/forwarding records at the DNS host (same visit as Q5) and the target addresses.*
 - **Q4 · Counsel** — **answered 2026-10-08: no legal review for now** (Rami's decision; higher legal risk accepted). The «مسودة» banners stay on the seven legal pages until a lawyer approves them.
 - **Q5 · SPF/DKIM DNS** at webhubteam's name servers. *Without them newsletter mail does not reach inboxes; alerts already work through GitHub.*
@@ -51,6 +51,6 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 
 ## Resume point
 
-Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 … D-071 and D-073 live; D-072 web push deployed and off (Q11). The build plan is complete; what remains waits on Rami's answers (Q1, Q2 id, Q3/Q5 DNS, Q6, Q10–Q12) and on real content (Q9). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
+Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 … D-071 and D-073 live; D-072 web push deployed and off (Q11). The build plan is complete; GA4 live (D-074). What remains waits on Rami's answers (Q1, Q3/Q5 DNS, Q6, Q10–Q12) and on real content (Q9). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
 **Last updated:** 2026-10-08 (answers to Q2–Q4, Q7–Q10) (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)

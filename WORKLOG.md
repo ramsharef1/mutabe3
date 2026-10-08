@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · Google Analytics 4 (D-074)
+
+- **Shipped (99766b0):** GA4 G-YH1LGW1B1D behind the consent bar, basic consent, production hosts only, staff marked internal, site events via gtag.
+- **Production check:** no Google request before consent or after refusal; page_view and article_view collected after «موافق»; no CSP errors.
+- **For Rami in GA4:** activate the Internal Traffic filter; retention 14 months.
+
+---
+
 ## 2026-10-08 · Claude Code · security slice 3 (D-073)
 
 - **Shipped:** Prisma 6 + tsx 4 (production "already in sync"), per-purpose HKDF keys for sealed secrets, SSH host keys pinned in deploy/ops/monitor, nginx version hidden on the shared VPS (pre-flight + automatic rollback; all 11 sites unchanged).
