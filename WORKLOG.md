@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · mail certificate (D-078)
+
+- **Live:** mail.mutabe3.news certificate on SMTP/IMAP/submission via SNI, auto-renewing; guard re-adds our SNI entry if the control agent regenerates the map. Next: Q12.
+
+---
+
 ## 2026-10-08 · Claude Code · mail for mutabe3.news (D-077)
 
 - **Live:** SPF, DKIM (app-signed, `m3`), DMARC p=none, MX in the VPS's PowerDNS; info@mutabe3.news mailbox with editor@/ads@/corrections@/privacy@/noreply@ → info@. Test mail: DKIM/SPF/DMARC pass, delivered to info@.

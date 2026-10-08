@@ -1018,3 +1018,6 @@
 - 2026-10-08T14:03Z · edit · ops/vps/mail-test-mutabe3.sh
 - 2026-10-08T14:04Z · edit · ops/vps/mail-aliases-mutabe3.sh
 - 2026-10-08T14:06Z · edit · ops/vps/mail-loop-source.sh
+- 2026-10-08T14:31Z · edit · ops/vps/mail-cert-survey.sh
+- 2026-10-08T14:40Z · edit · ops/vps/mail-cert-mutabe3.sh
+- 2026-10-08T14:43Z · edit · ops/vps/mail-sni-guard-mutabe3.sh
