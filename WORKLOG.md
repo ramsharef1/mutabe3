@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · more samples (D-080)
+
+- **Live (2003e0e):** +42 samples (3 per section, all 14) → 94 published, all labelled samples, at least 6 per section.
+
+---
+
 ## 2026-10-08 · Claude Code · imprint owner name (Q1)
 
 - **Live (555f01c):** «موقع المتابع الاخباري» as owner and licensed entity on /about and /privacy; «قيد التفعيل» removed from the mail addresses (live since D-077). City still a placeholder.
