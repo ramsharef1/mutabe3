@@ -30,7 +30,9 @@ export function allow(key: string, limit: number, windowMs: number): boolean {
  */
 export const isLoopback = (ip?: string) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
 
-const SALT = process.env.JWT_SECRET || 'dev-salt';
+// D-079: own secret, independent of the JWT keys (set to the old JWT_SECRET value on the server so existing
+// poll/view dedupe fingerprints keep matching); falls back to JWT_SECRET where it is not set.
+const SALT = process.env.FINGERPRINT_SALT || process.env.JWT_SECRET || 'dev-salt';
 
 /** Stable, non-reversible fingerprint (salted SHA-256) so raw IPs / voter ids are never stored. */
 export const fingerprint = (...parts: string[]) => crypto.createHash('sha256').update([SALT, ...parts].join('|')).digest('hex').slice(0, 40);

@@ -57,7 +57,7 @@ export async function readSmtp(): Promise<SmtpSettings | null> {
   const row = await prisma.siteSetting.findUnique({ where: { key: SMTP_KEY } });
   if (!row) return null;
   const v = row.value as unknown as SmtpSettings;
-  // D-073: a password sealed with the old single key is re-sealed with the SMTP purpose key on first read
+  // D-073/D-079: a password sealed under an older root (v1/v2) is re-sealed with the current one on first read
   if (needsReseal(v.passEnc)) {
     const plain = open(v.passEnc);
     if (plain !== null) {

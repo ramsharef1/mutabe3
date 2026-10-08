@@ -15,7 +15,7 @@ on:
         type: choice
         required: true
         default: status
-        options: [inspect, status, dns-mail-survey, mail-survey-2, mail-bounce-survey, mail-survey-3, mail-setup-mutabe3, mail-test-mutabe3, mail-aliases-mutabe3, mail-loop-source, mail-cert-survey, mail-cert-mutabe3, mail-sni-guard-mutabe3, healthcheck, failed-units, failed-units-diagnose, failed-units-diagnose-2, cleanup-failed-units, security-updates-survey, security-updates-apply, dnf-automatic-hold-apache, reboot, post-reboot-check, boot-starters, restrict-postgres, xff-check, host-keys, nginx-tokens-survey, nginx-server-tokens-off, setup-service-user, setup-backups, backup-now, switch-backend-to-dist, switch-node-22]
+        options: [inspect, status, dns-mail-survey, mail-survey-2, mail-bounce-survey, mail-survey-3, mail-setup-mutabe3, mail-test-mutabe3, mail-aliases-mutabe3, mail-loop-source, mail-cert-survey, mail-cert-mutabe3, mail-sni-guard-mutabe3, setup-deploy-user, healthcheck, failed-units, failed-units-diagnose, failed-units-diagnose-2, cleanup-failed-units, security-updates-survey, security-updates-apply, dnf-automatic-hold-apache, reboot, post-reboot-check, boot-starters, restrict-postgres, xff-check, host-keys, nginx-tokens-survey, nginx-server-tokens-off, setup-service-user, setup-backups, backup-now, switch-backend-to-dist, switch-node-22]
 
 jobs:
   ops:
@@ -45,4 +45,6 @@ jobs:
           SSH_PIN="-o HostKeyAlias=mutabe3-vps -o UserKnownHostsFile=$HOME/.ssh/known_hosts_pinned -o StrictHostKeyChecking=yes"
           test -f "ops/vps/$ACTION.sh" || { echo "no script ops/vps/$ACTION.sh"; exit 1; }
           echo "== ops/vps/$ACTION.sh @ $(git rev-parse --short HEAD) =="
-          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' < "ops/vps/$ACTION.sh"
+          # The deploy user's public key (D-079) is passed in for setup-deploy-user; it is public.
+          PUBKEY=$(cat ops/vps/keys/mutabe3-deploy.pub)
+          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "PUBKEY='$PUBKEY' bash -s" < "ops/vps/$ACTION.sh"

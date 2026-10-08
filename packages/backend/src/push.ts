@@ -32,7 +32,7 @@ export async function readPush(prisma: PrismaClient, create = false): Promise<Pu
   const row = await prisma.siteSetting.findUnique({ where: { key: PUSH_KEY } });
   if (row) {
     const cfg = row.value as unknown as PushConfig;
-    if (needsReseal(cfg.privateBox)) { // D-073: re-seal a v1 box with the push purpose key
+    if (needsReseal(cfg.privateBox)) { // D-073/D-079: re-seal an older box (v1/v2) with the current root and the push purpose key
       const plain = open(cfg.privateBox);
       if (plain !== null) {
         const next = { ...cfg, privateBox: seal(plain, 'push') };
@@ -61,7 +61,7 @@ async function deliver(prisma: PrismaClient, sendId: string, payload: string, cf
   const privateKey = open(cfg.privateBox);
   let sent = 0, failed = 0, removed = 0;
   if (!privateKey) {
-    console.error('[push] private key does not decrypt (JWT_SECRET rotated?) — nothing sent');
+    console.error('[push] private key does not decrypt (SEAL_SECRET rotated?) — nothing sent');
   } else {
     const vapidDetails = { subject: SUBJECT, publicKey: cfg.publicKey, privateKey };
     let cursor: string | undefined;
