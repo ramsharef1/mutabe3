@@ -8,7 +8,7 @@ import { useStaff } from '../components/staff';
 
 export default function Account() {
   const router = useRouter();
-  // Every signed-in role may change its own password, so no role is denied here; `me` feeds the sidebar (D-083).
+  // Every signed-in role may change its own password, so no role is denied here; `me` feeds the sidebar (D-084).
   const { me } = useStaff(['ADMIN', 'EDITOR', 'JOURNALIST', 'VIEWER']);
   const [cur, setCur] = useState('');
   const [nw, setNw] = useState('');

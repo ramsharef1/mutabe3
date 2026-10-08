@@ -4,12 +4,21 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Me, ROLE_AR, isEditorRole, logout, adminFetch } from './staff';
 
-// Dashboard sidebar (D-043 Stages 3–4; sidebar since D-083): the sections the signed-in role may open,
+// Dashboard sidebar (D-043 Stages 3–4; sidebar since D-084): the sections the signed-in role may open,
 // grouped, on the start (right) side. Pages keep their `<div className="adm"><AdminNav/><main className="adm-main">`
 // shape — the grid switches on in CSS only when this sidebar is present, so the editor and the preview,
 // which use the old `.adm-top` bar with a back link, are unchanged. Below 900px it folds into a top bar
-// with a «القائمة» button.
+// with a «القائمة» button. On desktop it collapses to a slim rail; the choice is remembered per browser
+// (localStorage `admSide`, restored before paint by dashboard/layout.tsx via <html data-adm-side>).
 type Link = { href: string; label: string; show: boolean; badge?: number };
+
+const SIDE_KEY = 'admSide';
+const PanelIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+    <line x1="12.5" y1="3.5" x2="12.5" y2="16.5" />
+  </svg>
+);
 
 export default function AdminNav({ me }: { me: Me | null }) {
   const path = usePathname() || '';
@@ -17,6 +26,16 @@ export default function AdminNav({ me }: { me: Me | null }) {
   const admin = me?.role === 'ADMIN';
   const [pending, setPending] = useState(0);
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  // The layout's pre-paint script already set the attribute; mirror it into state once mounted.
+  useEffect(() => { setCollapsed(document.documentElement.getAttribute('data-adm-side') === 'collapsed'); }, []);
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    if (next) document.documentElement.setAttribute('data-adm-side', 'collapsed');
+    else document.documentElement.removeAttribute('data-adm-side');
+    try { localStorage.setItem(SIDE_KEY, next ? 'collapsed' : 'open'); } catch { /* private mode: still works for this page */ }
+  };
   useEffect(() => {
     if (!editor) return;
     adminFetch('/api/admin/comments/counts').then((r) => (r.ok ? r.json() : null)).then((j) => j && setPending(j.data?.PENDING || 0)).catch(() => {});
@@ -71,6 +90,18 @@ export default function AdminNav({ me }: { me: Me | null }) {
     <aside className={`adm-side${open ? ' open' : ''}`}>
       <div className="adm-side-head">
         <a className="adm-brand" href="/dashboard"><b>المتابع</b><span>لوحة التحكم</span></a>
+        <button
+          type="button"
+          className="adm-side-collapse"
+          aria-expanded={!collapsed}
+          aria-controls="adm-side-menu"
+          aria-label={collapsed ? `إظهار القائمة الجانبية${pending ? ` — ${pending} تعليق بانتظار المراجعة` : ''}` : 'طيّ القائمة الجانبية'}
+          title={collapsed ? 'إظهار القائمة' : 'طيّ القائمة'}
+          onClick={toggleCollapsed}
+        >
+          <PanelIcon />
+          {collapsed && pending ? <span className="adm-side-dot" aria-hidden="true">{pending}</span> : null}
+        </button>
         <button
           type="button"
           className="adm-side-toggle"
