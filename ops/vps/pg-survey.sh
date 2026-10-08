@@ -14,3 +14,5 @@ psql "$B" -Atc "select 'databases '||count(*) from pg_database where not datiste
 echo "backend main pid conns: $(ss -tnp 2>/dev/null | grep ':5432' | grep -c node)"
 echo "plain (no-ssl) local connection: $(psql "$B?sslmode=disable" -Atc "select 'ok'" 2>&1 | head -1)"
 psql "$B" -Atc "select 'app connections using ssl: '||count(*) filter (where s.ssl)||' of '||count(*) from pg_stat_ssl s join pg_stat_activity a using (pid) where a.datname=current_database() and a.backend_type='client backend'"
+psql "$B" -Atc "select 'sessions: '||count(*)||' total, '||count(*) filter (where \"expiresAt\" > now())||' unexpired, newest created '||coalesce(to_char(max(\"createdAt\"),'YYYY-MM-DD HH24:MI'),'-')||', server tz '||current_setting('TimeZone')||', now '||to_char(now(),'YYYY-MM-DD HH24:MI') from \"Session\"" 2>&1 | head -1
+echo "os tz: $(timedatectl show -p Timezone --value 2>/dev/null || date +%Z)"
