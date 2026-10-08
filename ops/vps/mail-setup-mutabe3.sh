@@ -64,6 +64,7 @@ for a in editor ads corrections privacy noreply; do
 done
 
 echo "== verify =="
+pdns_control purge "$Z\$" >/dev/null 2>&1 || true  # earlier lookups cached "no MX/TXT"
 ok=1
 [ "$(postmap -q "$Z" sqlite:/etc/postfix/sql/sqlite_virtual_domains.cf)" = "$Z" ] && echo "✓ postfix knows $Z" || { echo "✗ domain map"; ok=0; }
 postmap -q "info@$Z" sqlite:/etc/postfix/sql/sqlite_virtual_mailbox_maps.cf >/dev/null && echo "✓ mailbox map" || { echo "✗ mailbox map"; ok=0; }
