@@ -63,6 +63,6 @@ grep -cE '^(SEAL_SECRET|FINGERPRINT_SALT|JWT_SECRET|JWT_REFRESH_SECRET)=' "$ENVF
 echo "== 5. dry run as $U (no restart) =="
 PATH_N=/opt/node22/bin:/usr/bin:/bin
 sudo -u "$U" -H env PATH=$PATH_N bash -c "cd '$APPDIR' && git fetch --quiet origin main && git status --short | wc -l | sed 's/^/dirty files: /' && node -v && npm -v && set -a && . '$ENVF' && set +a && [ -n \"\$DATABASE_URL\" ] && echo 'env readable'"
-sudo -u "$U" sudo -n /usr/local/sbin/mutabe3-deploy-helper bogus 2>&1 | head -1
-sudo -u "$U" sudo -n /bin/true 2>&1 | head -1 | sed 's/^/arbitrary sudo: /'
+r=$(sudo -u "$U" sudo -n /usr/local/sbin/mutabe3-deploy-helper bogus 2>&1 || true); echo "helper with other args: ${r%%$'\n'*}"
+r=$(sudo -u "$U" sudo -n /bin/true 2>&1 || true); echo "arbitrary sudo: ${r:-ALLOWED (unexpected)}"
 echo done
