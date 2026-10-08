@@ -146,7 +146,6 @@ export function Nav({ compact = false }: { compact?: boolean }) {
         const on = path.startsWith(`/category/${n.slug}`);
         return <li key={n.slug} className={on ? 'on' : ''}><a href={`/category/${n.slug}`} aria-current={on ? 'page' : undefined}>{n.label}</a></li>;
       })}
-      {!compact && <li className="morenav"><a href="/category/misc">المزيد ▾</a></li>}
     </ul>
   );
 }

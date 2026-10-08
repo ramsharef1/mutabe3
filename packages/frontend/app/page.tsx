@@ -25,6 +25,9 @@ import { WritersBand } from './components/authors';
 export const revalidate = 60;
 
 const API = process.env.VPS_API || 'http://127.0.0.1:9080';
+// Sections with their own homepage box (D-082) — fetched one list each so a box never shows another section.
+const SECTION_SLUGS = ['politics', 'economy', 'palestine', 'world', 'east-west', 'education', 'parliament', 'nights', 'video', 'caricature', 'health', 'panorama', 'writers'];
+
 async function getArticles(): Promise<Article[]> {
   try {
     const r = await fetch(`${API}/api/articles`, { next: { revalidate: 60 } });
@@ -100,9 +103,11 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
 );
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
-  const [latestArticles, wx, curated, writers, videoArts, caricatureArts, liveNowItem, data] = await Promise.all([
+  const [latestArticles, wx, curated, writers, videoArts, caricatureArts, liveNowItem, data, bySection] = await Promise.all([
     getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION'),
     fetchArticles({ kind: 'VIDEO', take: '7' }, 60), fetchArticles({ kind: 'CARICATURE', take: '4' }, 60), fetchCurrentLive(), fetchData(),
+    // Each section box shows its own section (D-082): one cached list per section, newest first.
+    Promise.all(SECTION_SLUGS.map((slug) => fetchArticles({ category: slug, take: '12' }, 60))).then((ls) => new Map(SECTION_SLUGS.map((slug, i) => [slug, ls[i]]))),
   ]);
   // Desk-managed data blocks (D-076): a block shows the desk's rows while fresh, the illustrative version only
   // while the demo switch is on, otherwise nothing. `upd` is the honest «تحديث» line for a real block.
@@ -134,14 +139,28 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
   const premium = pool.take(3);
   const trending = pool.take(5);
   pool.take(6); // formerly "discussed"; still consumed so the sections below keep their picks
-  const jordan = pool.take(4), jordanS = pool.take(4);
-  const econ = pool.take(5), econS = pool.take(4);
-  const pal = pool.take(3), world = pool.take(4);
-  const east = pool.take(4), eastS = pool.take(4);
-  const edu = pool.take(4), culture = pool.take(3);
-  const nights = pool.take(7);
-  const tech = pool.take(4), misc = pool.take(4), health = pool.take(4);
-  const pano = pool.take(7);
+  // D-082: section boxes take from their own section — first pieces the fold above does not show, then its own
+  // pieces the fold does show (a box repeating its section beats an empty box), news before labelled paid pieces;
+  // no box repeats another box, and only a section with too few pieces is topped up from the shared pool.
+  const fold = new Set([hero, ...leadMore, ...mid, ...latest, ...premium, ...trending].filter(Boolean).map((a) => a.id));
+  const inBox = new Set<string>();
+  const sec = (slug: string, n: number): Article[] => {
+    const own = (bySection.get(slug) || []).filter((a) => !inBox.has(a.id));
+    const rank = (a: Article) => (fold.has(a.id) ? 2 : 0) + (a.kind === 'SPONSORED' ? 1 : 0);
+    const out = own.map((a, i) => ({ a, i })).sort((x, y) => rank(x.a) - rank(y.a) || x.i - y.i).map((x) => x.a).slice(0, n);
+    for (let tries = 0; out.length < n && tries < articles.length; tries++) { const x = pool.take(1)[0]; if (x && !inBox.has(x.id) && !out.includes(x)) out.push(x); }
+    out.forEach((a) => inBox.add(a.id));
+    return out;
+  };
+  const jordanAll = sec('politics', 8), jordan = jordanAll.slice(0, 4), jordanS = jordanAll.slice(4);
+  const econAll = sec('economy', 9), econ = econAll.slice(0, 5), econS = econAll.slice(5);
+  const pal = sec('palestine', 3), world = sec('world', 4);
+  const eastAll = sec('east-west', 8), east = eastAll.slice(0, 4), eastS = eastAll.slice(4);
+  const edu = sec('education', 4), parl = sec('parliament', 3);
+  const nights = sec('nights', 7);
+  const vids = sec('video', 4), cartoons = sec('caricature', 4), health = sec('health', 4);
+  const pano = sec('panorama', 7);
+  const writerPieces = sec('writers', 4);
   const ticker = [hero, ...mid.slice(0, 5)];
 
   return (
@@ -283,18 +302,18 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
               </a>
             ))}
           </div>
-          <WritersRail articles={pool.take(4)} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>}
+          <WritersRail articles={writerPieces} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>}
 
         <div className="two">
           <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>
-          <div className="sec"><SecHd t="الثقافة" slug="culture" /><BigText a={culture[0]} more={culture.slice(1)} /><More slug="culture" /></div>
+          {parl[0] && <div className="sec"><SecHd t="البرلمان" slug="parliament" /><BigText a={parl[0]} more={parl.slice(1)} /><More slug="parliament" /></div>}
         </div>
 
         <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards items={east} /><Smalls items={eastS} /><More slug="east-west" /></div>
 
         <div className="two">
-          <div className="sec rnd"><SecHd t="تكنولوجيا وسيارات" slug="technology" /><Smalls items={tech} cols={1} /><More slug="technology" /></div>
-          <div className="sec rnd"><SecHd t="منوعات" slug="misc" /><Smalls items={misc} cols={1} /><More slug="misc" /></div>
+          <div className="sec rnd"><SecHd t="فيديو المتابع" slug="video" /><Smalls items={vids} cols={1} /><More slug="video" /></div>
+          <div className="sec rnd"><SecHd t="كاريكاتير" slug="caricature" /><Smalls items={cartoons} cols={1} /><More slug="caricature" /></div>
         </div>
 
         <AdBanner variant={6} className="adrow ad90 adbillboard" />
