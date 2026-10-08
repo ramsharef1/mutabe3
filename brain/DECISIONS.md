@@ -2,6 +2,15 @@
 
 ## 2026-10-08
 
+**D-082: Homepage section boxes show their own section; dead section boxes and links removed**
+- **Asked by:** Rami 2026-10-08 ("are they reflected on the homepage and categories pages?").
+- **Found:** the homepage still worked as built for 19 demo articles (D-034): every box («اخبار الاردن», «اقتصاد», «فلسطين»…) took the next items of one shared newest-20 list regardless of section, so only 4 sections' articles reached the page and a box could show another section's story. Three boxes and the header «المزيد ▾» linked to sections that do not exist (`culture`, `technology`, `misc` → empty pages). Category pages were already correct (own list, all items, pager of 12).
+- **Done (`app/page.tsx`):** one cached list per section (`?category=<slug>&take=12`, revalidate 60) for the 13 boxed sections; each box takes its own pieces — first those the fold above does not show, then its own fold pieces, news before labelled paid ones; no box repeats another; only a short section is topped up from the shared pool. «الثقافة» → «البرلمان», «تكنولوجيا وسيارات» → «فيديو المتابع», «منوعات» → «كاريكاتير»; header «المزيد ▾» removed (the menu already lists every section). The writers rail takes كتاب المتابع pieces.
+- **Verified:** locally every boxed section 100 % its own section, 0 repeats across boxes, 0 dead links, 13 sections on the page; production (e42fdde) — every visible section on the homepage (اخبار الاردن 7, اقتصاد 7, شرق وغرب 10, education 9, world 7, palestine 5, parliament 3, panorama 7, writers 4, nights 7, health 4, caricature 4, video 4; رياضة stays off the homepage as a hidden section), 0 dead links; category pages list all their articles (e.g. صحة وبيئة «10 خبر», all 10 titles).
+- **Status:** ✅ LIVE · 2026-10-08
+
+---
+
 **D-081: The daily monitor reads the server as a read-only user (no administrator key)**
 - **Asked by:** Rami 2026-10-08 ("go with 9").
 - **Done (`setup-monitor-user`):** `ops/vps/healthcheck.sh` installed as a root-owned copy at `/usr/local/lib/mutabe3/healthcheck.sh` (taken from the ops run, not from the deploy-owned checkout, so the deploy user cannot change what root runs); `mutabe3-facts.timer` (root, hourly + 04:10 UTC) writes `/var/lib/mutabe3-monitor/facts.txt` atomically (key=value, no secrets). User `mutabe3-monitor`: password locked, no sudo, cannot read `/etc/mutabe3/backend.env`; its key (`ops/vps/keys/mutabe3-monitor.pub`, secrets `VPS_MONITOR_USER`/`VPS_MONITOR_SSH_KEY`, private half generated locally and deleted) is `restrict,command="/bin/cat …/facts.txt"` — a leaked key can only read those facts. `monitor.yml` reads the file instead of running the script as root; `server.mjs` raises the `ssh` alert when the facts are older than 3 h (timer stopped). Re-run the action after changing healthcheck.sh.

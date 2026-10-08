@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · homepage boxes per section (D-082)
+
+- **Live (e42fdde):** each homepage section box shows its own section (was one shared newest-20 list); dead boxes/links to non-existent sections replaced or removed. All 13 visible sections now on the homepage.
+
+---
+
 ## 2026-10-08 · Claude Code · more samples, third batch (D-080)
 
 - **Live (a0841f9):** +56 samples (4 per section) → 150 published, all labelled samples, 10 per section (اخبار الاردن 17, اقتصاد 13).
