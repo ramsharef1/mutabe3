@@ -4,6 +4,7 @@ import { fetchAds } from './lib/ads';
 import { AdsProvider } from './components/ads';
 import { PwaRegister } from './components/pwa';
 import { Analytics } from './components/analytics';
+import { GA_ID, GA_HOSTS } from './lib/ga';
 import './globals.css';
 
 // Read the id here on the server: importing a value from a 'use client' module into a server component
@@ -51,9 +52,14 @@ const BOOT = "try{var t=localStorage.getItem('theme');if(t)document.documentElem
   + "addEventListener('beforeinstallprompt',function(e){window.__bip=e;dispatchEvent(new Event('mutabe3:bip'))});"
   + "addEventListener('appinstalled',function(){window.__bip=null;dispatchEvent(new Event('mutabe3:bip'))});";
 // Consent Mode v2 defaults must run before the GTM container (D-055): every storage type denied until the bar grants analytics.
-const CONSENT_DEFAULT = GTM_ID
+const CONSENT_DEFAULT = GTM_ID || GA_ID
   ? "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;"
     + "gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});"
+    // GA4 direct (D-074): a reader who already consented gets the config queued before any page event, so
+    // article_view & co. are never sent ahead of it; gtag.js itself is added by components/analytics.tsx.
+    + (GA_ID && !GTM_ID
+      ? `try{var c=JSON.parse(localStorage.getItem('consent.v1')||'null');if(c&&c.analytics&&Date.now()-c.at<31536e6&&${JSON.stringify(GA_HOSTS)}.indexOf(location.hostname)>-1&&!/^\\/(dashboard|auth|offline)(\\/|$)/.test(location.pathname)){gtag('consent','update',{analytics_storage:'granted'});gtag('js',new Date());gtag('config','${GA_ID}',localStorage.getItem('accessToken')?{traffic_type:'internal'}:{});window.__gaConfigured=true}}catch(e){}`
+      : '')
   : '';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

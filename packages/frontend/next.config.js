@@ -12,7 +12,7 @@ const CSP = [
   "img-src 'self' data: blob: https:",
   "media-src 'self' https:",
   "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net",
-  `connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://api.open-meteo.com${DEV ? ' ws: wss:' : ''}`,
+  `connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://api.open-meteo.com${DEV ? ' ws: wss:' : ''}`, // GA4 collect endpoints (D-074)
   "object-src 'none'",
   "frame-ancestors 'self'",
   "base-uri 'self'",
