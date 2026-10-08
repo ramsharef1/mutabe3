@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · security slice 3 (D-073)
+
+- **Shipped:** Prisma 6 + tsx 4 (production "already in sync"), per-purpose HKDF keys for sealed secrets, SSH host keys pinned in deploy/ops/monitor, nginx version hidden on the shared VPS (pre-flight + automatic rollback; all 11 sites unchanged).
+- **Waiting:** non-root deploy user and separate env secrets (PLAN Q12, Rami).
+- **Status:** ✅ build plan complete · the rest waits on Rami's answers and real content.
+
+---
+
 ## 2026-10-08 · Claude Code · web push for عاجل (D-072)
 
 - **Deployed off (743d2b7):** opt-in button (footer + عاجل bar), service-worker alerts, `/dashboard/push` with confirm + 10-minute gap, keys sealed in the DB, endpoints limited to real push services.

@@ -17,7 +17,7 @@
 | Component | Value | Date |
 |---|---|---|
 | Frontend | Next.js 14.2 App Router, `output: standalone`, PWA, RTL, Noto Kufi/Naskh — `packages/frontend` | 2026-10-07 ✅ |
-| Backend | Express 4 + Prisma 5, compiled to `dist/` — `packages/backend` | 2026-10-07 ✅ |
+| Backend | Express 4 + Prisma 6.19, compiled to `dist/` — `packages/backend` (D-073) | 2026-10-08 ✅ |
 | Database | PostgreSQL 13 on the VPS, db `mutabe3`; reachable from the server only (D-063) | 2026-10-07 ✅ |
 | Runtime | Node 22 under `/opt/node22` for build and both units (D-056); the VPS's global Node 20 is left for other sites | 2026-10-07 ✅ |
 | Not used | Strapi, Vercel, Meilisearch, Redis (dependency removed D-065), Sentry, Docker (all from the September plan, dropped) | 2026-10-07 ✅ |
@@ -29,7 +29,7 @@
 | VPS | Hostinger `srv1772644.hstgr.cloud` · 72.62.132.138 · AlmaLinux 9.8 · 1 vCPU · 3.6 GB RAM · 49 GB disk (66 %) · **shared with other sites** | 2026-10-07 ✅ |
 | Kernel | 5.14.0-687.54.1 (rebooted D-062) | 2026-10-07 ✅ |
 | Units | `mutabe3-frontend` (`next start`, :9100) · `mutabe3-backend` (`node dist/index.js`, :9080) · user `mutabe3` · nginx enabled at boot (D-062) | 2026-10-07 ✅ |
-| nginx | server blocks in the shared `/etc/nginx/conf.d/all-domains.conf`; `/api/` → :9080, `/` → :9100; appends `X-Forwarded-For` (D-064) | 2026-10-07 ✅ |
+| nginx | server blocks in the shared `/etc/nginx/conf.d/all-domains.conf`; `/api/` → :9080, `/` → :9100; appends `X-Forwarded-For` (D-064); `server_tokens off` in `conf.d/00-server-tokens.conf` (D-073) | 2026-10-08 ✅ |
 | Checkout | `/var/www/mutabe3/current/projects/mutabe3` | 2026-10-07 ✅ |
 | Env files | `/etc/mutabe3/backend.env` (root, 0600) · optional `/etc/mutabe3/frontend.env` (build-time `NEXT_PUBLIC_*`) | 2026-10-07 ✅ |
 | CORS | API allows `https://mutabe3.news` + `https://www.mutabe3.news` (code default; optional `CORS_ORIGINS` unset); backend runs with `NODE_ENV=production` — localhost origin refused (D-065) | 2026-10-07 ✅ |

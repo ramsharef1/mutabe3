@@ -31,7 +31,7 @@ Build order chosen by Rami 2026-10-08 ("everything"), one slice at a time, each 
 2. **Content types:** ✅ video, caricature and live blog live (D-068).
 3. **Ops:** ~~weekly conditional kernel reboot~~ — dropped 2026-10-08; reboots on request (Q8).
 4. **Weeks 9–12 · grow:** ✅ in-admin analytics (D-069), ✅ Lighthouse pass (D-070: mobile 95–97, accessibility 97–100), ✅ Arabic search (D-071), ✅ web push for عاجل built, off until Q11 (D-072).
-5. **Remaining security:** Prisma 5 / tsx 3 upgrades (S-19), HKDF sub-keys (S-05), nginx `server_tokens` + edge HSTS (S-02), non-root deploy user + pinned host key (S-07).
+5. **Remaining security:** ✅ Prisma 6 + tsx 4, per-purpose secret keys, pinned SSH host keys, nginx version hidden (D-073); deploy user + separate secrets wait for Q12.
 Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design answers (Q10).
 
 ## Open questions
@@ -47,9 +47,10 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 - **Q9 · Demo articles** — **answered 2026-10-08: after ~20 real articles** are published, then delete the 19 demo articles and switch the demo blocks off.
 - **Q10 · Ink & Signal sign-off** — **answered 2026-10-08: Rami shares the review page** (https://claude.ai/artifact/UnyMrjMLQa73vwSL5CDpc6) with the client and passes on their answers to the three questions. *Yes → merge `worktree-ink-skin` and make ink the default.*
 - **Q11 · Web push for «عاجل»** — built and deployed **off** (D-072). *Rami:* open `/dashboard/push` → «تشغيل التنبيهات», tap «فعّل تنبيهات عاجل» in the site footer on a phone (Android Chrome, or the installed app on iPhone), then send one test alert from the dashboard. Switching it on shows the opt-in button to all readers; nobody is prompted automatically.
+- **Q12 · Deploy user and separate secrets** (S-07, S-05) — deploys and ops still log in as the server's administrator account, and all app keys derive from one JWT_SECRET. *Proposal:* an ops action creates a `mutabe3-deploy` user whose sudo allows only the mutabe3 units, the checkout and nginx reload; a new deploy key goes to that user; Rami replaces the GitHub `production` secrets `VPS_USER`/`VPS_SSH_KEY`; then the old key is removed. Separate `SEAL_SECRET`/`FINGERPRINT_SALT` in `/etc/mutabe3/backend.env` at the same visit (stored seals are re-sealed on read). *Needs Rami: credentials and deploy-target change (LAW 3).*
 
 ## Resume point
 
-Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 statistics, D-070 Lighthouse pass, D-071 Arabic search live; D-072 web push deployed and off (Q11). Next: item 5 (remaining security). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
+Last session 2026-10-08 (Claude Code): D-057 … D-065 and D-067 live; D-066 Ink & Signal built on branch `worktree-ink-skin` (not deployed), waiting for client sign-off (Q10). D-068 video/caricature/live blog live. D-069 … D-071 and D-073 live; D-072 web push deployed and off (Q11). The build plan is complete; what remains waits on Rami's answers (Q1, Q2 id, Q3/Q5 DNS, Q6, Q10–Q12) and on real content (Q9). The next session starts from Priorities: answers to Q1–Q9 unblock their items; without them, item 3 (remaining security items) or item 4 (the Ink & Signal skin in a worktree) is the next slice that needs nobody.
 
 **Last updated:** 2026-10-08 (answers to Q2–Q4, Q7–Q10) (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
