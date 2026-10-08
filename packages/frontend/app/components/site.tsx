@@ -63,8 +63,11 @@ export function Img({ src, alt = '', priority = false, sizes }: { src?: string; 
 }
 
 // Sponsored material carries the law's word «إعلان» on every card (Press & Publications Law Art. 30(b); REVENUE-MAP §3, D-056).
+// Sample material (D-080) says so on every card, ahead of any other label.
 export const Chip = ({ a }: { a: Article }) =>
-  a.kind === 'SPONSORED'
+  a.isSample
+    ? <span className="chip sample">مادة تجريبية</span>
+    : a.kind === 'SPONSORED'
     ? <span className="chip sponsored">إعلان</span>
     : a.kind === 'OPINION'
       ? <span className="chip opinion">رأي</span>

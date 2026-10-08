@@ -27,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...statics.map((p) => ({ url: `${SITE_URL}/${p}`, changeFrequency: 'monthly' as const, priority: 0.3 })),
     // author pages (D-067): only staff with a published piece are listed by the API
     ...authors.map((a) => ({ url: authorUrl(a.slug), lastModified: a.latest?.publishedAt, changeFrequency: 'weekly' as const, priority: 0.4 })),
-    ...articles.map((a) => ({
+    ...articles.filter((a) => !a.isSample).map((a) => ({ // sample material is never listed (D-080)
       url: `${SITE_URL}/article/${a.id}`,
       lastModified: a.updatedAt || a.publishedAt,
       changeFrequency: 'daily' as const,

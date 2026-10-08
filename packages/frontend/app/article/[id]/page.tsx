@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const images = [articleImage(a)]; // large photo, or the branded card when the article has none
   return {
     title: `${a.title} | المتابع`,
+    ...(a.isSample ? { robots: { index: false, follow: true } } : {}), // sample material is never indexed (D-080)
     description,
     alternates: { canonical: url, types: { 'application/rss+xml': '/feed.xml' } },
     openGraph: {
@@ -54,7 +55,8 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <>
       {/* NewsArticle (LiveBlogPosting for live coverage, + VideoObject for video pieces, D-068) + breadcrumbs (D-043 Stage 5) */}
-      <JsonLd data={[live ? liveBlogLd(article, live) : newsArticleLd(article), ...(video ? [video] : []), breadcrumbLd(crumbs)]} />
+      {/* sample material (D-080) gets breadcrumbs only — no NewsArticle/VideoObject claims */}
+      <JsonLd data={article.isSample ? [breadcrumbLd(crumbs)] : [live ? liveBlogLd(article, live) : newsArticleLd(article), ...(video ? [video] : []), breadcrumbLd(crumbs)]} />
       <ArticleView article={article} live={live} articles={latest.length ? latest : undefined} />
     </>
   );

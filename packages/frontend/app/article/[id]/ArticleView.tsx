@@ -79,7 +79,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
   // CMS articles are stored as sanitized HTML and carry their real author; the
   // seeded demo set is plain text and keeps its filler/gallery/writer dressing.
   const html = isHtml(a.content);
-  const cmsAuthor = html && a.author?.name ? a.author.name : null;
+  const cmsAuthor = a.isSample ? 'فريق المتابع' : html && a.author?.name ? a.author.name : null; // samples carry no personal byline (D-080)
   const lead = { src: a.featuredImageUrl?.replace('/500/350', '/1200/800') || '', thumb: a.featuredImageUrl || '', cap: a.title };
   const shots = html ? [lead] : [lead, ...gallery(a, 4)];
   const relCards = related.slice(0, 3);
@@ -109,6 +109,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
             <div className="arthead">
               {liveNow(a) ? <LiveBadge /> : <Chip a={a} />}
               {/* Paid material: the disclosure the Press & Publications Law asks for, above the headline (D-056) */}
+              {a.isSample && <div className="sample-note">مادة تجريبية توضّح شكل هذا القسم وليست خبراً — تُستبدل بالأخبار الحقيقية فور نشرها.</div>}
               {a.kind === 'SPONSORED' && <div className="sponsored-note">محتوى مدفوع{a.sponsorName ? ` من ${a.sponsorName}` : ''} — لا يعبّر عن رأي التحرير · <a href="/editorial-policy#sponsored">كيف نتعامل مع الإعلان</a></div>}
               <h1>{a.title}</h1>
               {a.summary && <p className="artsum">{a.summary}</p>}

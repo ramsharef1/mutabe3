@@ -743,6 +743,37 @@ router.put('/homepage', requireRole(...EDITOR_ROLES), async (req: Request, res: 
   } catch (e) { sendError(res, e); }
 });
 
+// Sample material (D-080): how many illustrative pieces are live, and one switch to retire or restore them
+// all. Hiding moves them to DRAFT (reversible, nothing deleted); publishedAt is kept so a restore puts
+// them back where they were.
+const sampleCounts = async () => {
+  const rows = await prisma.article.groupBy({ by: ['status'], where: { isSample: true }, _count: true });
+  const n = (s: string) => rows.find((r) => r.status === s)?._count ?? 0;
+  return { published: n('PUBLISHED'), hidden: n('DRAFT'), total: rows.reduce((t, r) => t + r._count, 0) };
+};
+router.get('/samples', requireRole(...EDITOR_ROLES), async (_req: Request, res: Response) => {
+  try { res.json({ success: true, data: await sampleCounts() }); } catch (e) { sendError(res, e); }
+});
+// POST /api/admin/samples { publish: boolean }
+router.post('/samples', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const publish = req.body?.publish;
+    if (typeof publish !== 'boolean') return res.status(400).json({ error: 'publish must be true or false' });
+    const r = await prisma.article.updateMany({
+      where: { isSample: true, status: publish ? 'DRAFT' : 'PUBLISHED', ...(publish ? { publishedAt: { not: null } } : {}) },
+      data: { status: publish ? 'PUBLISHED' : 'DRAFT' },
+    });
+    if (r.count) {
+      await audit(prisma, who(req), req, {
+        action: publish ? 'samples.publish' : 'samples.hide', targetType: 'homepage',
+        summary: publish ? `أعاد نشر ${r.count} مادة تجريبية` : `أخفى ${r.count} مادة تجريبية من الموقع`,
+        meta: { count: r.count },
+      });
+    }
+    res.json({ success: true, data: { changed: r.count, ...(await sampleCounts()) } });
+  } catch (e) { sendError(res, e); }
+});
+
 /* ───────────────────────────── ads (admin) ───────────────────────────── */
 
 // Ad zones, AdSense ids and ads.txt (D-043 Stage 5). Admin only: this is the site's revenue setup.

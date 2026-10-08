@@ -126,6 +126,9 @@ model Article {
   coverCaption      String?  // caption under the lead image; falls back to the title
   kind              ArticleKind @default(NEWS) // D-056
   sponsorName       String?  // SPONSORED only: «محتوى مدفوع من ‹الجهة›»
+  // Sample material (D-080): illustrative pieces that fill sections until the desk publishes. Labelled
+  // «مادة تجريبية» on cards and the page, noindex, kept out of sitemaps/RSS/Google News and structured data.
+  isSample          Boolean  @default(false)
 
   // Relations
   authorId          String

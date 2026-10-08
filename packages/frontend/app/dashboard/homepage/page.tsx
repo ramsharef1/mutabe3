@@ -22,6 +22,8 @@ export default function Homepage() {
   const [brkHref, setBrkHref] = useState('');
   const [brkAt, setBrkAt] = useState<string | undefined>();
   const [demoOn, setDemoOn] = useState(true);
+  const [samples, setSamples] = useState<{ published: number; hidden: number; total: number } | null>(null); // D-080
+  const [sBusy, setSBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -29,7 +31,8 @@ export default function Homepage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [ar, hr] = await Promise.all([adminFetch('/api/admin/articles'), adminFetch('/api/admin/homepage')]);
+    const [ar, hr, sr] = await Promise.all([adminFetch('/api/admin/articles'), adminFetch('/api/admin/homepage'), adminFetch('/api/admin/samples')]);
+    if (sr.ok) setSamples((await sr.json()).data);
     if (ar.ok) setArticles(((await ar.json()).data || []).filter((a: A) => a.status === 'PUBLISHED'));
     if (hr.ok) {
       const s = (await hr.json()).data.setting as Setting;
@@ -69,6 +72,17 @@ export default function Homepage() {
     }
     else setErr(j.error || 'تعذّر الحفظ.');
     setBusy(false);
+  };
+
+  // D-080: retire (→ draft) or restore all sample pieces at once; takes effect immediately, nothing is deleted
+  const toggleSamples = async (publish: boolean) => {
+    if (!publish && !window.confirm(`إخفاء ${samples?.published ?? ''} مادة تجريبية من الموقع؟ تنتقل إلى المسودات ويمكن إعادتها.`)) return;
+    setErr(''); setOk(''); setSBusy(true);
+    const r = await adminFetch('/api/admin/samples', jsonInit('POST', { publish }));
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { setSamples(j.data); await refreshHomepage(); setOk(publish ? `أُعيد نشر ${j.data.changed} مادة تجريبية.` : `أُخفيت ${j.data.changed} مادة تجريبية — الأقسام تعرض المقالات الحقيقية فقط.`); load(); }
+    else setErr(j.error || 'تعذّر التنفيذ.');
+    setSBusy(false);
   };
 
   const opt = (a: A) => <option key={a.id} value={a.id}>{a.title}{a.category ? ` — ${a.category.name}` : ''}</option>;
@@ -131,6 +145,17 @@ export default function Homepage() {
               <label className="adm-check"><input type="checkbox" checked={demoOn} onChange={(e) => setDemoOn(e.target.checked)} /> إظهار الكتل التوضيحية على الصفحة الرئيسية</label>
               {!demoOn && <p className="adm-note">عند الحفظ تختفي الكتل التوضيحية فوراً من الموقع.</p>}
             </section>
+
+            {samples && samples.total > 0 && (
+              <section className="adm-card">
+                <h2>المواد التجريبية</h2>
+                <p className="adm-note">مقالات توضيحية تملأ الأقسام إلى أن ينشر التحرير. تحمل وسم «مادة تجريبية»، ولا تظهر في محركات البحث ولا في خريطة الموقع أو RSS. منشور الآن: {samples.published} · مخفي: {samples.hidden}.</p>
+                <div className="adm-ops">
+                  {samples.published > 0 && <button type="button" className="adm-new" disabled={sBusy} onClick={() => toggleSamples(false)}>{sBusy ? '…' : 'إخفاء كل المواد التجريبية'}</button>}
+                  {samples.hidden > 0 && <button type="button" disabled={sBusy} onClick={() => toggleSamples(true)}>إعادة نشرها</button>}
+                </div>
+              </section>
+            )}
 
             <section className="adm-card">
               <h2>شريط عاجل</h2>

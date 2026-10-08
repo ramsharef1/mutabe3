@@ -8,7 +8,7 @@ const esc = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&g
 const mime = (u: string) => (/\.png$/i.test(u) ? 'image/png' : /\.webp$/i.test(u) ? 'image/webp' : /\.gif$/i.test(u) ? 'image/gif' : 'image/jpeg');
 
 export async function GET() {
-  const items = (await fetchArticles({ take: '40' })).filter((a) => a.kind !== 'SPONSORED').slice(0, 30); // no paid material in RSS (D-057)
+  const items = (await fetchArticles({ take: '40' })).filter((a) => a.kind !== 'SPONSORED' && !a.isSample).slice(0, 30); // no paid material in RSS (D-057)
   const now = new Date().toUTCString();
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">

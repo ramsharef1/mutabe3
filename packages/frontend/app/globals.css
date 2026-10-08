@@ -2301,3 +2301,6 @@ a.au:hover b{color:var(--k-text,var(--red))}
 .adm-datap .dblock > * + *{margin-top:8px}
 .adm-datap .dblock > .adm-ops{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .adm-datap .rows li > .adm-ops{display:flex;gap:6px}
+/* Sample material (D-080): amber, distinct from «إعلان» grey and the live red */
+.chip.sample{background:var(--k-sample,#8a5a00);color:#fff;letter-spacing:.2px}
+.sample-note{margin:6px 0 10px;padding:8px 12px;border-right:4px solid var(--k-sample,#8a5a00);background:var(--bg2);color:var(--fg2);font:700 13px/1.6 var(--kufi)}

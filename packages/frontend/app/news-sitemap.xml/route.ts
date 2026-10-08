@@ -10,7 +10,7 @@ const WINDOW_MS = 48 * 60 * 60 * 1000;
 export async function GET() {
   const since = Date.now() - WINDOW_MS;
   // Paid material is excluded from the news sitemap (Google News policy; REVENUE-MAP §3, D-057).
-  const items = (await fetchArticles({ take: '100' })).filter((a) => a.kind !== 'SPONSORED' && a.publishedAt && new Date(a.publishedAt).getTime() >= since);
+  const items = (await fetchArticles({ take: '100' })).filter((a) => a.kind !== 'SPONSORED' && !a.isSample && a.publishedAt && new Date(a.publishedAt).getTime() >= since);
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
 ${items.map((a) => `<url>

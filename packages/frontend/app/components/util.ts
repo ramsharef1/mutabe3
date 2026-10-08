@@ -17,6 +17,7 @@ export interface Article {
   coverCaption?: string | null; // lead-image caption; falls back to the title
   kind?: 'NEWS' | 'OPINION' | 'EXPLAINER' | 'SPONSORED' | 'LIVE' | 'VIDEO' | 'GALLERY' | 'CARICATURE' | 'NOTICE'; // D-056
   sponsorName?: string | null;  // SPONSORED: «محتوى مدفوع من ‹الجهة›»
+  isSample?: boolean;           // D-080: illustrative piece — labelled, noindex, out of sitemaps/RSS
   liveEndedAt?: string | null;  // LIVE: coverage closed (D-068); open while null
   seoKeywords?: string[];
   _count?: { comments?: number }; // approved reader comments (D-043 Stage 4)
