@@ -12,3 +12,5 @@ psql "$B" -Atc "select 'connections now '||count(*)||' (this db '||count(*) filt
 psql "$B" -Atc "select 'ssl on server '||current_setting('ssl')"
 psql "$B" -Atc "select 'databases '||count(*) from pg_database where not datistemplate"
 echo "backend main pid conns: $(ss -tnp 2>/dev/null | grep ':5432' | grep -c node)"
+echo "plain (no-ssl) local connection: $(psql "$B?sslmode=disable" -Atc "select 'ok'" 2>&1 | head -1)"
+psql "$B" -Atc "select 'app connections using ssl: '||count(*) filter (where s.ssl)||' of '||count(*) from pg_stat_ssl s join pg_stat_activity a using (pid) where a.datname=current_database() and a.backend_type='client backend'"
