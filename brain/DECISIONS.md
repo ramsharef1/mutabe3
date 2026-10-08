@@ -2,6 +2,13 @@
 
 ## 2026-10-08
 
+**D-075: Loose ends reviewed — statistics confirmed on production; three items not worth doing now**
+- **Asked by:** Rami 2026-10-08 ("go with the small things you can do").
+- **Daily statistics (D-069) confirmed on production:** `ArticleViewDaily` counting since 2026-10-08 — 4 counted reads today (3 on «الحكومة تطلق برنامج تطوير البنية التحتية…», 1 on «شركة تقنية أردنية…»). Automated test browsers identify as HeadlessChrome and are excluded by the bot filter, so these are real readers.
+- **Ticker pause button (D-070 leftover) — no change:** at 375 px and at Lighthouse's 412×823, unscrolled, all five probe points (corners and centre) hit the 32×32 button. Lighthouse's "partially obscured" comes from the fixed bottom overlays (consent bar 165 px on phones until the reader chooses, audio mini-player, back-to-top) covering whatever sits in the lower part of the first screen.
+- **Not done, with reasons:** *Prisma 7* — not a small step: driver adapters, ESM output and `prisma.config.ts`; Prisma 6 is current and supported; do it with the Next 16 upgrade. *CSP nonces* — would force every page to render per request (losing the homepage's 60 s cache and the Lighthouse gains of D-070); the risk they address is low because all stored HTML is sanitized on write and comments are plain text. Recommendation: keep `'unsafe-inline'` with Next 14. *Live data for the demo blocks* — most have no free, licensable feed (Amman Stock Exchange, gold, roads and crossings, obituaries, jobs, MP votes); FX has free feeds; prayer times and weather are already real. Decision for Rami: PLAN Q13.
+- **Status:** ✅ reviewed · 2026-10-08
+
 **D-074: Google Analytics 4 live behind the consent bar (G-YH1LGW1B1D, basic consent)**
 - **Decided by:** Rami 2026-10-08 — supplied the GA4 tag and the web stream (name mutabe3, URL https://mutabe3.news, stream id 16067707038, measurement id G-YH1LGW1B1D), answering PLAN Q2.
 - **Change from D-055:** Rami gave a GA4 measurement id, not a GTM container, so GA4 is loaded directly (gtag.js) and the GTM path stays available (`NEXT_PUBLIC_GTM_ID`). Consent mode is now **basic**: gtag.js is not requested until the reader taps «موافق»; a refusal means no request to Google on that device. D-055's "advanced" mode would send cookieless pings before consent, which does not fit PDPL's consent-only basis. The raw snippet Rami pasted was not inserted (it would track before consent).

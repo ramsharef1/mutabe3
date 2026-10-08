@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · loose ends (D-075)
+
+- Daily statistics confirmed on production (4 real reads today). Ticker pause button: not a defect (bottom overlays). Prisma 7 and CSP nonces: not now, with reasons. Demo data blocks: decision for Rami (PLAN Q13).
+
+---
+
 ## 2026-10-08 · Claude Code · Google Analytics 4 (D-074)
 
 - **Shipped (99766b0):** GA4 G-YH1LGW1B1D behind the consent bar, basic consent, production hosts only, staff marked internal, site events via gtag.
