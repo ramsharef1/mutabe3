@@ -6,18 +6,17 @@ on:
     paths:
       - 'packages/**'
       - '.github/workflows/deploy-vps.yml'
-  workflow_dispatch:      # manual re-deploy: gh workflow run deploy-vps.yml [-f images_backfill=dry]
-    inputs:
-      images_backfill:
-        description: 'Re-encode stored JPEG/PNG uploads to WebP masters and repoint the DB (D-045)'
-        type: choice
-        default: none
-        options: [none, dry, apply, apply-delete-original]
+  workflow_dispatch:      # manual re-deploy: gh workflow run deploy-vps.yml
 
 # The production app is a git checkout at
 # /var/www/mutabe3/current/projects/mutabe3 run by the systemd units
 # mutabe3-frontend (next start, :9100) and mutabe3-backend (:9080).
 # Deploy = ssh in, fast-forward to origin/main, build the frontend, restart.
+# Since D-079 (PLAN Q12, SECURITY S-07) deploys log in as the unprivileged mutabe3-deploy user, who owns
+# the checkout: git, npm ci, prisma and the builds run without root. Its only sudo is the fixed helper
+# `mutabe3-deploy-helper prepare|finish` (.next ownership + restarting the two mutabe3 units).
+# One-time server config (UPLOAD_DIR, nginx body limit) and the D-045 image backfill moved out of deploys:
+# both are applied; re-run them through ops-vps.yml (administrator key) if ever needed.
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -27,10 +26,9 @@ jobs:
       - name: Deploy over SSH
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_DEPLOY_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
-          IMAGES_BACKFILL: ${{ inputs.images_backfill || 'none' }}
         run: |
           mkdir -p ~/.ssh
           echo "$VPS_SSH_KEY" > ~/.ssh/id_deploy
@@ -43,9 +41,9 @@ jobs:
             'mutabe3-vps ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAfJ7KoLJYJH0FvDD0C5ifccXWAryWK0ppWOLVfxS/fhq9LvZNp41JzJNNcyg2jNMNCsJlrN5GT2XMrbnL3LnSQ=' > ~/.ssh/known_hosts_pinned
           SSH_PIN="-o HostKeyAlias=mutabe3-vps -o UserKnownHostsFile=$HOME/.ssh/known_hosts_pinned -o StrictHostKeyChecking=yes"
 
-          # IMAGES_BACKFILL is a fixed-choice input, so it is safe to splice into the remote command.
-          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "IMAGES_BACKFILL=$IMAGES_BACKFILL bash -s" <<'REMOTE'
+          ssh $SSH_PIN -i ~/.ssh/id_deploy -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
+          [ "$(id -un)" != root ] || { echo "❌ deploys must not run as root (D-079)"; exit 1; }
           cd /var/www/mutabe3/current/projects/mutabe3
           # Build with the same runtime the units run on (D-055: Node 22 under /opt/node22; the shared global node is left alone).
           [ -x /opt/node22/bin/node ] && export PATH=/opt/node22/bin:$PATH
@@ -60,27 +58,6 @@ jobs:
             git reset --hard --quiet origin/main
           else
             echo "❌ prod checkout has local commits not on origin/main — refusing to clobber"; exit 1
-          fi
-
-          echo "== One-time server config (idempotent) =="
-          # Editor image uploads live outside the checkout (D-039).
-          grep -q '^UPLOAD_DIR=' /etc/mutabe3/backend.env || echo 'UPLOAD_DIR=/var/www/mutabe3/uploads' >> /etc/mutabe3/backend.env
-          mkdir -p /var/www/mutabe3/uploads
-          SVC_USER=$(systemctl show -p User --value mutabe3-backend); [ -n "$SVC_USER" ] && chown -R "$SVC_USER" /var/www/mutabe3/uploads
-          # nginx defaults to 1MB request bodies; photos need more. The mutabe3 server
-          # blocks live in /etc/nginx/conf.d/all-domains.conf, shared with other sites
-          # that already set client_max_body_size, so key off our own marker comment
-          # and only look at real *.conf files (not the .bak/.new copies beside them).
-          MARK='# mutabe3-upload-limit'
-          NGX=$(grep -l 'server_name[^;]*mutabe3\.news' /etc/nginx/conf.d/*.conf /etc/nginx/sites-enabled/* 2>/dev/null | head -1 || true)
-          if [ -n "$NGX" ] && ! grep -qF "$MARK" "$NGX"; then
-            BAK="$NGX.bak.$(date +%s)"; cp "$NGX" "$BAK"
-            sed -i "/server_name[^;]*mutabe3\.news[^;]*;/a\\    client_max_body_size 25m; $MARK" "$NGX"
-            if nginx -t; then
-              systemctl reload nginx && echo "nginx: client_max_body_size 25m added to $NGX"
-            else
-              cp "$BAK" "$NGX"; echo "⚠️  nginx -t failed after edit; restored $NGX from $BAK"
-            fi
           fi
 
           echo "== Installing dependencies (lockfile, D-051) =="
@@ -101,35 +78,17 @@ jobs:
             npx prisma generate --schema=packages/backend/prisma/schema.prisma
           )
 
-          if [ "${IMAGES_BACKFILL:-none}" != "none" ]; then
-            echo "== Image backfill: $IMAGES_BACKFILL (D-045) =="
-            UP=$(grep '^UPLOAD_DIR=' /etc/mutabe3/backend.env | cut -d= -f2- || echo /var/www/mutabe3/uploads)
-            echo "media before: $(du -sh "$UP" 2>/dev/null | cut -f1) ($(find "$UP" -type f -not -path '*/.cache/*' 2>/dev/null | wc -l) files)"
-            case "$IMAGES_BACKFILL" in
-              dry) ARGS="--dry" ;;
-              apply-delete-original) ARGS="--delete-original" ;;
-              *) ARGS="" ;;
-            esac
-            ( set -a; . /etc/mutabe3/backend.env; set +a; npx tsx packages/backend/src/scripts/images-to-webp.ts $ARGS )
-            echo "media after:  $(du -sh "$UP" 2>/dev/null | cut -f1) ($(find "$UP" -type f -not -path '*/.cache/*' 2>/dev/null | wc -l) files)"
-          fi
-
           echo "== Building backend (tsc → packages/backend/dist, D-049) =="
           npm run build --workspace=packages/backend
 
           echo "== Building frontend =="
+          sudo -n /usr/local/sbin/mutabe3-deploy-helper prepare
           # Optional build-time frontend env (NEXT_PUBLIC_* such as the GTM id, D-055): /etc/mutabe3/frontend.env.
           # Subshell so nothing leaks into the restart below.
           ( [ -f /etc/mutabe3/frontend.env ] && { set -a; . /etc/mutabe3/frontend.env; set +a; echo "frontend env: $(grep -c '^[A-Z]' /etc/mutabe3/frontend.env) vars"; }
             npm run build --workspace=packages/frontend )
-          # The build runs as root; when the units run as the service user (D-048) hand .next back
-          # to it so `next start` can write its ISR / revalidate cache.
-          FE_USER=$(systemctl show -p User --value mutabe3-frontend)
-          [ -n "$FE_USER" ] && chown -R "$FE_USER:" packages/frontend/.next && echo ".next owned by $FE_USER"
-
-          echo "== Restarting services =="
-          systemctl restart mutabe3-frontend
-          systemctl restart mutabe3-backend || true
+          echo "== Restarting services (helper: .next → service user, restart both units) =="
+          sudo -n /usr/local/sbin/mutabe3-deploy-helper finish
 
           echo "== Deployed $(git rev-parse --short HEAD) =="
           REMOTE
@@ -137,8 +96,8 @@ jobs:
       - name: Verify deployment
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_DEPLOY_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
           mkdir -p ~/.ssh
