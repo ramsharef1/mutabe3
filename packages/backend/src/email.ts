@@ -1,7 +1,7 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import dns from 'dns';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { seal, open } from './secretbox';
+import { seal, open, needsReseal } from './secretbox';
 
 // Mail transport (D-043 Stage 4, dashboard settings D-044). Precedence:
 // 1. MAIL_DRY_RUN=1                → nothing leaves the machine; messages are logged.
@@ -40,7 +40,18 @@ function parseEnvFrom(v?: string) {
 
 export async function readSmtp(): Promise<SmtpSettings | null> {
   const row = await prisma.siteSetting.findUnique({ where: { key: SMTP_KEY } });
-  return row ? (row.value as unknown as SmtpSettings) : null;
+  if (!row) return null;
+  const v = row.value as unknown as SmtpSettings;
+  // D-073: a password sealed with the old single key is re-sealed with the SMTP purpose key on first read
+  if (needsReseal(v.passEnc)) {
+    const plain = open(v.passEnc);
+    if (plain !== null) {
+      const next = { ...v, passEnc: seal(plain, 'smtp') };
+      await prisma.siteSetting.update({ where: { key: SMTP_KEY }, data: { value: next as unknown as Prisma.InputJsonObject } });
+      return next;
+    }
+  }
+  return v;
 }
 
 export async function writeSmtp(s: SmtpSettings) {
@@ -49,7 +60,7 @@ export async function writeSmtp(s: SmtpSettings) {
   resetMailTransport();
 }
 
-export const sealPassword = seal;
+export const sealPassword = (plain: string) => seal(plain, 'smtp');
 export const passwordReadable = (s: SmtpSettings | null) => (s?.passEnc ? open(s.passEnc) !== null : null);
 
 async function effectiveConf(): Promise<Conf> {

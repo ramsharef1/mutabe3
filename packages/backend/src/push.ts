@@ -5,7 +5,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import webpush from 'web-push';
-import { seal, open } from './secretbox';
+import { seal, open, needsReseal } from './secretbox';
 import { allow } from './ratelimit';
 import { sendError } from './errors';
 
@@ -30,10 +30,21 @@ const B64URL = /^[A-Za-z0-9_-]+={0,2}$/;
 /** Read the config; with `create`, generate and store the key pair the first time. */
 export async function readPush(prisma: PrismaClient, create = false): Promise<PushConfig | null> {
   const row = await prisma.siteSetting.findUnique({ where: { key: PUSH_KEY } });
-  if (row) return row.value as unknown as PushConfig;
+  if (row) {
+    const cfg = row.value as unknown as PushConfig;
+    if (needsReseal(cfg.privateBox)) { // D-073: re-seal a v1 box with the push purpose key
+      const plain = open(cfg.privateBox);
+      if (plain !== null) {
+        const next = { ...cfg, privateBox: seal(plain, 'push') };
+        await prisma.siteSetting.update({ where: { key: PUSH_KEY }, data: { value: next as unknown as Prisma.InputJsonObject } });
+        return next;
+      }
+    }
+    return cfg;
+  }
   if (!create) return null;
   const keys = webpush.generateVAPIDKeys();
-  const value: PushConfig = { enabled: false, publicKey: keys.publicKey, privateBox: seal(keys.privateKey) };
+  const value: PushConfig = { enabled: false, publicKey: keys.publicKey, privateBox: seal(keys.privateKey, 'push') };
   await prisma.siteSetting.create({ data: { key: PUSH_KEY, value: value as unknown as Prisma.InputJsonObject } });
   return value;
 }
