@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Contact() {
   return (
-    <StaticPage title="اتصل بنا" intro="نرحّب بأخباركم وملاحظاتكم وطلبات التصحيح. صناديق البريد التالية قيد التفعيل؛ تُنشر أرقام الهاتف وعنوان المكتب مع بيانات الترخيص." counsel>
+    <StaticPage title="اتصل بنا" intro="نرحّب بأخباركم وملاحظاتكم وطلبات التصحيح. راسلونا على العناوين التالية؛ تُنشر أرقام الهاتف وعنوان المكتب مع بيانات الترخيص." counsel>
       <table>
         <tbody>
           <tr><th>التحرير والأخبار</th><td dir="ltr">editor@mutabe3.news</td></tr>
