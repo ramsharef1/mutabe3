@@ -18,6 +18,7 @@ import { Pool, prayerTimes, fetchWeather, hijri, ammanDate, ammanTime, currentSe
 import JsonLd from './components/JsonLd';
 import { websiteLd } from './lib/seo';
 import { fetchAuthors, fetchArticles, fetchCurrentLive } from './lib/api';
+import { fetchData, type Block } from './lib/data';
 import { CaricatureBand } from './components/blocks/caricature';
 import { WritersBand } from './components/authors';
 
@@ -99,10 +100,14 @@ const BigText = ({ a, more }: { a: Article; more: Article[] }) => (
 );
 
 export default async function Home({ searchParams }: { searchParams?: { season?: string } }) {
-  const [latestArticles, wx, curated, writers, videoArts, caricatureArts, liveNowItem] = await Promise.all([
+  const [latestArticles, wx, curated, writers, videoArts, caricatureArts, liveNowItem, data] = await Promise.all([
     getArticles(), fetchWeather(), getCuration(), fetchAuthors('OPINION'),
-    fetchArticles({ kind: 'VIDEO', take: '7' }, 60), fetchArticles({ kind: 'CARICATURE', take: '4' }, 60), fetchCurrentLive(),
+    fetchArticles({ kind: 'VIDEO', take: '7' }, 60), fetchArticles({ kind: 'CARICATURE', take: '4' }, 60), fetchCurrentLive(), fetchData(),
   ]);
+  // Desk-managed data blocks (D-076): a block shows the desk's rows while fresh, the illustrative version only
+  // while the demo switch is on, otherwise nothing. `upd` is the honest «تحديث» line for a real block.
+  const upd = (b?: Block) => (b ? `تحديث ${ago(b.updatedAt)}` : undefined);
+  const fxDay = data.fx ? new Intl.DateTimeFormat('ar-JO-u-nu-latn', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${data.fx.day}T00:00:00Z`)) : '';
   // Real video pieces: the first YouTube embed in each VIDEO article's body (D-068). The kind is checked here
   // too: during a deploy the old API ignored ?kind= and its answer stayed in the 60 s cache (seen 2026-10-08).
   const videos = videoArts.filter((a) => a.kind === 'VIDEO').flatMap((a) => { const id = youTubeId(a.content); return id ? [{ id, title: a.title, href: `/article/${encodeURIComponent(a.slug || a.id)}` }] : []; });
@@ -148,11 +153,11 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
 
         <BreakingBar item={curated.breaking} />
-        {demo && <MetAlert />}
+        {(data.alert || demo) && <MetAlert item={data.alert?.items[0]} />}
         <Ticker items={ticker} hot={!!curated.breaking} />
         {/* running coverage (D-068) wins; the seeded demo story only while the demo switch is on */}
         {liveNowItem ? <LiveStrip current={liveNowItem} /> : demo && <LiveStrip />}
-        {demo && <MarketStrip updated={ammanTime(now)} />}
+        {(data.fx || data.market || demo) && <MarketStrip updated={data.fx || data.market ? fxDay || (upd(data.market) ?? '') : ammanTime(now)} fx={data.fx} rows={data.market?.items} />}
         <Missed articles={articles} />
 
         {/* Premium Spotlight */}
@@ -193,7 +198,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         <div className="desk">
           <div className="two" style={{ marginTop: 12 }}>
             <div className="sec"><PicksBox articles={articles} picks={curated.picks} /></div>
-            {demo && <div className="sec"><ObitsBox /></div>}
+            {(data.obits || demo) && <div className="sec"><ObitsBox items={data.obits?.items} /></div>}
           </div>
         </div>
 
@@ -221,7 +226,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         )}
 
         {/* ────────── ZONE 4 · CORE NEWS (contiguous, native ads woven in) ────────── */}
-        {demo && <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta="أنشطة اليوم" /><Royal /></div>}
+        {(data.royal || demo) && <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta={upd(data.royal) ?? 'أنشطة اليوم'} /><Royal items={data.royal?.items} /></div>}
 
         <TrendingNow items={trending} />
 
@@ -231,9 +236,9 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
         </div>
 
         {/* today's digest */}
-        {demo ? (
+        {data.sixty || demo ? (
           <div className="two">
-            <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty /></div>
+            <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty items={data.sixty?.items} /></div>
             <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} /></div>
           </div>
         ) : (
@@ -247,17 +252,22 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
           <div className="sec"><SecHd t="العالم" slug="world" /><BigText a={world[0]} more={world.slice(1)} /><More slug="world" /></div>
         </div>
 
-        {demo && (<>
+        {demo ? (<>
           <div className="two">
-            <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta="جلسة الثلاثاء · 14 قراراً" /><Decisions /><More slug="parliament" /></div>
+            <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta={upd(data.decisions) ?? 'جلسة الثلاثاء · 14 قراراً'} /><Decisions items={data.decisions?.items} /><More slug="parliament" /></div>
             <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" meta="من محاضر مجلس النواب" /><VoteTracker /></div>
           </div>
 
           <div className="two">
             <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" meta="حيّ · من الاتحاد الأردني" /><Sports /></div>
-            <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora /></div>
+            <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora fx={data.fx} /></div>
           </div>
-        </>)}
+        </>) : (data.decisions || data.fx) && (
+          <div className="two">
+            {data.decisions && <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta={upd(data.decisions)} /><Decisions items={data.decisions.items} /><More slug="parliament" /></div>}
+            {data.fx && <div className="sec"><SecHd t="الأردنيون في الخارج" meta="ساعات وأسعار صرف حقيقية" /><Diaspora fx={data.fx} /></div>}
+          </div>
+        )}
 
         <AdBanner variant={3} className="adrow ad90" />
 
@@ -289,20 +299,19 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <AdBanner variant={6} className="adrow ad90 adbillboard" />
 
-        {/* ────────── ZONE 5 · SERVICES & TOOLS (illustrative data until sourced — F-02) ────────── */}
-        {demo && (<>
+        {/* ────────── ZONE 5 · SERVICES & TOOLS — desk-managed rows when fresh (D-076), illustrative only in demo mode ────────── */}
+        {(data.crossings || data.roads || data.services || demo) && (
           <div className="three">
-            <div className="sec"><SecHd t="المعابر والمطار الآن" meta="كل 15 دقيقة" /><Crossings /></div>
-            <div className="sec"><SecHd t="الطرق الآن" meta="مباشر" /><Roads /></div>
-            <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta="من الجهات الرسمية" /><Services /></div>
+            {(data.crossings || demo) && <div className="sec"><SecHd t="المعابر والمطار الآن" meta={upd(data.crossings) ?? 'كل 15 دقيقة'} /><Crossings items={data.crossings?.items} /></div>}
+            {(data.roads || demo) && <div className="sec"><SecHd t="الطرق الآن" meta={upd(data.roads) ?? 'مباشر'} /><Roads items={data.roads?.items} updatedAt={data.roads?.updatedAt} /></div>}
+            {(data.services || demo) && <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta={upd(data.services) ?? 'من الجهات الرسمية'} /><Services items={data.services?.items} /></div>}
           </div>
+        )}
+        {demo && <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>}
 
-          <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>
-        </>)}
-
-        {demo ? (
+        {data.jobs || demo ? (
           <div className="two">
-            <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta="ديوان الخدمة المدنية · دائرة العطاءات" /><Jobs /><More slug="jobs" /></div>
+            <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta={upd(data.jobs) ?? 'ديوان الخدمة المدنية · دائرة العطاءات'} /><Jobs items={data.jobs?.items} />{!data.jobs && <More slug="jobs" />}</div>
             <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
           </div>
         ) : (
@@ -311,7 +320,7 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
 
         <div className="two capfact">
           <div className="sec" id="newsletter" style={{ flex: '0 0 330px', scrollMarginTop: 80 }}><SecHd t="قناة المتابع" /><Capture /></div>
-          {demo && <div className="sec"><SecHd t="تحقق المتابع" meta="نتحقق من الشائعات المنتشرة على فيسبوك وواتساب" /><FactCheck /></div>}
+          {(data.facts || demo) && <div className="sec"><SecHd t="تحقق المتابع" meta={upd(data.facts) ?? 'نتحقق من الشائعات المنتشرة على فيسبوك وواتساب'} /><FactCheck items={data.facts?.items} /></div>}
         </div>
 
         <AdBanner variant={0} className="adrow ad90" />

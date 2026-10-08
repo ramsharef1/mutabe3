@@ -6,41 +6,50 @@ import { CROSSINGS, ROADS, SERVICES, ROYAL, DECISIONS, VOTE, TAWJIHI, ELECTIONS,
 import { LIVE, fmtTime } from '../content';
 import { subscribe, CONFIRM_MSG } from '../newsletter';
 import { track } from '../../lib/track';
+import { type Row, type Fx, SERVICE_COLORS, DECISION_COLORS, VERDICT_COLORS, deadlineLabel } from '../../lib/data';
+import { ago as agoText } from '../util';
 
 /* ---------- J3 / J4 / J5 ---------- */
-export function Crossings() {
+// D-076: each block takes the desk's rows from /dashboard/data when they are fresh; the constants are the
+// illustrative fallback shown only while the demo switch is on.
+export function Crossings({ items }: { items?: Row[] }) {
+  const list = (items as typeof CROSSINGS | undefined) ?? CROSSINGS;
   return (
     <ul className="st">
-      {CROSSINGS.map((c) => <li key={c.n}><span className={`dot ${c.st}`} aria-hidden /><b>{c.n}</b><small>{c.s}</small><span className="pillx">{c.w}</span></li>)}
+      {list.map((c) => <li key={c.n}><span className={`dot ${c.st}`} aria-hidden /><b>{c.n}</b><small>{c.s}</small><span className="pillx">{c.w}</span></li>)}
     </ul>
   );
 }
-export function Roads() {
+export function Roads({ items, updatedAt }: { items?: Row[]; updatedAt?: string }) {
+  const list = (items as typeof ROADS | undefined) ?? ROADS;
   return (
     <>
-      <ul className="st">{ROADS.map((r) => <li key={r.n}><span className={`dot ${r.st}`} aria-hidden /><b>{r.n}</b><small>{r.s}</small></li>)}</ul>
-      <small className="src">المصدر: إدارة السير · آخر تحديث منذ 4 دقائق</small>
+      <ul className="st">{list.map((r) => <li key={r.n}><span className={`dot ${r.st}`} aria-hidden /><b>{r.n}</b><small>{r.s}</small></li>)}</ul>
+      <small className="src" suppressHydrationWarning>{items ? `آخر تحديث ${agoText(updatedAt)}` : 'المصدر: إدارة السير · آخر تحديث منذ 4 دقائق'}</small>
     </>
   );
 }
-export function Services() {
+export function Services({ items }: { items?: Row[] }) {
+  const list = items ? items.map((r) => ({ ...(r as { k: string; n: string; s: string }), c: SERVICE_COLORS[String(r.k)] || '#455a64' })) : SERVICES;
   return (
-    <ul className="st">{SERVICES.map((s) => <li key={s.n}><span className="pillx" style={{ background: s.c, color: '#fff' }}>{s.k}</span><b>{s.n}</b><small>{s.s}</small></li>)}</ul>
+    <ul className="st">{list.map((s) => <li key={s.n}><span className="pillx" style={{ background: s.c, color: '#fff' }}>{s.k}</span><b>{s.n}</b><small>{s.s}</small></li>)}</ul>
   );
 }
 
 /* ---------- J6 royal strip ---------- */
-export function Royal() {
+export function Royal({ items }: { items?: Row[] }) {
+  const list = (items as { k: string; t: string; url?: string; img?: string }[] | undefined) ?? ROYAL;
   return (
     <div className="royal">
-      {ROYAL.map((r) => <a key={r.k} href="/category/politics"><div className="im"><Img src={r.img} /></div><div className="t"><small>{r.k}</small>{r.t}</div></a>)}
+      {list.map((r) => <a key={r.t} href={('url' in r && r.url) || '/category/politics'}>{r.img ? <div className="im"><Img src={r.img} /></div> : null}<div className="t"><small>{r.k}</small>{r.t}</div></a>)}
     </div>
   );
 }
 
 /* ---------- J7 decisions ---------- */
-export function Decisions() {
-  return <ul className="dec">{DECISIONS.map((d) => <li key={d.t}><span className="k" style={{ background: d.c }}>{d.k}</span><a href="/category/politics">{d.t}</a></li>)}</ul>;
+export function Decisions({ items }: { items?: Row[] }) {
+  const list = items ? items.map((r) => ({ k: String(r.k), t: String(r.t), url: String(r.url || ''), c: DECISION_COLORS[String(r.k)] || '#455a64' })) : DECISIONS.map((d) => ({ ...d, url: '' }));
+  return <ul className="dec">{list.map((d) => <li key={d.t}><span className="k" style={{ background: d.c }}>{d.k}</span><a href={d.url || '/category/politics'}>{d.t}</a></li>)}</ul>;
 }
 
 /* ---------- J8 how did your MP vote ---------- */
@@ -194,7 +203,7 @@ export function Sports() {
 }
 
 /* ---------- J17 diaspora (auto-emphasised for Gulf time zones) ---------- */
-export function Diaspora() {
+export function Diaspora({ fx }: { fx?: Fx | null }) {
   const [now, setNow] = useState<Date | null>(null);
   const [gulf, setGulf] = useState(false);
   useEffect(() => {
@@ -206,8 +215,16 @@ export function Diaspora() {
     <div className={`dia ${gulf ? 'gulf' : ''}`}>
       {gulf && <div className="hi">أهلاً بك من الخليج — هذه الكتلة مخصصة لك</div>}
       <div className="clocks">{CLOCKS.map(([n, tz]) => <span key={tz}>{n}<b>{now ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(now) : '--:--'}</b></span>)}</div>
-      <ul className="fx">{FX.map(([a, b]) => <li key={a}><span>{a}</span><b>{b}</b></li>)}</ul>
-      <p className="note"><b>يهم المغترب:</b> إعفاء جمركي للعائدين · مواعيد السفارة في الرياض · رحلات عمّان–الدمام من 120 د</p>
+      {fx
+        ? <>
+            {/* live rates (D-076): JOD per unit, from ExchangeRate-API (attribution required) */}
+            <ul className="fx">{fx.gulf.map((g) => <li key={g.c}><span>{g.n} ← دينار</span><b>{g.v.toFixed(3)}</b></li>)}<li><span>تحويل 1000 ريال سعودي</span><b>{(1000 * (fx.gulf.find((g) => g.c === 'SAR')?.v || 0)).toFixed(1)} د</b></li></ul>
+            <p className="note fxsrc">أسعار مرجعية ليوم {fx.day} من <a href={fx.source.url} rel="noopener" target="_blank">{fx.source.name}</a> — قد تختلف أسعار الصرافين.</p>
+          </>
+        : <>
+            <ul className="fx">{FX.map(([a, b]) => <li key={a}><span>{a}</span><b>{b}</b></li>)}</ul>
+            <p className="note"><b>يهم المغترب:</b> إعفاء جمركي للعائدين · مواعيد السفارة في الرياض · رحلات عمّان–الدمام من 120 د</p>
+          </>}
     </div>
   );
 }
@@ -282,13 +299,15 @@ export function Capture() {
 }
 
 /* ---------- C14 fact-check ---------- */
-export function FactCheck() {
-  return <div className="fact">{FACTS.map((f) => <a className="c" key={f.c} href="/tag/%D8%A7%D9%84%D8%AD%D9%83%D9%88%D9%85%D8%A9"><small>الادعاء</small><b>{f.c}</b><span className="v" style={{ background: f.col }}>{f.v}</span></a>)}</div>;
+export function FactCheck({ items }: { items?: Row[] }) {
+  const list = items ? items.map((r) => ({ c: String(r.c), v: String(r.v), col: VERDICT_COLORS[String(r.v)] || '#455a64', url: String(r.url || '') })) : FACTS.map((f) => ({ ...f, url: '' }));
+  return <div className="fact">{list.map((f) => <a className="c" key={f.c} href={f.url || '/tag/%D8%A7%D9%84%D8%AD%D9%83%D9%88%D9%85%D8%A9'}><small>الادعاء</small><b>{f.c}</b><span className="v" style={{ background: f.col }}>{f.v}</span></a>)}</div>;
 }
 
 /* ---------- C10 jobs ---------- */
-export function Jobs() {
-  return <ul className="jobs">{JOBS.map((j) => <li key={j.t}><b>{j.t}</b><small>{j.s}</small><span className={`dl ${j.urgent ? '' : 'ok'}`}>{j.d}</span></li>)}</ul>;
+export function Jobs({ items }: { items?: Row[] }) {
+  const list = items ? items.map((r) => ({ t: String(r.t), s: String(r.s), urgent: !!r.urgent, d: deadlineLabel(String(r.deadline)), url: String(r.url || '') })) : JOBS.map((j) => ({ ...j, url: '' }));
+  return <ul className="jobs">{list.map((j) => <li key={j.t}><b>{j.url ? <a href={j.url}>{j.t}</a> : j.t}</b><small>{j.s}</small><span className={`dl ${j.urgent ? '' : 'ok'}`} suppressHydrationWarning>{j.d}</span></li>)}</ul>;
 }
 
 /* ---------- C8 story timeline (from LIVE data) ---------- */

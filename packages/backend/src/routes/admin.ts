@@ -13,6 +13,7 @@ import { freeSlug, parseProfile } from '../authors';
 import { plainText, LIVE_TEXT_MAX, LIVE_TITLE_MAX } from '../live';
 import { siteStats } from '../stats';
 import { readPush, setPushEnabled, sendAlert, SEND_GAP_MS } from '../push';
+import { SPECS as DATA_SPECS, parseBlock, readBlock, writeBlock, publicItems, readFx, fxView } from '../datablocks';
 import { reindexArticle } from '../search';
 import { RejectedImage } from '../images';
 
@@ -583,6 +584,32 @@ router.put('/users/:id', requireRole('ADMIN'), async (req: Request, res: Respons
     if (e?.code === 'P2025') return res.status(404).json({ error: 'Not found' });
     sendError(res, e);
   }
+});
+
+/* ───────────────────────────── homepage data blocks (editors, D-076) ───────────────────────────── */
+
+// GET /api/admin/data — every block's field definitions, stored rows and whether readers see it now
+router.get('/data', requireRole(...EDITOR_ROLES), async (_req: Request, res: Response) => {
+  try {
+    const blocks = await Promise.all(DATA_SPECS.map(async (spec) => {
+      const s = await readBlock(prisma, spec.type);
+      return { spec, items: s?.items || [], updatedAt: s?.updatedAt || null, live: !!publicItems(spec, s) };
+    }));
+    res.json({ success: true, data: { blocks, fx: fxView(await readFx(prisma)) } });
+  } catch (e) { sendError(res, e); }
+});
+
+// PUT /api/admin/data/:type { items } — replace a block's rows ([] clears it)
+router.put('/data/:type', requireRole(...EDITOR_ROLES), async (req: Request, res: Response) => {
+  try {
+    const spec = DATA_SPECS.find((x) => x.type === req.params.type);
+    if (!spec) return res.status(404).json({ error: 'Not found' });
+    const p = parseBlock(spec.type, req.body);
+    if (!p.ok) return res.status(400).json({ error: p.error });
+    const saved = await writeBlock(prisma, spec.type, p.items, who(req).id);
+    await audit(prisma, who(req), req, { action: p.items.length ? 'data.update' : 'data.clear', targetType: 'data', targetId: spec.type, summary: p.items.length ? `حدّث «${spec.label}» (${p.items.length} بنود)` : `أفرغ «${spec.label}»` });
+    res.json({ success: true, data: { items: saved?.items || [], updatedAt: saved?.updatedAt || null, live: !!publicItems(spec, saved) } });
+  } catch (e) { sendError(res, e); }
 });
 
 /* ───────────────────────────── web push for «عاجل» (D-072) ───────────────────────────── */

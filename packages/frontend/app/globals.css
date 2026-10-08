@@ -2275,3 +2275,29 @@ a.au:hover b{color:var(--k-text,var(--red))}
 .adm-pushp .st-card label{display:block;margin-bottom:10px}
 .adm-pushp .st-card input{width:100%}
 .adm-pushp .st-tile .adm-logout{margin-top:6px}
+/* live market/FX attribution (D-076, ExchangeRate-API terms) */
+.mkt{position:relative}
+.mkt-src{position:absolute;left:6px;bottom:2px;font-size:9.5px;color:var(--muted)}
+.dia .note.fxsrc{font-size:11.5px;color:var(--muted)}
+.dia .note.fxsrc a{text-decoration:underline}
+/* «بيانات الصفحة الرئيسية» (D-076) */
+.adm-datap .dblock header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.adm-datap .dblock header{background:none;padding:0;color:#222}
+.adm-datap .dblock header h2{margin:0;color:#111;font-size:16px}
+.adm-datap .dblock .badge{font-size:12px;padding:2px 9px;border-radius:10px;background:#eee;color:#555}
+.adm-datap .dblock .badge.on{background:#e6f4ea;color:#15803d}
+.adm-datap .dblock header small{color:#777;font-size:12px}
+.adm-datap .rows{list-style:none;margin:8px 0;padding:0;display:grid;gap:10px}
+.adm-datap .rows li{border:1px solid #eee;border-radius:6px;padding:8px 10px;display:grid;gap:6px}
+.adm-datap .fields{display:flex;flex-wrap:wrap;gap:8px}
+.adm-datap .fld{display:grid;gap:2px;flex:1 1 160px;min-width:0}
+.adm-datap .fld.k-long{flex-basis:100%}
+.adm-datap .fld .lbl{font-size:12px;color:#666}
+.adm-datap .fld input,.adm-datap .fld select,.adm-datap .fld textarea{width:100%;font:inherit;font-size:13.5px;padding:5px 7px;border:1px solid #ccc;border-radius:4px}
+.adm-datap .fld .img{display:flex;align-items:center;gap:8px}
+.adm-datap .fld .img img{width:64px;height:44px;object-fit:cover;border-radius:3px}
+.adm-datap .fld.k-bool{flex:0 0 auto;align-self:end}
+.adm-datap .dblock{display:block}
+.adm-datap .dblock > * + *{margin-top:8px}
+.adm-datap .dblock > .adm-ops{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.adm-datap .rows li > .adm-ops{display:flex;gap:6px}

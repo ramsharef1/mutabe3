@@ -18,6 +18,7 @@ import { liveRoutes } from './live';
 import { recordView, flushViewStats } from './stats';
 import { searchArticles, ensureSearchText } from './search';
 import { pushRoutes } from './push';
+import { dataRoutes } from './datablocks';
 
 // Crawlers, link previews and monitors: never counted as reads or ad deliveries.
 const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor/i;
@@ -270,6 +271,9 @@ app.use('/api', liveRoutes(prisma));
 
 // Web push for «عاجل»: /api/push/key, /api/push/subscribe, /api/push/unsubscribe (D-072)
 app.use('/api', pushRoutes(prisma));
+
+// Editor-managed homepage data blocks + live exchange rates: /api/data (D-076)
+app.use('/api', dataRoutes(prisma));
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

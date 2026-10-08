@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Prayer, Wx } from '../feeds';
 import { MET_ALERT, wxIcon } from '../feeds';
+import type { Row } from '../../lib/data';
 
 /** Minutes until a decimal-hour time today (Amman), wrapping to tomorrow. */
 function untilLabel(h: number) {
@@ -40,18 +41,25 @@ export function UtilityStrip({ prayers, wx, hijriText, dateText }: { prayers: Pr
 }
 
 /** Met-office warning + school-closure chips. Renders nothing when no alert is active. */
-export function MetAlert() {
-  const a = MET_ALERT;
+const govs = (v: unknown) => String(v || '').split(/[،,]/).map((x) => x.trim()).filter(Boolean);
+
+/** The weather/closure alert: the desk's current one from /dashboard/data (D-076), else the illustrative one. */
+export function MetAlert({ item }: { item?: Row }) {
+  const a = item
+    ? { title: String(item.title), text: String(item.text), closures: [...govs(item.closed).map((n) => ({ n, off: true })), ...govs(item.open).map((n) => ({ n, off: false }))], real: true }
+    : MET_ALERT && { ...MET_ALERT, real: false };
   const [open, setOpen] = useState(true);
   if (!a || !open) return null;
   return (
     <div className="alert" role="status">
       <span className="ic" aria-hidden>!</span>
       <div className="txt"><b>{a.title}</b><p>{a.text}</p></div>
-      <div className="sch">
-        <small>تعطيل الدوام غداً — حسب المحافظة</small>
-        <div className="chips">{a.closures.map((c) => <span key={c.n} className={c.off ? 'off' : 'on'}>{c.n}</span>)}<span>+6</span></div>
-      </div>
+      {a.closures.length > 0 && (
+        <div className="sch">
+          <small>الدوام حسب المحافظة{a.real ? ' — المعطّلة بالأحمر' : ''}</small>
+          <div className="chips">{a.closures.map((c) => <span key={c.n} className={c.off ? 'off' : 'on'}>{c.n}</span>)}{!a.real && <span>+6</span>}</div>
+        </div>
+      )}
       <button type="button" className="x" onClick={() => setOpen(false)} aria-label="إغلاق التنبيه">×</button>
     </div>
   );

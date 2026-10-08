@@ -5,6 +5,7 @@ import { Article, Img, Ico, ago, Chip, WRITERS, face } from '../site';
 import { MARKET, PICKS, OBITS, SIXTY, BreakingItem } from '../feeds';
 import { usePoll, pct, votesAr, PollOpt } from '../polls';
 import { PushToggle } from '../push';
+import { type Row, type Fx } from '../../lib/data';
 
 const link = (a: Article) => `/article/${a.id}`;
 
@@ -42,15 +43,27 @@ export function Ticker({ items, hot = false }: { items: Article[]; hot?: boolean
 }
 
 /* ---- C4 market strip ---- */
-export function MarketStrip({ updated }: { updated: string }) {
+const fmtPct = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(2)}%`;
+
+/** Live dollar/euro (ExchangeRate-API) + the desk's rows (gold, petrol, ASE, inflation); demo values without either (D-076). */
+export function MarketStrip({ updated, fx, rows }: { updated: string; fx?: Fx | null; rows?: Row[] }) {
+  const live = fx || rows?.length;
+  const list = live
+    ? [
+        ...(fx ? [{ n: 'دولار / دينار', v: fx.usd.toFixed(3), d: 0, s: 'ثابت' }] : []),
+        ...(fx?.eur ? [{ n: 'يورو / دينار', v: fx.eur.toFixed(3), d: fx.eurChangePct ? Math.sign(fx.eurChangePct) : 0, s: fx.eurChangePct != null ? fmtPct(fx.eurChangePct) : '—' }] : []),
+        ...(rows || []).map((r) => ({ n: String(r.n), v: String(r.v), d: r.d === 'up' ? 1 : r.d === 'down' ? -1 : 0, s: String(r.s || '') })),
+      ]
+    : MARKET;
   return (
     <div className="mkt" aria-label="لوحة الاقتصاد">
       <a className="mlb" href="/category/economy">لوحة الاقتصاد <small>تحديث {updated}</small></a>
       <ul>
-        {MARKET.map((m) => (
+        {list.map((m) => (
           <li key={m.n}><small>{m.n}</small><b>{m.v}<span className={m.d > 0 ? 'up' : m.d < 0 ? 'dn' : 'fl'}>{m.d > 0 ? '▲' : m.d < 0 ? '▼' : '•'} {m.s}</span></b></li>
         ))}
       </ul>
+      {fx && <a className="mkt-src" href={fx.source.url} rel="noopener" target="_blank">العملات: {fx.source.name}</a>}
     </div>
   );
 }
@@ -106,9 +119,10 @@ export function PicksBox({ articles, picks, rail = false }: { articles: Article[
   );
 }
 
-export function ObitsBox() {
+export function ObitsBox({ items }: { items?: Row[] }) {
   const [q, setQ] = useState('');
-  const list = OBITS.filter((o) => !q || o.n.includes(q) || o.a.includes(q) || o.gov.includes(q)).slice(0, 4);
+  const src = (items as typeof OBITS | undefined) ?? OBITS;
+  const list = src.filter((o) => !q || o.n.includes(q) || o.a.includes(q) || o.gov.includes(q)).slice(0, 4);
   return (
     <div className="box obits">
       <div className="hd"><a href="/category/obituaries">وفيات</a><i /></div>
@@ -117,9 +131,9 @@ export function ObitsBox() {
         <button type="submit">بحث</button>
       </form>
       <ul>
-        {list.length ? list.map((o) => <li key={o.n}><a href="/category/obituaries">{o.n} في ذمة الله</a><span className="tm">العزاء: {o.a} · {o.h}</span></li>) : <li className="none">لا نتائج لـ «{q}»</li>}
+        {list.length ? list.map((o) => <li key={o.n}>{items ? <b>{o.n} في ذمة الله</b> : <a href="/category/obituaries">{o.n} في ذمة الله</a>}<span className="tm">العزاء: {o.a}{o.h ? ` · ${o.h}` : ''} · {o.gov}</span></li>) : <li className="none">لا نتائج لـ «{q}»</li>}
       </ul>
-      <a className="all" href="/category/obituaries">كل الوفيات ›</a>
+      {!items && <a className="all" href="/category/obituaries">كل الوفيات ›</a>}
     </div>
   );
 }
@@ -144,10 +158,12 @@ export function MostRead({ articles }: { articles: Article[] }) {
 }
 
 /* ---- C5 في 60 ثانية ---- */
-export function Sixty() {
+const SIXTY_K = ['ماذا حدث', 'لماذا يهم', 'ما التالي'];
+export function Sixty({ items }: { items?: Row[] }) {
+  const list = items ? items.map((r, i) => ({ k: SIXTY_K[i] || '', b: String(r.b), p: String(r.p) })) : SIXTY;
   return (
     <div className="sixty">
-      {SIXTY.map((c, i) => <div className="c" key={c.k}><span className="no" aria-hidden>{i + 1}</span><small>{c.k}</small><b>{c.b}</b><p>{c.p}</p></div>)}
+      {list.map((c, i) => <div className="c" key={c.k}><span className="no" aria-hidden>{i + 1}</span><small>{c.k}</small><b>{c.b}</b><p>{c.p}</p></div>)}
     </div>
   );
 }
