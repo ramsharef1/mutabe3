@@ -26,7 +26,7 @@ chown "$U:$U" /home/$U/.ssh/authorized_keys; chmod 600 /home/$U/.ssh/authorized_
 # sshd may restrict logins (AllowUsers/AllowGroups) — report, do not edit
 sshd -T 2>/dev/null | grep -iE '^(allowusers|allowgroups|denyusers|denygroups|passwordauthentication|pubkeyauthentication) ' || true
 for f in "$ENVF" "$FENV"; do [ -f "$f" ] && { chgrp "$SVC" "$f"; chmod 640 "$f"; }; done
-ls -l "$ENVF" "$FENV" 2>/dev/null | awk '{print $1,$3,$4,$NF}'
+ls -l "$ENVF" "$FENV" 2>/dev/null | awk '{print $1,$3,$4,$NF}' || true
 
 echo "== 2. checkout ownership =="
 NEXT="$APPDIR/packages/frontend/.next"
