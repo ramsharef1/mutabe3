@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · monitor on a read-only user (D-081)
+
+- **Live:** root facts timer + `mutabe3-monitor` (key can only `cat` the facts file); stale-facts alert. Manual check green. Only manual ops still uses the administrator key.
+
+---
+
 ## 2026-10-08 · Claude Code · sample material for every section (D-080)
 
 - **Live:** 33 new labelled samples (3 per empty section) + the 19 demo articles flagged; «مادة تجريبية» label, noindex, out of sitemaps/RSS; one-click hide/restore in /dashboard/homepage.

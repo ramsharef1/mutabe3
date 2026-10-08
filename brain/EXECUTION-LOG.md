@@ -1025,3 +1025,4 @@
 - 2026-10-08T14:58Z · edit · ops/vps/deploy-user-check.sh
 - 2026-10-08T15:40Z · edit · packages/backend/src/routes/admin.ts
 - 2026-10-08T15:43Z · edit · packages/backend/src/scripts/sample-articles.ts
+- 2026-10-08T15:58Z · edit · ops/vps/setup-monitor-user.sh

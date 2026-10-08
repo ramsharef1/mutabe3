@@ -2,6 +2,15 @@
 
 ## 2026-10-08
 
+**D-081: The daily monitor reads the server as a read-only user (no administrator key)**
+- **Asked by:** Rami 2026-10-08 ("go with 9").
+- **Done (`setup-monitor-user`):** `ops/vps/healthcheck.sh` installed as a root-owned copy at `/usr/local/lib/mutabe3/healthcheck.sh` (taken from the ops run, not from the deploy-owned checkout, so the deploy user cannot change what root runs); `mutabe3-facts.timer` (root, hourly + 04:10 UTC) writes `/var/lib/mutabe3-monitor/facts.txt` atomically (key=value, no secrets). User `mutabe3-monitor`: password locked, no sudo, cannot read `/etc/mutabe3/backend.env`; its key (`ops/vps/keys/mutabe3-monitor.pub`, secrets `VPS_MONITOR_USER`/`VPS_MONITOR_SSH_KEY`, private half generated locally and deleted) is `restrict,command="/bin/cat …/facts.txt"` — a leaked key can only read those facts. `monitor.yml` reads the file instead of running the script as root; `server.mjs` raises the `ssh` alert when the facts are older than 3 h (timer stopped). Re-run the action after changing healthcheck.sh.
+- **Verified:** setup checks (sudo none, env unreadable, facts readable); a manual server check read facts written a minute earlier (units active, health 200, dump valid, 52 published) and opened no alert.
+- **Left on the administrator key:** only `ops-vps.yml` (manual, workflow_dispatch) — its scripts need root by design.
+- **Status:** ✅ LIVE · 2026-10-08
+
+---
+
 **D-080: Sample material for every section, labelled and kept out of search (PLAN Q9)**
 - **Asked by:** Rami 2026-10-08 ("go with 7" → asked what to do with 0 real articles → "lets create demo articles for each section instead").
 - **Found:** all 19 published articles were the 2026-09-16 demo set; 11 of 14 sections were empty.
