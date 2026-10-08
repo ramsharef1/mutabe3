@@ -2,6 +2,16 @@
 
 ## 2026-10-08
 
+**D-077: Mail for mutabe3.news — app-signed DKIM, SPF/DMARC/MX in the VPS's own DNS, info@ mailbox**
+- **Asked by:** Rami 2026-10-08 (Q5 "I'll add records you give me" → "dns is already managed inside the vps"; Q3 "forward to info email" → new info@mutabe3.news mailbox; DKIM "sign inside our app").
+- **Found (read-only surveys `dns-mail-survey`, `mail-survey-2/3`, `mail-bounce-survey`):** ns1/ns2.webhubteam.com are this VPS (PowerDNS, SQL backend); the zone had only A/NS/SOA. The mail server (Postfix + Dovecot + rspamd, SQLite mail DB) is **shared**; its DKIM milter points at 127.0.0.1:8891 where nothing listens, so nothing on the server is signed. IP on no blocklists; outbound 25 open.
+- **Done:** (1) `email.ts` signs our own mail with a mutabe3-only key (selector `m3`, `/etc/mutabe3/dkim/m3.private`, root:mutabe3 0640; `DKIM_KEY_FILE`/`DKIM_SELECTOR` in backend.env) — only on the local Postfix route and only for @mutabe3.news senders; `mailStatus()` reports `dkim`. (2) Zone mutabe3.news: `v=spf1 ip4:72.62.132.138 ~all`, `m3._domainkey` (RSA 2048), `_dmarc` `p=none; rua=mailto:info@`, `mail` A, MX 10 mail.mutabe3.news. (3) Mailbox info@mutabe3.news (SHA512-CRYPT; password generated on the server, in `/root/mutabe3-info-mailbox.txt` 0600, never printed); editor@ ads@ corrections@ privacy@ noreply@ → info@ in `hash:/etc/postfix/virtual` (the map this Postfix uses; the SQLite aliases table is not wired). Every script backs up the zone/DB/map under `/root/mail-dns-backup/` and restores on a failed check; other domains' rows and lines unchanged (7/7 domains, 5/5 alias lines).
+- **Verified:** local sink — signed mutabe3 mail `dkim=pass`, other senders unsigned; public DNS (ns1, 8.8.8.8, 1.1.1.1) serves all records; on the VPS a signed test to editor@ landed in info@ with rspamd `R_DKIM_ALLOW (s=m3)`, `R_SPF_ALLOW`, `DMARC_POLICY_ALLOW`; port 25 answers publicly. Two runs rolled back cleanly on the way (pdnsutil wants full names; stale PowerDNS negative cache — now purged before verifying).
+- **Open:** the shared TLS certificate covers neither mail.mutabe3.news nor the server name — IMAP/SMTP clients will warn until a mail.mutabe3.news cert is added via SNI. Side finding, report only (Rami): a once-a-minute root job of another site on the server mails its output to root@hstgr.cloud (no MX) since ~07:45 UTC 2026-10-08 → ~60 local double bounces/hour; never leaves the box; not mutabe3.
+- **Status:** ✅ LIVE · newsletter/alerts can reach inboxes; info@ receives · 2026-10-08
+
+---
+
 **D-076: Homepage data blocks — desk-managed «البيانات» page, live exchange rates, no invented data with the demo switch off**
 - **Asked by:** Rami 2026-10-08 ("go with q13" → "all": PLAN Q13 options a + b + c).
 - **(a) Honest homepage:** with the demo switch (Q9) off, a data block appears only when the desk has filled it and it is still fresh; otherwise it disappears. The election calculator, MP vote tracker and sports tables stay demo-only (no source the desk can keep). With the switch on nothing changes for readers, except the market strip and the expatriates block now show the real rates.

@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-10-08 · Claude Code · mail for mutabe3.news (D-077)
+
+- **Live:** SPF, DKIM (app-signed, `m3`), DMARC p=none, MX in the VPS's PowerDNS; info@mutabe3.news mailbox with editor@/ads@/corrections@/privacy@/noreply@ → info@. Test mail: DKIM/SPF/DMARC pass, delivered to info@.
+- **Open:** TLS cert for mail.mutabe3.news (clients warn); Rami reads the info@ password from `/root/mutabe3-info-mailbox.txt`. Mail loop of another site reported, not touched.
+
+---
+
 ## 2026-10-08 · Claude Code · answers applied (Q1, Q5, Q6, Q11, Q12)
 
 - **Live (039259b):** editor-in-chief عدي عليان on /about and /contact; organisation legal name and city still placeholders.
