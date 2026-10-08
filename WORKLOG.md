@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-10-08 · Claude Code · homepage data blocks (D-076)
+
+- **Shipped (300fc55):** «البيانات» dashboard page for 11 data blocks the desk keeps current (each hidden once stale), live USD/EUR/Gulf rates with attribution, and no invented data on the homepage once the demo switch is off.
+- **Production check:** rates live (USD 0.709 · EUR 0.794 · SAR 0.189), dashboard page loads, nothing saved.
+- **Next for the desk:** fill the blocks it will maintain; Q9 (demo switch off) after ~20 real articles.
+
+---
+
 ## 2026-10-08 · Claude Code · loose ends (D-075)
 
 - Daily statistics confirmed on production (4 real reads today). Ticker pause button: not a defect (bottom overlays). Prisma 7 and CSP nonces: not now, with reasons. Demo data blocks: decision for Rami (PLAN Q13).

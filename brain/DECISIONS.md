@@ -2,6 +2,17 @@
 
 ## 2026-10-08
 
+**D-076: Homepage data blocks — desk-managed «البيانات» page, live exchange rates, no invented data with the demo switch off**
+- **Asked by:** Rami 2026-10-08 ("go with q13" → "all": PLAN Q13 options a + b + c).
+- **(a) Honest homepage:** with the demo switch (Q9) off, a data block appears only when the desk has filled it and it is still fresh; otherwise it disappears. The election calculator, MP vote tracker and sports tables stay demo-only (no source the desk can keep). With the switch on nothing changes for readers, except the market strip and the expatriates block now show the real rates.
+- **(b) «البيانات» (`/dashboard/data`, editors and up):** one generic editor for 11 block types defined in `packages/backend/src/datablocks.ts` — weather/school alert (expires at a set time), manual market rows (gold, fuel…; 35 days), crossings and roads (24 h), service notices (7 days), royal court (3 days; images from the media library only), cabinet decisions (10 days), obituaries (3 days), jobs (each row hidden the day after its deadline), fact-checks (30 days), «في 60 ثانية» (exactly 3 points; 48 h). Values are validated server-side, HTML stripped, links `http(s)` only, every save and clear audited (`data.update` / `data.clear`). Stored as `SiteSetting` rows `data.<type>` — no schema change. Public read: `GET /api/data` (homepage revalidates every 60 s).
+- **(c) Live exchange rates:** ExchangeRate-API's open endpoint (no key, attribution link shown under the market strip and the expatriates block), refreshed at most every 6 h and kept in `data.fx` with the previous day for the euro's change. USD is pegged (0.709 JOD); the strip shows USD and EUR, the expatriates block SAR/AED/QAR/KWD with a 1000-riyal conversion. If the feed fails, the last stored rates are used; if there are none, the rows are left out.
+- **Verified locally:** 14 API checks (validation, tag stripping, remote-image and `javascript:` refusal, expiry of alert and jobs, clearing, audit, 401 without token); homepage screenshots with the switch on and off; dashboard page at 1180 px. Fixtures removed and the demo switch restored afterwards.
+- **Deployed (300fc55, CI run 37781857503):** in production `/api/data` returns the rates for 2026-10-08 (USD 0.709, EUR 0.794, SAR 0.189) and no desk blocks yet; the homepage market strip shows the live rate with the attribution; `/dashboard/data` loads through Rami's session (11 blocks, all empty) — nothing saved; `/api/admin/data` 401 without a token.
+- **Status:** ✅ LIVE · the desk fills the blocks it will keep current · 2026-10-08
+
+---
+
 **D-075: Loose ends reviewed — statistics confirmed on production; three items not worth doing now**
 - **Asked by:** Rami 2026-10-08 ("go with the small things you can do").
 - **Daily statistics (D-069) confirmed on production:** `ArticleViewDaily` counting since 2026-10-08 — 4 counted reads today (3 on «الحكومة تطلق برنامج تطوير البنية التحتية…», 1 on «شركة تقنية أردنية…»). Automated test browsers identify as HeadlessChrome and are excluded by the bot filter, so these are real readers.
