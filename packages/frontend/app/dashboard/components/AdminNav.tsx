@@ -4,49 +4,107 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Me, ROLE_AR, isEditorRole, logout, adminFetch } from './staff';
 
-// Shared dashboard header: sections the signed-in role may open (D-043 Stages 3–4).
+// Dashboard sidebar (D-043 Stages 3–4; sidebar since D-083): the sections the signed-in role may open,
+// grouped, on the start (right) side. Pages keep their `<div className="adm"><AdminNav/><main className="adm-main">`
+// shape — the grid switches on in CSS only when this sidebar is present, so the editor and the preview,
+// which use the old `.adm-top` bar with a back link, are unchanged. Below 900px it folds into a top bar
+// with a «القائمة» button.
+type Link = { href: string; label: string; show: boolean; badge?: number };
+
 export default function AdminNav({ me }: { me: Me | null }) {
   const path = usePathname() || '';
   const editor = isEditorRole(me?.role);
+  const admin = me?.role === 'ADMIN';
   const [pending, setPending] = useState(0);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!editor) return;
     adminFetch('/api/admin/comments/counts').then((r) => (r.ok ? r.json() : null)).then((j) => j && setPending(j.data?.PENDING || 0)).catch(() => {});
   }, [editor, path]);
-  const links = [
-    { href: '/dashboard', label: 'المقالات', show: true },
-    { href: '/dashboard/comments', label: 'التعليقات', badge: pending, show: editor },
-    { href: '/dashboard/stats', label: 'الإحصاءات', show: editor },
-    { href: '/dashboard/push', label: 'التنبيهات', show: editor },
-    { href: '/dashboard/homepage', label: 'الصفحة الرئيسية', show: editor },
-    { href: '/dashboard/data', label: 'البيانات', show: editor },
-    { href: '/dashboard/polls', label: 'الاستطلاعات', show: editor },
-    { href: '/dashboard/newsletter', label: 'النشرة', show: editor },
-    { href: '/dashboard/categories', label: 'الأقسام', show: editor },
-    { href: '/dashboard/users', label: 'المستخدمون', show: me?.role === 'ADMIN' },
-    { href: '/dashboard/ads', label: 'الإعلانات', show: me?.role === 'ADMIN' },
-    { href: '/dashboard/audit', label: 'سجل التدقيق', show: me?.role === 'ADMIN' },
-    { href: '/dashboard/account', label: 'ملفي وكلمة المرور', show: !!me },
-  ].filter((l) => l.show);
+  useEffect(() => { setOpen(false); }, [path]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const groups: { title: string; links: Link[] }[] = [
+    {
+      title: 'المحتوى',
+      links: [
+        { href: '/dashboard', label: 'المقالات', show: true },
+        { href: '/dashboard/comments', label: 'التعليقات', badge: pending, show: editor },
+        { href: '/dashboard/homepage', label: 'الصفحة الرئيسية', show: editor },
+        { href: '/dashboard/data', label: 'البيانات', show: editor },
+        { href: '/dashboard/categories', label: 'الأقسام', show: editor },
+        { href: '/dashboard/polls', label: 'الاستطلاعات', show: editor },
+      ],
+    },
+    {
+      title: 'القرّاء',
+      links: [
+        { href: '/dashboard/newsletter', label: 'النشرة', show: editor },
+        { href: '/dashboard/push', label: 'التنبيهات', show: editor },
+        { href: '/dashboard/stats', label: 'الإحصاءات', show: editor },
+      ],
+    },
+    {
+      title: 'الإدارة',
+      links: [
+        { href: '/dashboard/users', label: 'المستخدمون', show: admin },
+        { href: '/dashboard/ads', label: 'الإعلانات', show: admin },
+        { href: '/dashboard/audit', label: 'سجل التدقيق', show: admin },
+      ],
+    },
+    {
+      title: 'حسابي',
+      links: [{ href: '/dashboard/account', label: 'ملفي وكلمة المرور', show: !!me }],
+    },
+  ]
+    .map((g) => ({ ...g, links: g.links.filter((l) => l.show) }))
+    .filter((g) => g.links.length);
+
+  const isOn = (href: string) => (href === '/dashboard' ? path === '/dashboard' : path === href || path.startsWith(`${href}/`));
+
   return (
-    <header className="adm-top">
-      <div className="adm-brand"><b>المتابع</b><span>لوحة التحكم</span></div>
-      <nav className="adm-nav" aria-label="أقسام لوحة التحكم">
-        {links.map((l) => {
-          const on = l.href === '/dashboard' ? path === '/dashboard' : path.startsWith(l.href);
-          return (
-            <a key={l.href} href={l.href} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}>
-              {l.label}{l.badge ? <span className="adm-count" aria-label={`${l.badge} بانتظار المراجعة`}>{l.badge}</span> : null}
-            </a>
-          );
-        })}
-      </nav>
-      <div className="adm-actions">
-        <a className="adm-link" href="/" target="_blank" rel="noopener">عرض الموقع ↗</a>
-        {me && <span className="adm-user">{me.name} · {ROLE_AR[me.role] || me.role}</span>}
-        <button type="button" className="adm-logout" onClick={logout}>خروج</button>
+    <aside className={`adm-side${open ? ' open' : ''}`}>
+      <div className="adm-side-head">
+        <a className="adm-brand" href="/dashboard"><b>المتابع</b><span>لوحة التحكم</span></a>
+        <button
+          type="button"
+          className="adm-side-toggle"
+          aria-expanded={open}
+          aria-controls="adm-side-menu"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? '✕ إغلاق' : '☰ القائمة'}
+        </button>
       </div>
-    </header>
+      <div className="adm-side-menu" id="adm-side-menu">
+        <nav className="adm-side-nav" aria-label="أقسام لوحة التحكم">
+          {groups.map((g) => (
+            <div className="adm-side-group" key={g.title}>
+              <div className="adm-side-title">{g.title}</div>
+              {g.links.map((l) => {
+                const on = isOn(l.href);
+                return (
+                  <a key={l.href} href={l.href} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}>
+                    <span>{l.label}</span>
+                    {l.badge ? <span className="adm-count" aria-label={`${l.badge} بانتظار المراجعة`}>{l.badge}</span> : null}
+                  </a>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+        <div className="adm-side-foot">
+          {me && <span className="adm-user">{me.name}<small>{ROLE_AR[me.role] || me.role}</small></span>}
+          <a className="adm-link" href="/" target="_blank" rel="noopener">عرض الموقع ↗</a>
+          <button type="button" className="adm-logout" onClick={logout}>خروج</button>
+        </div>
+      </div>
+    </aside>
   );
 }
 

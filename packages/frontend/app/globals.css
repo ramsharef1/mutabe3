@@ -1955,6 +1955,8 @@ button[type="submit"]:active, .btn-primary:active {
 /* Dashboard sidebar (D-083): on the start side (right in RTL), sticky at full height. The grid only applies
    where AdminNav renders it, so the editor and preview keep their .adm-top bar. Folds into a top bar < 900px. */
 .adm:has(> .adm-side){display:grid;grid-template-columns:236px minmax(0,1fr);align-items:start}
+/* .adm-main centres itself with auto margins, which would shrink a grid item to its content: fill the column, keep the cap */
+.adm:has(> .adm-side) > :not(.adm-side){width:100%;min-width:0;box-sizing:border-box}
 .adm-side{position:sticky;top:0;z-index:20;height:100vh;overflow-y:auto;background:#fff;border-inline-end:1px solid #e3e3e3;display:flex;flex-direction:column}
 .adm-side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 16px 12px;border-bottom:2px solid #c41e3a}
 .adm-side .adm-brand{flex-direction:column;align-items:flex-start;gap:0;text-decoration:none}

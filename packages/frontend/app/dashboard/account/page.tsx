@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfileForm from './ProfileForm';
+import AdminNav from '../components/AdminNav';
+import { useStaff } from '../components/staff';
 
 export default function Account() {
   const router = useRouter();
+  // Every signed-in role may change its own password, so no role is denied here; `me` feeds the sidebar (D-083).
+  const { me } = useStaff(['ADMIN', 'EDITOR', 'JOURNALIST', 'VIEWER']);
   const [cur, setCur] = useState('');
   const [nw, setNw] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -41,9 +45,7 @@ export default function Account() {
 
   return (
     <div className="adm">
-      <header className="adm-top">
-        <div className="adm-brand"><a href="/dashboard" className="adm-back">‹ لوحة التحكم</a></div>
-      </header>
+      <AdminNav me={me} />
       <main className="adm-main adm-editor" style={{ maxWidth: 560 }}>
         <ProfileForm />
         <h1>تغيير كلمة المرور</h1>
