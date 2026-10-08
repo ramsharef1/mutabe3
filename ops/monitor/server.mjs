@@ -29,14 +29,22 @@ let opened = false;
 const track = (r) => { if (r?.opened) opened = true; };
 
 // ── reachability of the daily check itself ───────────────────────────────────────────────────────────
+// Since D-081 the facts are written hourly by a root timer on the VPS and only read over SSH by the
+// read-only monitor user, so a stopped timer shows up as old facts rather than as an SSH failure.
+const factsAgeH = has && f.now ? (Date.now() - Date.parse(f.now)) / 3_600_000 : NaN;
+const stale = Number.isFinite(factsAgeH) && factsAgeH > 3;
 if (!sshOk) {
   track(await raise('ssh', '⚠️ الفحص اليومي لم يصل إلى الخادم — mutabe3 VPS',
     'فشل اتصال SSH من GitHub Actions إلى الخادم، فلم يُفحص القرص ولا النسخ الاحتياطي ولا الخدمات اليوم. ' +
     'فحص الموقع من الخارج (كل 10 دقائق) مستقل عن هذا ويستمر.\n\n' +
-    '**تحقّق:** هل الخادم يعمل (hPanel)؟ هل تغيّر منفذ SSH أو المفتاح (`VPS_*` في أسرار بيئة production)؟ ' +
+    '**تحقّق:** هل الخادم يعمل (hPanel)؟ هل تغيّر منفذ SSH أو مفتاح المراقبة (`VPS_MONITOR_*` في أسرار بيئة production)؟ ' +
     'جرّب `gh workflow run ops-vps.yml -f action=status`.', { recommentMin: DAILY }));
+} else if (stale) {
+  track(await raise('ssh', `⚠️ بيانات الفحص اليومي قديمة (${Math.round(factsAgeH)} ساعة) — mutabe3 VPS`,
+    `آخر بيانات كتبها الخادم تعود إلى ${f.now}؛ مؤقّت \`mutabe3-facts.timer\` متوقف على الأرجح، فالأرقام أدناه ليست حديثة.\n\n` +
+    '**الخطوات:** `gh workflow run ops-vps.yml -f action=setup-monitor-user` يعيد تثبيت المؤقّت ويشغّله.', { recommentMin: DAILY }));
 } else {
-  await resolve('ssh', 'الفحص اليومي وصل إلى الخادم مجدداً');
+  await resolve('ssh', 'الفحص اليومي وصل إلى الخادم ببيانات حديثة');
 }
 
 if (has) {
