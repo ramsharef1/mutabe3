@@ -167,6 +167,8 @@ export default async function Home({ searchParams }: { searchParams?: { season?:
     <div className="am home">
       <JsonLd data={websiteLd()} />
       <SiteHeader articles={articles} temp={amman?.t} wxLabel={amman ? wxText(amman.code) : undefined} />
+      {/* the page's one heading for screen readers and search engines; the masthead logo is the visual title */}
+      <h1 className="sr-only">موقع المتابع الاخباري — آخر أخبار الأردن وفلسطين والعالم</h1>
 
       <div className="wrap">
         <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
