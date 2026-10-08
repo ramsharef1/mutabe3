@@ -2,6 +2,12 @@
 
 ## 2026-10-08
 
+**D-083: Dashboard navigation as a sidebar**
+- **Decided by:** Rami 2026-10-08 ("for the admin, set the admin links as a sidebar").
+- **What:** `AdminNav` renders an `<aside class="adm-side">` instead of the top bar: the 13 links grouped «المحتوى» (المقالات · التعليقات with the pending badge · الصفحة الرئيسية · البيانات · الأقسام · الاستطلاعات), «القرّاء» (النشرة · التنبيهات · الإحصاءات), «الإدارة» (المستخدمون · الإعلانات · سجل التدقيق — admins), «حسابي» (ملفي وكلمة المرور); groups a role cannot open disappear. The brand sits on top, the user with role, «عرض الموقع» and «خروج» at the bottom. On the start (right) side, 236 px, sticky at full height; active link tinted with a start-edge bar. The grid switches on in CSS only when the sidebar is present (`.adm:has(> .adm-side)`), so none of the 12 pages changed and the editor and preview keep their full-width `.adm-top` bar with the back link; content columns get `width:100%` (auto margins would otherwise shrink a grid item to its content). Below 900 px it folds into a top bar with «☰ القائمة» (`aria-expanded`, Escape closes, closes on navigation). The account page now uses `useStaff` with every role allowed (nobody newly denied) and shows the sidebar.
+- **Verified:** locally at 1366 px (sidebar 1130–1366 full height, content 980 px, stays pinned after scrolling 2 000 px; account page with the sidebar and its 560 px column; editor unchanged; ads/homepage headers intact; no horizontal scroll) and at 551 px (top bar, menu opens with 13 links in four groups, Escape closes). Production after deploy (d6450b6, CI run 37825360613): the same at 1366 px under Rami's session (150 articles, «مسؤول · مدير» in the foot) and at 375 px on `/dashboard/users` (menu opens, «المستخدمون» active, no horizontal scroll). `tsc`/lint clean (one pre-existing warning).
+- **Status:** ✅ LIVE · 2026-10-08
+
 **D-082: Homepage section boxes show their own section; dead section boxes and links removed**
 - **Asked by:** Rami 2026-10-08 ("are they reflected on the homepage and categories pages?").
 - **Found:** the homepage still worked as built for 19 demo articles (D-034): every box («اخبار الاردن», «اقتصاد», «فلسطين»…) took the next items of one shared newest-20 list regardless of section, so only 4 sections' articles reached the page and a box could show another section's story. Three boxes and the header «المزيد ▾» linked to sections that do not exist (`culture`, `technology`, `misc` → empty pages). Category pages were already correct (own list, all items, pager of 12).

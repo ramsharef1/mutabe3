@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · dashboard sidebar (D-083)
+
+- **Live (d6450b6):** dashboard links moved from the top bar to a grouped right-hand sidebar (sticky, full height); «☰ القائمة» top bar under 900 px; account page joins the layout; editor and preview unchanged. Verified locally and on production at desktop and phone widths.
+
+---
+
 ## 2026-10-08 · Claude Code · homepage boxes per section (D-082)
 
 - **Live (e42fdde):** each homepage section box shows its own section (was one shared newest-20 list); dead boxes/links to non-existent sections replaced or removed. All 13 visible sections now on the homepage.
