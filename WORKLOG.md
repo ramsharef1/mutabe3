@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-10-08 · Claude Code · deploy user + separate secrets (D-079)
+
+- **Live:** deploys as `mutabe3-deploy` (own key, no root; sudo only for the prepare/finish helper); SEAL_SECRET + FINGERPRINT_SALT separate from JWT_SECRET. First unprivileged deploy green, 0 permission errors, ISR cache writes fine.
+- **Left:** ops/monitor still use the administrator key (ops needs root by design).
+
+---
+
 ## 2026-10-08 · Claude Code · mail certificate (D-078)
 
 - **Live:** mail.mutabe3.news certificate on SMTP/IMAP/submission via SNI, auto-renewing; guard re-adds our SNI entry if the control agent regenerates the map. Next: Q12.

@@ -2,6 +2,16 @@
 
 ## 2026-10-08
 
+**D-079: Deploys as an unprivileged user; separate seal and fingerprint secrets (PLAN Q12, SECURITY S-07 + S-05)**
+- **Asked by:** Rami 2026-10-08 (Q12 "yes, do it now"; "do the mail cert first then q12").
+- **Deploy user (`setup-deploy-user`):** `mutabe3-deploy` (password locked, group `mutabe3` to read the env files, key `ops/vps/keys/mutabe3-deploy.pub` with `restrict`) owns the checkout; `deploy-vps.yml` logs in with the new secrets `VPS_DEPLOY_USER`/`VPS_DEPLOY_SSH_KEY` (key generated on Rami's Mac, private half stored straight into the GitHub `production` environment and deleted locally) and refuses to run as root. git, `npm ci`, prisma and both builds run unprivileged; the only sudo is `/usr/local/sbin/mutabe3-deploy-helper prepare|finish` (`.next` ownership, restart of the two mutabe3 units) — other arguments and any other command are refused (tested). One-time config and the D-045 image backfill left the deploy (both applied; ops can re-run them).
+- **Secrets (S-05):** `SEAL_SECRET` (random) is the root for sealed values — new boxes `v3`, older `v2`/`v1` still open and are re-sealed on first read; `FINGERPRINT_SALT` keys IP/voter fingerprints, set on the server to the old JWT_SECRET value (copied there, never printed) so poll/view dedupe continues. JWT_SECRET can now be rotated without touching either. Production held no sealed values yet (no SMTP password, push keys not generated), so nothing needed re-sealing.
+- **Verified:** migration test (v1/v2 open and re-seal to v3, purpose swap refused, fingerprints unchanged, v3 survives a JWT rotation, v3 without SEAL_SECRET → null); first unprivileged deploy 023a617 green (health 200/200); afterwards 0 permission errors, the frontend (as `mutabe3`) writes its ISR cache, backend sees the new variables, Rami's dashboard session still valid.
+- **Still on the administrator key:** `ops-vps.yml` (manual, workflow_dispatch only — its scripts need root) and `monitor.yml` (secrets `VPS_USER`/`VPS_SSH_KEY`). Moving the monitor to a read-only user is a possible later step.
+- **Status:** ✅ LIVE · 2026-10-08
+
+---
+
 **D-078: TLS certificate for mail.mutabe3.news (mail apps connect without warnings)**
 - **Asked by:** Rami 2026-10-08 ("do the mail cert first then q12").
 - **Done (`mail-cert-mutabe3`):** Let's Encrypt `mail.mutabe3.news` via `certbot certonly --nginx` (shared nginx config untouched; expires 2027-01-06, auto-renews with a per-certificate deploy hook reloading postfix + dovecot); one line in `/etc/postfix/sni_map`; `/etc/dovecot/conf.d/sni/mail.mutabe3.news.conf` (`local_name`). Default certificate for other hosts unchanged; other SNI lines 4 → 4.
