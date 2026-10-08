@@ -2,6 +2,15 @@
 
 ## 2026-10-08
 
+**D-083: Newsroom handbook, full QA pass, uptime-check gap**
+- **Asked by:** Rami 2026-10-08 ("continue" → "everything": handbook, QA pass, uptime alerts, Next 16 + Prisma 7).
+- **Handbook:** Arabic «دليل غرفة الأخبار» for the editors — roles, writing (templates, cover credit, keywords, preview), article kinds incl. paid «إعلان» and live coverage, publish/schedule (Amman time), homepage curation, «البيانات» blocks with their expiry, push alerts, comments/polls/newsletter/stats, author profile, editorial rules, launch checklist (retire samples at ~20 real articles). Published as a private page: https://claude.ai/artifact/RyNq8zGMoPsGXERi3EVR94 — Rami shares it with the desk.
+- **QA (live site):** link crawl — 236 internal pages all 200, 201 images all load; headless Chrome on 9 page types × 375/1280 × light/dark — no horizontal overflow, console/CSP errors, broken images, unlabeled controls or duplicate ids; the only defect: the homepage had no `<h1>` → added a visually hidden one (2d25952, `.sr-only` clip method — no off-screen offsets in RTL). Lighthouse mobile (devtools throttling, warm): homepage perf 91–97, LCP 2.0–2.2 s, a11y/best-practices/SEO 100; section page 96/100/100/100, CLS 0.007. A cold run right after a deploy measured 69 / LCP 7.1 s (first render fills 14 section caches) — warm runs are what readers see.
+- **Uptime gap (finding):** GitHub ran only 5 of ~108 scheduled 10-minute uptime checks in 18 h (all green) — its scheduler drops runs (cf. D-063), so an outage can go unnoticed for hours. A dependable check needs an outside service account only Rami can create (PLAN Q7 reopened).
+- **Status:** ✅ handbook + QA done · uptime decision with Rami · 2026-10-08
+
+---
+
 **D-083: Dashboard navigation as a sidebar**
 - **Decided by:** Rami 2026-10-08 ("for the admin, set the admin links as a sidebar").
 - **What:** `AdminNav` renders an `<aside class="adm-side">` instead of the top bar: the 13 links grouped «المحتوى» (المقالات · التعليقات with the pending badge · الصفحة الرئيسية · البيانات · الأقسام · الاستطلاعات), «القرّاء» (النشرة · التنبيهات · الإحصاءات), «الإدارة» (المستخدمون · الإعلانات · سجل التدقيق — admins), «حسابي» (ملفي وكلمة المرور); groups a role cannot open disappear. The brand sits on top, the user with role, «عرض الموقع» and «خروج» at the bottom. On the start (right) side, 236 px, sticky at full height; active link tinted with a start-edge bar. The grid switches on in CSS only when the sidebar is present (`.adm:has(> .adm-side)`), so none of the 12 pages changed and the editor and preview keep their full-width `.adm-top` bar with the back link; content columns get `width:100%` (auto margins would otherwise shrink a grid item to its content). Below 900 px it folds into a top bar with «☰ القائمة» (`aria-expanded`, Escape closes, closes on navigation). The account page now uses `useStaff` with every role allowed (nobody newly denied) and shows the sidebar.

@@ -12,6 +12,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · handbook + QA (D-083)
+
+- **Done:** newsroom handbook (private page for Rami to share); QA crawl + browser matrix clean except the homepage `<h1>` (fixed, 2d25952); Lighthouse warm 91–97. Uptime: GitHub schedules too unreliable — needs Rami's call (Q7).
+
+---
+
 ## 2026-10-08 · Claude Code · homepage boxes per section (D-082)
 
 - **Live (e42fdde):** each homepage section box shows its own section (was one shared newest-20 list); dead boxes/links to non-existent sections replaced or removed. All 13 visible sections now on the homepage.

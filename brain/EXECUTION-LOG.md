@@ -1026,3 +1026,14 @@
 - 2026-10-08T15:40Z · edit · packages/backend/src/routes/admin.ts
 - 2026-10-08T15:43Z · edit · packages/backend/src/scripts/sample-articles.ts
 - 2026-10-08T15:58Z · edit · ops/vps/setup-monitor-user.sh
+- 2026-10-08T16:51Z · edit · /private/tmp/claude-501/-Users-ramialsharef-Projects-forge-projects-mutabe3/2c7aa10e-f73b-4426-983b-53a0c74c9c27/scratchpad/newsroom-handbook.html
+- 2026-10-08T16:51Z · edit · /private/tmp/claude-501/-Users-ramialsharef-Projects-forge-projects-mutabe3/2c7aa10e-f73b-4426-983b-53a0c74c9c27/scratchpad/newsroom-handbook.html
+- 2026-10-08T16:54Z · edit · /private/tmp/claude-501/-Users-ramialsharef-Projects-forge-projects-mutabe3/2c7aa10e-f73b-4426-983b-53a0c74c9c27/scratchpad/qa.mjs
+- 2026-10-08T18:17Z · edit · packages/frontend/app/dashboard/components/AdminNav.tsx
+- 2026-10-08T18:17Z · edit · packages/frontend/app/dashboard/account/page.tsx
+- 2026-10-08T18:17Z · edit · packages/frontend/app/dashboard/account/page.tsx
+- 2026-10-08T18:19Z · edit · packages/frontend/app/globals.css
+- 2026-10-08T18:19Z · edit · packages/frontend/app/globals.css
+- 2026-10-08T18:21Z · edit · packages/frontend/app/globals.css
+- 2026-10-08T18:38Z · edit · brain/DECISIONS.md
+- 2026-10-08T18:38Z · edit · WORKLOG.md
