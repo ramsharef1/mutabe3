@@ -34,8 +34,8 @@ sudo -u mutabe3 test -r /etc/mutabe3/dkim/$SEL.private && echo "service user can
 
 echo "== 2. DNS =="
 have() { pdnsutil list-zone "$Z" | awk -v n="$1" -v t="$2" '$1==n && $4==t' | grep -q .; }
-add() { if have "$1" "$3"; then echo "exists: $1 $3"; else pdnsutil add-record "$Z" "$2" "$3" 3600 "$4" >/dev/null && echo "added: $1 $3"; fi; }
-if pdnsutil list-zone "$Z" | awk '$1=="'$Z'" && $4=="TXT"' | grep -qi 'v=spf1'; then echo "exists: SPF"; else pdnsutil add-record "$Z" @ TXT 3600 "\"v=spf1 ip4:$IP ~all\"" >/dev/null && echo "added: SPF"; fi
+add() { if have "$1" "$3"; then echo "exists: $1 $3"; else pdnsutil add-record "$Z" "$1" "$3" 3600 "$4" >/dev/null && echo "added: $1 $3"; fi; }
+if pdnsutil list-zone "$Z" | awk '$1=="'$Z'" && $4=="TXT"' | grep -qi 'v=spf1'; then echo "exists: SPF"; else pdnsutil add-record "$Z" "$Z" TXT 3600 "\"v=spf1 ip4:$IP ~all\"" >/dev/null && echo "added: SPF"; fi
 DK="\"v=DKIM1; k=rsa; \" \"p=${PUB:0:200}\" \"${PUB:200}\""
 add "$SEL._domainkey.$Z" "$SEL._domainkey" TXT "$DK"
 add "_dmarc.$Z" _dmarc TXT "\"v=DMARC1; p=none; rua=mailto:info@$Z; adkim=r; aspf=r\""
