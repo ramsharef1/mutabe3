@@ -16,7 +16,7 @@ export default function Contact() {
           <tr><th>الإعلانات والرعاية</th><td dir="ltr">ads@mutabe3.news</td></tr>
           <tr><th>التصحيح وحق الرد</th><td dir="ltr">corrections@mutabe3.news</td></tr>
           <tr><th>الخصوصية وحقوق البيانات</th><td dir="ltr">privacy@mutabe3.news</td></tr>
-          <tr><th>رئيس التحرير / المدير المسؤول</th><td>[الاسم] — يُنشر بريده مع بيانات الترخيص</td></tr>
+          <tr><th>رئيس التحرير / المدير المسؤول</th><td>عدي عليان — عبر بريد التحرير أعلاه</td></tr>
         </tbody>
       </table>
 
