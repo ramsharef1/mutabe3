@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-10-08 · Claude Code · answers applied (Q1, Q5, Q6, Q11, Q12)
+
+- **Live (039259b):** editor-in-chief عدي عليان on /about and /contact; organisation legal name and city still placeholders.
+- **Recorded:** Q6 keep the re-drawn logo; Q5 Claude writes the DNS records, Rami enters them; Q11 Rami switches push on and tests; Q12 next slice; GA4 steps given to Rami.
+
+---
+
 ## 2026-10-08 · Claude Code · homepage data blocks (D-076)
 
 - **Shipped (300fc55):** «البيانات» dashboard page for 11 data blocks the desk keeps current (each hidden once stale), live USD/EUR/Gulf rates with attribution, and no invented data on the homepage once the demo switch is off.
