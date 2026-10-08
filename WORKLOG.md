@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · more samples, third batch (D-080)
+
+- **Live (a0841f9):** +56 samples (4 per section) → 150 published, all labelled samples, 10 per section (اخبار الاردن 17, اقتصاد 13).
+
+---
+
 ## 2026-10-08 · Claude Code · more samples (D-080)
 
 - **Live (2003e0e):** +42 samples (3 per section, all 14) → 94 published, all labelled samples, at least 6 per section.
