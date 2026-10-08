@@ -36,7 +36,7 @@ Waiting on others: Rami's items Q1, Q2 id, Q3/Q5 DNS, Q6 logo; client's design a
 
 ## Open questions
 
-- **Q1 · Imprint names** — client legal name and editor-in-chief. *Needed for the about page, imprint and licence records.* **Answered 2026-10-08: editor-in-chief عدي عليان**; organisation legal name still to come.
+- **Q1 · Imprint names** — client legal name and editor-in-chief. *Needed for the about page, imprint and licence records.* **Answered 2026-10-08: editor-in-chief عدي عليان**; organisation legal name still to come. **Owner/licensed entity 2026-10-08: «موقع المتابع الاخباري»** (live on /about, /privacy); city still to come.
 - **Q2 · Analytics** — **done 2026-10-08 (D-074):** GA4 G-YH1LGW1B1D live behind the consent bar. *Rami, in GA4:* activate the «Internal Traffic» data filter, set retention to 14 months; connect Search Console when convenient.
 - **Q3 · Mailboxes** — **answered 2026-10-08: forwarding** of editor@, ads@, corrections@, privacy@ to the editors' existing inboxes. *Waiting on Rami: MX/forwarding records at the DNS host (same visit as Q5) and the target addresses.* **Done 2026-10-08 (D-077):** info@mutabe3.news mailbox; editor@, ads@, corrections@, privacy@, noreply@ delivered to it.
 - **Q4 · Counsel** — **answered 2026-10-08: no legal review for now** (Rami's decision; higher legal risk accepted). The «مسودة» banners stay on the seven legal pages until a lawyer approves them.

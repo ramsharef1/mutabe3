@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · imprint owner name (Q1)
+
+- **Live (555f01c):** «موقع المتابع الاخباري» as owner and licensed entity on /about and /privacy; «قيد التفعيل» removed from the mail addresses (live since D-077). City still a placeholder.
+
+---
+
 ## 2026-10-08 · Claude Code · monitor on a read-only user (D-081)
 
 - **Live:** root facts timer + `mutabe3-monitor` (key can only `cat` the facts file); stale-facts alert. Manual check green. Only manual ops still uses the administrator key.
