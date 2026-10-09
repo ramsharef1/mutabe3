@@ -16,8 +16,8 @@
 
 | Component | Value | Date |
 |---|---|---|
-| Frontend | Next.js 14.2 App Router, `output: standalone`, PWA, RTL, Noto Kufi/Naskh — `packages/frontend` | 2026-10-07 ✅ |
-| Backend | Express 4 + Prisma 6.19, compiled to `dist/` — `packages/backend` (D-073) | 2026-10-08 ✅ |
+| Frontend | Next.js 16.4 + React 19 App Router, `output: standalone`, PWA, RTL, Ink & Signal skin (D-088), Noto Kufi/Naskh only — `packages/frontend` (D-084) | 2026-10-10 ✅ |
+| Backend | Express 4 + Prisma 7.10 (pg adapter, client generated into `src/generated/prisma`), compiled to `dist/` — `packages/backend` (D-084) | 2026-10-10 ✅ |
 | Database | PostgreSQL 13 on the VPS, db `mutabe3`; reachable from the server only (D-063) | 2026-10-07 ✅ |
 | Runtime | Node 22 under `/opt/node22` for build and both units (D-056); the VPS's global Node 20 is left for other sites | 2026-10-07 ✅ |
 | Not used | Strapi, Vercel, Meilisearch, Redis (dependency removed D-065), Sentry, Docker (all from the September plan, dropped) | 2026-10-07 ✅ |

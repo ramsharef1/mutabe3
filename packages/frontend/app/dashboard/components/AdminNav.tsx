@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Me, ROLE_AR, isEditorRole, logout, adminFetch } from './staff';
 import { useHtmlAttr } from '../../components/hooks';
 
-// Dashboard sidebar (D-043 Stages 3–4; sidebar since D-084): the sections the signed-in role may open,
+// Dashboard sidebar (D-043 Stages 3–4; sidebar since D-090): the sections the signed-in role may open,
 // grouped, on the start (right) side. Pages keep their `<div className="adm"><AdminNav/><main className="adm-main">`
 // shape — the grid switches on in CSS only when this sidebar is present, so the editor and the preview,
 // which use the old `.adm-top` bar with a back link, are unchanged. Below 900px it folds into a top bar

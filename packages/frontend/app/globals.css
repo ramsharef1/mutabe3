@@ -1960,7 +1960,7 @@ button[type="submit"]:active, .btn-primary:active {
 @media(max-width:600px){.rte-bar{top:0}.adm-cover{flex-direction:column}.adm-cover img,.adm-cover .ph{width:100%;height:160px}}
 
 /* ---------- Stage 3: dashboard nav, tabs, categories/users/homepage screens (D-043) ---------- */
-/* Dashboard sidebar (D-084): on the start side (right in RTL), sticky at full height. The grid only applies
+/* Dashboard sidebar (D-090): on the start side (right in RTL), sticky at full height. The grid only applies
    where AdminNav renders it, so the editor and preview keep their .adm-top bar. Folds into a top bar < 900px;
    on desktop it collapses to a 56px rail (html[data-adm-side="collapsed"], remembered per browser). */
 .adm:has(> .adm-side){display:grid;grid-template-columns:236px minmax(0,1fr);align-items:start}

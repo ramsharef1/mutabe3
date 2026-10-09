@@ -6,10 +6,10 @@
 
 ---
 
-## 2026-10-08 · Claude Code · dashboard sidebar, collapsible on desktop (D-084)
+## 2026-10-08 · Claude Code · dashboard sidebar, collapsible on desktop (D-090)
 
 - **Live (d6450b6):** dashboard links moved from the top bar to a grouped right-hand sidebar (sticky, full height); «☰ القائمة» top bar under 900 px; account page joins the layout; editor and preview unchanged. Verified locally and on production at desktop and phone widths.
-- **Collapse (D-084):** on desktop the sidebar folds to a 56 px rail (panel-icon button, pending-comment count kept on the rail), remembered per browser and restored before paint by `app/dashboard/layout.tsx`. First logged as D-083; renumbered because the handbook/QA entry took D-083 in the same minute.
+- **Collapse (D-090):** on desktop the sidebar folds to a 56 px rail (panel-icon button, pending-comment count kept on the rail), remembered per browser and restored before paint by `app/dashboard/layout.tsx`. First logged as D-083, then D-084; both numbers were taken by parallel entries, so it is D-090 since 2026-10-10.
 
 ---
 
