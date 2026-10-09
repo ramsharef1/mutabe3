@@ -38,3 +38,5 @@ Serving: `ads.ts readAds` merges ACTIVE campaigns (now ∈ [startAt,endAt), zone
 
 ## Deploy risk register (open)
 EOL Node/Next · no lockfile (`npm install` on `^` ranges each deploy) · in-place `next build` over the live `.next` · failed health check doesn't roll back · `db push` instead of migrations · root SSH deploy · sed on the shared nginx file · VPS restore hits all sites · shared global node · newsletter stuck on restart. Release-directory deploys with symlink swap + auto-revert: **deferred with packaging** unless a failed deploy bites first.
+
+**Update 2026-10-08 (D-084):** Next 16.4 + React 19.3, Prisma 7.10 with @prisma/adapter-pg (client generated into packages/backend/src/generated/prisma, config in packages/backend/prisma.config.ts), ESLint 9 flat config, Node ≥20.19 (production Node 22). The "Next 16 deferred 90+ days" item is done.

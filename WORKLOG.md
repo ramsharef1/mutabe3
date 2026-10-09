@@ -13,6 +13,12 @@
 
 ---
 
+## 2026-10-08 · Claude Code · Next 16 + Prisma 7 (D-084)
+
+- **Live (5389ccf):** Next 16.4 / React 19 / Prisma 7.10 with the pg adapter (pool 3 per client); deploy uses prisma.config.ts. Production verified (crawl, feeds, dashboard routes, DB connections 15 → 4). Rami logs in to the dashboard again (old session rotated out).
+
+---
+
 ## 2026-10-08 · Claude Code · handbook + QA (D-083)
 
 - **Done:** newsroom handbook (private page for Rami to share); QA crawl + browser matrix clean except the homepage `<h1>` (fixed, 2d25952); Lighthouse warm 91–97. Uptime: GitHub schedules too unreliable — needs Rami's call (Q7).
