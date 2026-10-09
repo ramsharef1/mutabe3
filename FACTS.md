@@ -56,8 +56,8 @@
 
 | Fact | Value | Date |
 |---|---|---|
-| Articles | 19 published, all demo (stay until real content exists — removal is a separate Rami gate) | 2026-10-07 ✅ |
-| Ads | all four zones on demo; house banners with dates, first-party counts, CSV report ready (D-057) | 2026-10-07 ✅ |
+| Articles | 0 published — launched with real content only; 150 sample articles retired to drafts (D-089) | 2026-10-10 ✅ |
+| Ads | all four zones show the site's «أعلن معنا» promo (mode `demo`, D-089); house banners with dates, first-party counts, CSV report ready (D-057) | 2026-10-10 ✅ |
 | Analytics | GA4 measurement id G-YH1LGW1B1D (web stream 16067707038, Rami's Google account) behind the consent bar, basic consent; first-party stats at /dashboard/stats (D-069, D-074) | 2026-10-08 ✅ |
 
 ## Credentials (paths and names only)

@@ -38,7 +38,7 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 | ID | Finding | Severity | Status |
 |---|---|---|---|
 | F-01 | Footer links to about/contact/advertise/privacy/terms are dead (`#`); no imprint, corrections or privacy page | High | **in-progress (D-053)** — seven pages live as counsel drafts with a visible banner; footer wired; needs names, mailboxes and counsel sign-off |
-| F-02 | ~20 homepage blocks, live strip, video, columnists and 19 articles are demo/invented data | High | **done in code (D-089)** — launch with real content only: invented blocks off, «أعلن معنا» in unsold zones, filler/dead links removed, article page without invented dressing; the two dashboard switches wait for Rami's sign-in |
+| F-02 | ~20 homepage blocks, live strip, video, columnists and 19 articles are demo/invented data | High | **done (D-089)** — launched 2026-10-10 with real content only: samples retired, invented blocks off, «أعلن معنا» in unsold zones, filler/dead links removed, article page without invented dressing |
 | F-03 | No photo credit field; every cover captioned «تصوير: المتابع» | High | **done (D-054)** — credit/caption fields, credit shown only when set, JSON-LD ImageObject |
 | F-04 | `dateModified` = `updatedAt`, bumped by every view → fake freshness signal | Medium | **done (D-052)** — raw increment, `updatedAt` moves only on edits |
 | F-05 | Category pages repeat articles and inflate counts; unknown slugs show other categories | Medium | **done (D-054, D-058)** — honest counts; server-side title/description/canonical + CollectionPage JSON-LD for category, tag and search pages; unknown category = 404; thin tags and search results `noindex` |
@@ -61,4 +61,4 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 | Deferred | Advertiser portal; instance-per-client packaging; Next 16; AI editor assist; Cloudflare; English edition | — | revisit after the first sale |
 
 ## Needs Rami (not derivable)
-Dashboard sign-in to retire the samples (D-089) · Search Console Domain property TXT value (PLAN Q14) · counsel's identity when a legal review happens · the push investigation when he picks it up (Q11).
+Search Console Domain property TXT value (PLAN Q14) · counsel's identity when a legal review happens · the push investigation when he picks it up (Q11).

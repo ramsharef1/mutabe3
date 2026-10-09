@@ -11,7 +11,7 @@
 - **Revenue:** direct-sold banners with dates and first-party counts (D-057), sponsored articles labelled «إعلان» (D-056). No AdSense, no newsletter sponsorship for now. Unsold zones show the site's own «أعلن معنا» promo linking to /advertise (D-089).
 - **Design:** Ink & Signal «حبر وإشارة» is the site's look since D-088 (client sign-off 2026-10-09); Noto Kufi + Noto Naskh only; `?skin=classic` shows the old look in one browser.
 - **Stack:** Next 16.4 + React 19, Express + Prisma 7.10 + Postgres 13 on the shared Hostinger VPS, Node 22, CI deploys from `main` (D-084, D-056, D-079).
-- **Launch (D-089, 2026-10-10, Rami: "launch today, empty"):** the site carries real content only — sample articles retired, illustrative blocks off, nothing invented on any page. The homepage works from zero articles up. *The two dashboard switches wait for Rami's sign-in (his session expired).*
+- **Launch (D-089, 2026-10-10, Rami: "launch today, empty"):** the site carries real content only — sample articles retired, illustrative blocks off, nothing invented on any page. The homepage works from zero articles up.
 - **Alerts are GitHub Issues that mail Rami** (D-059); no outside uptime service (Q7, 2026-10-09).
 - **Security baseline** (D-051, D-054, D-063, D-064, D-065, D-073, D-079): auth guards and throttling, refresh rotation, double opt-in, audit log, local-only ad creatives, per-reader limits, enforced CSP, Postgres local-only, generic error responses, uploads decided by content, links cut from comments, pinned SSH host keys, separate deploy user and secrets.
 
@@ -49,6 +49,6 @@ Waiting on Rami: Q11 (push on the second device, postponed), Q14.
 
 ## Resume point
 
-Last session 2026-10-10 (Claude Code): D-089 launch code live — homepage, header/footer, article page, Ink leftovers, bcrypt 6 + nodemailer 10.0.10 with DKIM covering List-Unsubscribe-Post. D-084's duplicate renumbered (sidebar is D-090). **Next:** once Rami signs in to the dashboard, retire the samples («إخفاء كل المواد التجريبية») and switch the demo blocks off in /dashboard/homepage, then verify the empty homepage on production; Q14 Search Console when Rami has the TXT value; an optional `mail-test-mutabe3` run (sends one test mail to info@) if Rami agrees. Otherwise the site waits on real articles.
+Last session 2026-10-10 (Claude Code): D-089 launch code live — homepage, header/footer, article page, Ink leftovers, bcrypt 6 + nodemailer 10.0.10 with DKIM covering List-Unsubscribe-Post. D-084's duplicate renumbered (sidebar is D-090). Samples retired (150, kept as drafts) and demo blocks off — the site shows real content only. **Next:** Q14 Search Console when Rami has the TXT value; an optional `mail-test-mutabe3` run (sends one test mail to info@) if Rami agrees. Otherwise the site waits on real articles.
 
 **Last updated:** 2026-10-10 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)

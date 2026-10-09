@@ -9,7 +9,8 @@
 ## 2026-10-10 · Claude Code · public launch, real content only (D-089)
 
 - **Live (cb68730, f777c50, fb54255…bd3d3bb):** homepage works from zero articles up (own-section boxes that hide while empty, no repeats, welcome + newsletter before the first article); «أعلن معنا» in unsold ad zones; filler, dead tabs/links and invented content removed from homepage, header, footer and article page; Ink leftovers (share image, favicon set, iPhone icon, mail templates, Amiri dropped); bcrypt 6 + nodemailer 10.0.10, DKIM now signs List-Unsubscribe-Post. Sidebar decision renumbered D-090; PLAN/FACTS/BIBLE refreshed.
-- **Waiting:** Rami signs in to the dashboard → retire samples + demo off; Search Console TXT (Q14); optional mail test (one mail to info@).
+- **Launched:** Rami signed in; 150 samples retired (drafts), demo blocks off, verified from outside (0 articles, welcome + newsletter, nothing invented, phone 1 809 px). Follow-up: banner wording, no «رياضة» edition.
+- **Waiting:** Search Console TXT (Q14); optional mail test (one mail to info@).
 
 ---
 
