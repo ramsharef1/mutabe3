@@ -2,6 +2,15 @@
 
 ## 2026-10-09
 
+**D-087: Dashboard articles table — paging, real/sample filter, search**
+- **Asked by:** Rami 2026-10-09 (screenshot of «المقالات (150)» → "go ahead").
+- **Found:** the table loaded every article on one page and the API capped it at the newest 200 by update time, so at 10+ articles a day older ones would silently drop off; sample rows looked like real ones.
+- **Done:** `GET /api/admin/articles?page=&per=&status=&origin=real|sample&q=` — server-side paging (per 5–100, default 25), counts per status and per origin, title search; without `page` the old newest-200 shape stays for the homepage curation picker. The table: origin pills (الكل / حقيقية / تجريبية with counts, shown while samples exist), status pills counted within the chosen origin, title search, amber «تجريبي» tag on sample rows, pager «صفحة n من m · k مقالاً»; deleting reloads from the server. Also fixed an invalid `font: … inherit` shorthand in the new button styles (white-on-white label).
+- **Verified:** locally — API (page 1 = 25 of 139, page 6 = 14, real 8 / sample 131, status + origin combined, search, per capped at 100, legacy shape intact); table in headless Chrome (tags, origin and status switching, page 2, search, back to all), lint 0, tsc clean. Production (f3de395): admin API 401 without a token, the deployed dashboard bundle carries the new table; Rami checks it in his own logged-in browser.
+- **Status:** ✅ LIVE · 2026-10-09
+
+---
+
 **D-086: Root-mail bounce loop on the shared server stopped (server-level, no site files)**
 - **Asked by:** Rami 2026-10-09 ("go with 12" → server-level option). Origin (D-077 finding): another site's once-a-minute root cron job; its output went to root@hstgr.cloud (no MX) and bounced twice — ~124 bounce lines an hour, local only.
 - **Done (`root-mail-to-file`):** `/etc/postfix/virtual` `root@hstgr.cloud → root@localhost` (a local domain) and `/etc/aliases` `root → /var/log/root-mail` (owner `nobody`, 0600; `/etc/logrotate.d/root-mail` weekly, 4 kept, compressed). Both files backed up under /root/mail-dns-backup, restore on any failed check. No other site's files were read or changed; nothing about other sites printed (the repo's logs are public).

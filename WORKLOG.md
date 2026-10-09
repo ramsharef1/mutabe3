@@ -13,6 +13,12 @@
 
 ---
 
+## 2026-10-09 · Claude Code · dashboard articles table (D-087)
+
+- **Live (f3de395):** server-side paging (25/page, no more 200 cap), real/sample and status filters with counts, title search, «تجريبي» tag.
+
+---
+
 ## 2026-10-09 · Claude Code · root-mail loop stopped (D-086)
 
 - **Live:** root's mail delivered to /var/log/root-mail (rotated) instead of bouncing; 0 bounces since. No site files touched.
