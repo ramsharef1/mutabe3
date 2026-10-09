@@ -45,8 +45,11 @@ function dkimFor(c: Pick<Conf, 'host' | 'from'>) {
   if (dkimKey === undefined) {
     try { dkimKey = fs.readFileSync(process.env.DKIM_KEY_FILE, 'utf8'); } catch (e: any) { dkimKey = null; console.error(`DKIM key unreadable: ${e?.code || e}`); }
   }
-  return dkimKey ? { domainName: domain, keySelector: DKIM_SELECTOR, privateKey: dkimKey } : undefined;
+  // RFC 8058 one-click unsubscribe needs List-Unsubscribe AND List-Unsubscribe-Post inside the signature; nodemailer's
+  // default header list stops at List-Unsubscribe (D-089).
+  return dkimKey ? { domainName: domain, keySelector: DKIM_SELECTOR, privateKey: dkimKey, headerFieldNames: DKIM_HEADERS } : undefined;
 }
+const DKIM_HEADERS = 'From:Sender:Reply-To:Subject:Date:Message-ID:To:Cc:MIME-Version:Content-Type:Content-Transfer-Encoding:List-Id:List-Unsubscribe:List-Unsubscribe-Post';
 
 function parseEnvFrom(v?: string) {
   if (!v) return DEFAULT_FROM;
