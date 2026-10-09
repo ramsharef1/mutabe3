@@ -4,20 +4,42 @@
     {
       "name": "frontend-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=packages/frontend", "--", "--port", "3100"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace=packages/frontend",
+        "--",
+        "--port",
+        "3100"
+      ],
       "port": 3100
     },
     {
       "name": "frontend-prod",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd /Users/ramialsharef/Projects/forge/projects/mutabe3 && exec npm run start --workspace=packages/frontend -- --port 3200"],
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/ramialsharef/Projects/forge/projects/mutabe3 && exec npm run start --workspace=packages/frontend -- --port 3200"
+      ],
       "port": 3200
     },
     {
       "name": "backend-dev",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "set -a; . /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/.env.local; set +a; exec npx tsx /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/src/index.ts"],
+      "runtimeArgs": [
+        "-c",
+        "set -a; . /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/.env.local; set +a; exec npx tsx /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/src/index.ts"
+      ],
       "port": 9080
+    },
+    {
+      "name": "backend-alt",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "set -a; . /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/.env.local; set +a; export PORT=9180; exec npx tsx /Users/ramialsharef/Projects/forge/projects/mutabe3/packages/backend/src/index.ts"
+      ],
+      "port": 9180
     }
   ]
 }

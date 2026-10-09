@@ -15,7 +15,11 @@ interface Row {
   authorId?: string;
   category?: { name: string } | null;
   author?: { id: string; name: string } | null;
+  isSample?: boolean;
 }
+interface Meta { page: number; per: number; total: number; pages: number; counts: Record<string, number>; all: number; samples: number; real: number }
+const PER = 25;
+const ORIGIN_AR: Record<string, string> = { all: 'الكل', real: 'حقيقية', sample: 'تجريبية' };
 
 const STATUS_AR: Record<string, string> = { DRAFT: 'مسودة', PUBLISHED: 'منشور', SCHEDULED: 'مجدول', ARCHIVED: 'مؤرشف' };
 const fmt = (d?: string | null) => { if (!d) return ''; try { return new Date(d).toLocaleString('ar-JO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
@@ -27,23 +31,32 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [filter, setFilter] = useState<string>('ALL');
+  // D-087: the server pages the list (25 a page) and filters by status, origin (real/sample) and title
+  const [origin, setOrigin] = useState<'all' | 'real' | 'sample'>('all');
+  const [page, setPage] = useState(1);
+  const [q, setQ] = useState('');
+  const [query, setQuery] = useState('');
+  const [meta, setMeta] = useState<Meta | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetch('/api/admin/articles');
+      const params = new URLSearchParams({ page: String(page), per: String(PER), origin, ...(filter !== 'ALL' ? { status: filter } : {}), ...(query ? { q: query } : {}) });
+      const res = await adminFetch(`/api/admin/articles?${params}`);
       if (res.status === 401) { logout(); return; }
       if (res.status === 403) { setErr('ليس لديك صلاحية الوصول إلى لوحة التحكم.'); setRows([]); return; }
-      setRows((await res.json()).data || []);
+      const j = await res.json();
+      setRows(j.data || []); setMeta(j.meta || null);
       setErr('');
     } catch {
       setErr('تعذّر تحميل المقالات. تحقّق من الاتصال.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, origin, filter, query]);
 
   useLoadWhen(!!me && !denied, load);
+  const pick = (f: () => void) => { f(); setPage(1); }; // any filter change starts again at page 1
 
   const editor = isEditorRole(me?.role);
   const canDelete = (a: Row) => editor || (a.author?.id === me?.id && a.status === 'DRAFT');
@@ -51,7 +64,7 @@ export default function Dashboard() {
   const del = async (id: string, title: string) => {
     if (!confirm(`حذف المقال «${title}»؟ لا يمكن التراجع.`)) return;
     const res = await adminFetch(`/api/admin/articles/${id}`, { method: 'DELETE' });
-    if (res.ok) setRows((r) => r.filter((x) => x.id !== id));
+    if (res.ok) load(); // counts and paging come from the server
     else alert((await res.json().catch(() => ({}))).error || 'تعذّر الحذف.');
   };
 
@@ -71,8 +84,9 @@ export default function Dashboard() {
     else alert(j.error || 'تعذّر إنشاء النسخة.');
   };
 
-  const counts = rows.reduce<Record<string, number>>((m, r) => { m[r.status] = (m[r.status] || 0) + 1; return m; }, {});
-  const shown = filter === 'ALL' ? rows : rows.filter((r) => r.status === filter);
+  const counts = meta?.counts || {};
+  const inOrigin = Object.values(counts).reduce((t, n) => t + n, 0);
+  const shown = rows;
 
   return (
     <div className="adm">
@@ -80,19 +94,34 @@ export default function Dashboard() {
       {denied ? <Denied /> : (
         <main className="adm-main">
           <div className="adm-head">
-            <h1>{editor ? 'المقالات' : 'مقالاتي'} {rows.length ? `(${rows.length})` : ''}</h1>
+            <h1>{editor ? 'المقالات' : 'مقالاتي'} {meta ? `(${meta.all})` : ''}</h1>
             <a className="adm-new" href="/dashboard/article/new">+ مقال جديد</a>
           </div>
 
-          {rows.length > 0 && (
-            <div className="adm-tabs" role="tablist">
-              {['ALL', 'PUBLISHED', 'SCHEDULED', 'DRAFT', 'ARCHIVED'].map((s) => (
-                (s === 'ALL' || counts[s]) ? (
-                  <button key={s} type="button" role="tab" aria-selected={filter === s} className={filter === s ? 'on' : ''} onClick={() => setFilter(s)}>
-                    {s === 'ALL' ? 'الكل' : STATUS_AR[s]} <small>{s === 'ALL' ? rows.length : counts[s]}</small>
-                  </button>
-                ) : null
-              ))}
+          {meta && meta.all > 0 && (
+            <div className="adm-filters">
+              {meta.samples > 0 && (
+                <div className="adm-tabs" role="tablist" aria-label="المصدر">
+                  {(['all', 'real', 'sample'] as const).map((o) => (
+                    <button key={o} type="button" role="tab" aria-selected={origin === o} className={`${origin === o ? 'on' : ''}${o === 'sample' ? ' smp' : ''}`} onClick={() => pick(() => setOrigin(o))}>
+                      {ORIGIN_AR[o]} <small>{o === 'all' ? meta.all : o === 'real' ? meta.real : meta.samples}</small>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="adm-tabs" role="tablist" aria-label="الحالة">
+                {['ALL', 'PUBLISHED', 'SCHEDULED', 'DRAFT', 'ARCHIVED'].map((s) => (
+                  (s === 'ALL' || counts[s]) ? (
+                    <button key={s} type="button" role="tab" aria-selected={filter === s} className={filter === s ? 'on' : ''} onClick={() => pick(() => setFilter(s))}>
+                      {s === 'ALL' ? 'كل الحالات' : STATUS_AR[s]} <small>{s === 'ALL' ? inOrigin : counts[s]}</small>
+                    </button>
+                  ) : null
+                ))}
+              </div>
+              <form className="adm-search" role="search" onSubmit={(e) => { e.preventDefault(); pick(() => setQuery(q.trim())); }}>
+                <input type="search" value={q} onChange={(e) => { setQ(e.target.value); if (!e.target.value) pick(() => setQuery('')); }} placeholder="ابحث في العناوين" aria-label="ابحث في عناوين المقالات" />
+                <button type="submit">بحث</button>
+              </form>
             </div>
           )}
 
@@ -100,7 +129,9 @@ export default function Dashboard() {
           {loading ? (
             <div className="adm-loading">جاري التحميل…</div>
           ) : !err && rows.length === 0 ? (
-            <div className="adm-empty">لا توجد مقالات بعد. ابدأ بإنشاء <a href="/dashboard/article/new">مقال جديد</a>.</div>
+            meta && meta.all > 0
+              ? <div className="adm-empty">لا مقالات تطابق هذا الاختيار.</div>
+              : <div className="adm-empty">لا توجد مقالات بعد. ابدأ بإنشاء <a href="/dashboard/article/new">مقال جديد</a>.</div>
           ) : (
             <div className="adm-scroll">
             <table className="adm-table">
@@ -108,7 +139,7 @@ export default function Dashboard() {
               <tbody>
                 {shown.map((a) => (
                   <tr key={a.id}>
-                    <td className="adm-title">{a.title}</td>
+                    <td className="adm-title">{a.isSample && <span className="adm-smp" title="مادة تجريبية — تُخفى بنقرة من «الصفحة الرئيسية»">تجريبي</span>}{a.title}</td>
                     <td>{a.category?.name || '—'}</td>
                     <td className="adm-hide-sm">{a.author?.name || '—'}</td>
                     <td>
@@ -128,6 +159,13 @@ export default function Dashboard() {
               </tbody>
             </table>
             </div>
+          )}
+          {meta && meta.pages > 1 && (
+            <nav className="adm-pager" aria-label="صفحات المقالات">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>السابق</button>
+              <span>صفحة {page} من {meta.pages} · {meta.total} مقالاً</span>
+              <button type="button" disabled={page >= meta.pages} onClick={() => setPage(page + 1)}>التالي</button>
+            </nav>
           )}
         </main>
       )}

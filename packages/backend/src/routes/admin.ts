@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { newPrismaClient } from '../db';
+import type { Prisma } from '../generated/prisma/client';
 import { authMiddleware, drainRequest } from '../middleware';
 import { sanitizeArticleHtml } from '../sanitize';
 import { imageUpload, storeUpload, listMedia, MAX_UPLOAD_BYTES, UPLOAD_URL, uploadRel, uploadExists, deleteUpload } from '../uploads';
@@ -101,12 +102,34 @@ const fmtWhen = (d: Date | null | undefined) => (d ? new Date(d).toISOString().s
 router.get('/articles', async (req: Request, res: Response) => {
   try {
     const u = who(req);
-    const articles = await prisma.article.findMany({
-      where: isEditor(u) ? {} : { authorId: u.id },
-      include: { author: { select: { id: true, name: true } }, category: { select: { id: true, name: true } } },
-      orderBy: { updatedAt: 'desc' },
-      take: 200,
-    });
+    const scope: Prisma.ArticleWhereInput = isEditor(u) ? {} : { authorId: u.id };
+    const include = { author: { select: { id: true, name: true } }, category: { select: { id: true, name: true } } };
+    // Paged list for the articles table (D-087): ?page=1&per=25&status=PUBLISHED&origin=real|sample&q=… — the
+    // whole archive stays reachable, with totals per status and per origin. Without ?page the old shape stays
+    // (newest 200), which the homepage curation picker still uses.
+    if (req.query.page !== undefined) {
+      const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
+      const per = Math.min(100, Math.max(5, parseInt(String(req.query.per), 10) || 25));
+      const origin = String(req.query.origin || '');
+      const status = String(req.query.status || '');
+      const q = String(req.query.q || '').trim().slice(0, 80);
+      const base: Prisma.ArticleWhereInput = {
+        ...scope,
+        ...(origin === 'sample' ? { isSample: true } : origin === 'real' ? { isSample: false } : {}),
+        ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}),
+      };
+      const where: Prisma.ArticleWhereInput = { ...base, ...(STATUSES.includes(status) ? { status: status as any } : {}) };
+      const [rows, total, byStatus, samples, all] = await Promise.all([
+        prisma.article.findMany({ where, include, orderBy: { updatedAt: 'desc' }, skip: (page - 1) * per, take: per }),
+        prisma.article.count({ where }),
+        prisma.article.groupBy({ by: ['status'], where: base, _count: true }),
+        prisma.article.count({ where: { ...scope, isSample: true } }),
+        prisma.article.count({ where: scope }),
+      ]);
+      const counts = Object.fromEntries(byStatus.map((r) => [r.status, r._count]));
+      return res.json({ success: true, data: rows, meta: { page, per, total, pages: Math.max(1, Math.ceil(total / per)), counts, all, samples, real: all - samples } });
+    }
+    const articles = await prisma.article.findMany({ where: scope, include, orderBy: { updatedAt: 'desc' }, take: 200 });
     res.json({ success: true, data: articles });
   } catch (e) { sendError(res, e); }
 });
