@@ -8,6 +8,7 @@ import { subscribe, CONFIRM_MSG } from '../newsletter';
 import { track } from '../../lib/track';
 import { type Row, type Fx, SERVICE_COLORS, DECISION_COLORS, VERDICT_COLORS, deadlineLabel } from '../../lib/data';
 import { ago as agoText } from '../util';
+import { useNow, useBrowserValue } from '../hooks';
 
 /* ---------- J3 / J4 / J5 ---------- */
 // D-076: each block takes the desk's rows from /dashboard/data when they are fresh; the constants are the
@@ -156,13 +157,16 @@ const Cnt = ({ iso, days = true }: { iso: string; days?: boolean }) => {
 };
 
 /* ---------- J13–J15 seasonal (in season, or ?season=all for preview) ---------- */
-export function Seasonal({ season }: { season: Season | 'all' }) {
+export function Seasonal({ season, at }: { season: Season | 'all'; at: number }) {
+  // D-085: render time comes from the server (`at`) until hydration, then from the shared clock — no Date.now() in render
+  const t = useNow() ?? at;
   const show = (s: Season) => season === 'all' || season === s;
   if (!season) return null;
-  const pr = prayerTimes();
-  const today = new Date(); const mag = pr.find((p) => p.k === 'maghrib')!;
+  const today = new Date(t);
+  const pr = prayerTimes(today);
+  const mag = pr.find((p) => p.k === 'maghrib')!;
   const iftar = new Date(today); iftar.setHours(Math.floor(mag.h), Math.round((mag.h % 1) * 60), 0, 0);
-  if (iftar.getTime() < Date.now()) iftar.setDate(iftar.getDate() + 1);
+  if (iftar.getTime() < t) iftar.setDate(iftar.getDate() + 1);
   return (
     <div className="three seasons">
       {show('tawjihi') && (
@@ -204,13 +208,10 @@ export function Sports() {
 
 /* ---------- J17 diaspora (auto-emphasised for Gulf time zones) ---------- */
 export function Diaspora({ fx }: { fx?: Fx | null }) {
-  const [now, setNow] = useState<Date | null>(null);
-  const [gulf, setGulf] = useState(false);
-  useEffect(() => {
-    setNow(new Date()); const t = setInterval(() => setNow(new Date()), 30000);
-    try { setGulf(GULF_TZ.includes(Intl.DateTimeFormat().resolvedOptions().timeZone)); } catch {}
-    return () => clearInterval(t);
-  }, []);
+  // D-085: shared clock (null until hydrated) and the reader's time zone, both read in the browser only
+  const nowMs = useNow();
+  const now = nowMs === null ? null : new Date(nowMs);
+  const gulf = useBrowserValue(() => GULF_TZ.includes(Intl.DateTimeFormat().resolvedOptions().timeZone), false);
   return (
     <div className={`dia ${gulf ? 'gulf' : ''}`}>
       {gulf && <div className="hi">أهلاً بك من الخليج — هذه الكتلة مخصصة لك</div>}
@@ -324,10 +325,10 @@ export function Timeline({ id = 'art-006', title = 'الاجتماع العرب�
 
 /* ---------- C9 audio bulletin (Web Speech API; server TTS later) ---------- */
 export function AudioPill({ articles, mini = false }: { articles: Article[]; mini?: boolean }) {
-  const [state, setState] = useState<'idle' | 'playing' | 'unsupported'>('idle');
+  const [state, setState] = useState<'idle' | 'playing'>('idle');
+  const supported = useBrowserValue(() => 'speechSynthesis' in window, true); // D-085: feature detection without an effect
   const [idx, setIdx] = useState(0);
   const heads = useMemo(() => articles.slice(0, 5).map((a) => a.title), [articles]);
-  useEffect(() => { if (typeof window !== 'undefined' && !('speechSynthesis' in window)) setState('unsupported'); }, []);
   const stop = () => { window.speechSynthesis?.cancel(); setState('idle'); setIdx(0); };
   const play = () => {
     if (state === 'playing') return stop();
@@ -339,7 +340,7 @@ export function AudioPill({ articles, mini = false }: { articles: Article[]; min
     heads.forEach((h, i) => { const u = new SpeechSynthesisUtterance(`الخبر ${['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'][i]}. ${h}`); u.lang = 'ar-JO'; if (voice) u.voice = voice; u.onstart = () => setIdx(i); if (i === heads.length - 1) u.onend = () => setState('idle'); ss.speak(u); });
     setState('playing');
   };
-  if (state === 'unsupported') return null;
+  if (!supported) return null;
   if (mini) {
     return (
       <div className={`mini ${state === 'playing' ? 'on' : ''}`}>

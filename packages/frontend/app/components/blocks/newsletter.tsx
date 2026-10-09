@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { subscribe, CONFIRM_MSG } from '../newsletter';
 import { track } from '../../lib/track';
+import { useBrowserValue } from '../hooks';
 
 const EDITIONS = ['سياسة', 'اقتصاد', 'رياضة', 'فلسطين'];
 
@@ -13,16 +14,15 @@ export function NewsletterCTA() {
   const [hp, setHp] = useState('');
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [err, setErr] = useState('');
-  const [picks, setPicks] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      setPicks(JSON.parse(localStorage.getItem('editions') || '[]'));
-    } catch {}
-  }, []);
+  // saved editions come from the browser (D-085); once the reader toggles one, local state takes over
+  const storedRaw = useBrowserValue(() => localStorage.getItem('editions'), null);
+  const stored = useMemo<string[]>(() => { try { return JSON.parse(storedRaw || '[]'); } catch { return []; } }, [storedRaw]);
+  const [picked, setPicks] = useState<string[] | null>(null);
+  const picks = picked ?? stored;
 
   const toggle = (t: string) => {
-    setPicks((prev) => {
+    setPicks((prevSet) => {
+      const prev = prevSet ?? stored;
       const next = prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t];
       try {
         localStorage.setItem('editions', JSON.stringify(next));

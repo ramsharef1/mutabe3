@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 interface C { id: string; content: string; status: string; authorName: string | null; authorEmail: string | null; ipHash: string | null; createdAt: string; article: { id: string; title: string } }
 
@@ -26,7 +27,7 @@ export default function Comments() {
     if (c.ok) setCounts((await c.json()).data || {});
     setLoading(false);
   }, [tab]);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const act = async (c: C, status: string) => {
     setBusy(c.id); setErr('');

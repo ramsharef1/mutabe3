@@ -5,6 +5,7 @@ import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff } from '../components/staff';
 import { uploadImage } from '../components/upload';
 import { AdsConfig, AdZone, AdMode, HouseBanner, AD_ZONES, ZONE_INFO, MODE_LABEL, DEFAULT_ADS } from '../../components/adsConfig';
+import { useLoadWhen } from '../../components/hooks';
 
 const MAX_BANNERS = 6;
 const MODES: AdMode[] = ['off', 'demo', 'house', 'adsense'];
@@ -60,7 +61,7 @@ export default function Ads() {
     const a = document.createElement('a'); a.href = url; a.download = `mutabe3-ads-30d.csv`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const setZone = (z: AdZone, patch: Partial<AdsConfig['zones'][AdZone]>) =>
     setCfg((c) => ({ ...c, zones: { ...c.zones, [z]: { ...c.zones[z], ...patch } } }));

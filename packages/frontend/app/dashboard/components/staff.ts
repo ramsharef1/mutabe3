@@ -66,7 +66,9 @@ export const refreshHomepage = () => adminFetch('/dashboard/revalidate', { metho
 
 export function logout() {
   try { localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); } catch {}
-  window.location.href = '/auth/login';
+  // A full load on purpose (D-085): signing out must drop every in-memory session state, which client navigation keeps.
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+  window.location.assign('/auth/login');
 }
 
 /**

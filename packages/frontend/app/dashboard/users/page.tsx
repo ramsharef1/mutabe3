@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, ROLE_AR } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 interface U { id: string; name: string; email: string; role: string; emailVerified: boolean; createdAt: string; _count?: { articles: number } }
 
@@ -33,7 +34,7 @@ export default function Users() {
     if (r.ok) setRows((await r.json()).data || []); else await fail(r, 'تعذّر تحميل المستخدمين.');
     setLoading(false);
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const update = async (u: U, body: Record<string, string>, msg: string) => {
     setBusy(true);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { liveNow } from './content';
 import { AudioPill } from './blocks/jordan';
@@ -12,6 +12,7 @@ export * from './util';
 import { Article, NAV, WRITERS, face, ago, catColor } from './util';
 import { imgAt, srcSetFor } from './img';
 import { PrivacySettingsLink } from './analytics';
+import { useHtmlAttr } from './hooks';
 
 /* ---------- navigation from the DB (D-043 Stage 3) ---------- */
 export interface NavItem { label: string; slug: string; description?: string | null }
@@ -22,22 +23,24 @@ let navPending: Promise<NavItem[] | null> | null = null;
  * First render uses the built-in NAV so server and client markup match; the DB list
  * replaces it after mount and is cached for the rest of the page's life.
  */
+const navSubs = new Set<() => void>();
+const subscribeNav = (cb: () => void) => {
+  navSubs.add(cb);
+  navPending ??= fetch('/api/categories')
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((d) => {
+      const list: NavItem[] = (d.data || [])
+        .filter((c: any) => c.showInNav !== false)
+        .map((c: any) => ({ label: c.name, slug: c.slug, description: c.description }));
+      if (list.length) { navCache = list; navSubs.forEach((f) => f()); }
+      return list.length ? list : null;
+    })
+    .catch(() => null);
+  return () => { navSubs.delete(cb); };
+};
+// D-085: an external store instead of setState in an effect — the server and hydration see NAV, then the DB list.
 export function useNav(): NavItem[] {
-  const [items, setItems] = useState<NavItem[]>(NAV);
-  useEffect(() => {
-    if (navCache) { setItems(navCache); return; }
-    navPending ??= fetch('/api/categories')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        const list: NavItem[] = (d.data || [])
-          .filter((c: any) => c.showInNav !== false)
-          .map((c: any) => ({ label: c.name, slug: c.slug, description: c.description }));
-        return list.length ? (navCache = list) : null;
-      })
-      .catch(() => null);
-    navPending.then((l) => { if (l) setItems(l); });
-  }, []);
-  return items;
+  return useSyncExternalStore(subscribeNav, () => navCache ?? NAV, () => NAV);
 }
 
 /**
@@ -77,11 +80,9 @@ export const Chip = ({ a }: { a: Article }) =>
 
 /* ---------- theme (light = Ammon default; dark persisted in localStorage) ---------- */
 export function ThemeToggle({ className = '' }: { className?: string }) {
-  const [dark, setDark] = useState(false);
-  useEffect(() => { setDark(document.documentElement.dataset.theme === 'dark'); }, []);
+  const dark = useHtmlAttr('data-theme') === 'dark'; // D-085: follows <html data-theme>, set before paint
   const flip = () => {
     const d = !dark;
-    setDark(d);
     document.documentElement.dataset.theme = d ? 'dark' : 'light';
     try { localStorage.setItem('theme', d ? 'dark' : 'light'); } catch {}
   };

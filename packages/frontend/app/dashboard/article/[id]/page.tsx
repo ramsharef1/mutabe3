@@ -8,6 +8,7 @@ import { adminFetch, jsonInit, useStaff, isEditorRole, ROLE_AR, refreshHomepage 
 import { isHtml, plain } from '../../../components/util';
 import { imgAt } from '../../../components/img';
 import LivePanel from './LivePanel';
+import { useLoadWhen } from '../../../components/hooks';
 
 // Article kinds (ArticleKind, D-056) and the editor's templates per kind.
 type Kind = 'NEWS' | 'OPINION' | 'EXPLAINER' | 'SPONSORED' | 'LIVE' | 'VIDEO' | 'GALLERY' | 'CARICATURE' | 'NOTICE';
@@ -107,7 +108,7 @@ export default function Editor() {
     finally { setLoading(false); }
   }, [id, isNew, router]);
 
-  useEffect(() => { if (me && !denied) init(); }, [me, denied, init]);
+  useLoadWhen(!!me && !denied, init);
 
   const save = async (publish?: boolean) => {
     setErr('');
@@ -153,9 +154,11 @@ export default function Editor() {
 
   // Keyboard (D-056): Ctrl/Cmd+S saves a draft, Ctrl/Cmd+Enter publishes (editors). Hooks stay above the early
   // returns below (hooks order); the latest handlers are reached through refs.
-  const saveRef = useRef(save); saveRef.current = save;
-  const lockRef = useRef(!editor && !isNew && loadedStatus !== 'DRAFT'); lockRef.current = !editor && !isNew && loadedStatus !== 'DRAFT';
-  const editorRef = useRef(editor); editorRef.current = editor;
+  const saveRef = useRef(save);
+  const lockRef = useRef(!editor && !isNew && loadedStatus !== 'DRAFT');
+  const editorRef = useRef(editor);
+  // refs are updated after each render, not during it (D-085, React Compiler rule)
+  useEffect(() => { saveRef.current = save; lockRef.current = !editor && !isNew && loadedStatus !== 'DRAFT'; editorRef.current = editor; });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 // «تنبيهات المتصفح» (D-072): web push for عاجل. Admins switch it on (readers then see «فعّل تنبيهات عاجل» in
 // the footer and the عاجل bar — nobody is prompted automatically). Editors send each alert by hand, at most
@@ -35,7 +36,7 @@ export default function PushPage() {
       if (b) { setTitle((t) => t || b.title); setUrl((u) => (u === '/' ? b.href || '/' : u)); }
     } catch { setErr('تعذّر الاتصال.'); }
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
   // refresh the delivery counts while a send is running
   useEffect(() => {
     if (!st?.recent.some((r) => r.status === 'sending')) return;

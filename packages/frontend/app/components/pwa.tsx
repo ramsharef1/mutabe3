@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useBrowserValue, useEventValue } from './hooks';
 
 // Installable app + offline reading (D-043 Stage 5). The service worker lives in
 // public/sw.js. Chrome's install prompt can fire before React hydrates, so the
@@ -22,16 +23,14 @@ export function PwaRegister() {
 
 /** Footer entry «تطبيق المتابع»: installs where the browser allows it, otherwise explains how. */
 export function InstallApp() {
-  const [ready, setReady] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  // D-085: both read from the browser; a dismissed prompt and an accepted install are remembered locally
+  const promptReady = useEventValue('mutabe3:bip', () => !!getPrompt(), false);
+  const standalone = useBrowserValue(() => window.matchMedia('(display-mode: standalone)').matches, false);
+  const [used, setReady] = useState<boolean | null>(null); // false once the prompt was shown
+  const [accepted, setInstalled] = useState(false);
+  const ready = used ?? promptReady;
+  const installed = standalone || accepted;
   const [hint, setHint] = useState('');
-  useEffect(() => {
-    const sync = () => setReady(!!getPrompt());
-    sync();
-    setInstalled(window.matchMedia('(display-mode: standalone)').matches);
-    window.addEventListener('mutabe3:bip', sync);
-    return () => window.removeEventListener('mutabe3:bip', sync);
-  }, []);
   if (installed) return null;
 
   const click = async () => {

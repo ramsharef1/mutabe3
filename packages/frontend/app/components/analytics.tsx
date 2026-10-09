@@ -49,6 +49,9 @@ export function Analytics() {
   const [loadGa, setLoadGa] = useState(false);
   const staff = STAFF.test(path);
 
+  // The consent bar syncs with the browser's stored choice and loads GA after it (D-074, verified on production);
+  // its state is set from that external read on purpose — rewriting it as derived state would re-test consent.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!ANALYTICS || staff) return;
     const onHost = GTM_ID ? true : GA_HOSTS.includes(location.hostname);
@@ -61,6 +64,7 @@ export function Analytics() {
     addEventListener('mutabe3:consent', reopen);
     return () => removeEventListener('mutabe3:consent', reopen);
   }, [staff]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!ANALYTICS || staff || !host) return null;
   const choose = (analytics: boolean) => {

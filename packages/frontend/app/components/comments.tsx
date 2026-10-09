@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ago } from './util';
+import { useBrowserValue } from './hooks';
 
 interface C { id: string; name: string; content: string; createdAt: string }
 
@@ -9,7 +10,10 @@ interface C { id: string; name: string; content: string; createdAt: string }
 // for an editor's approval. A hidden "website" field catches form-filling bots.
 export function Comments({ articleId, enabled = true }: { articleId: string; enabled?: boolean }) {
   const [list, setList] = useState<C[] | null>(null);
-  const [name, setName] = useState('');
+  const shown = enabled ? list : []; // comments off → an empty list, not «…»
+  const savedName = useBrowserValue(() => localStorage.getItem('cname') || '', ''); // D-085
+  const [typedName, setName] = useState<string | null>(null);
+  const name = typedName ?? savedName;
   const [email, setEmail] = useState('');
   const [text, setText] = useState('');
   const [hp, setHp] = useState('');
@@ -17,12 +21,11 @@ export function Comments({ articleId, enabled = true }: { articleId: string; ena
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
   useEffect(() => {
-    if (!enabled) { setList([]); return; }
+    if (!enabled) return; // nothing is fetched or shown while comments are off
     fetch(`/api/articles/${articleId}/comments`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setList(d.data || []))
       .catch(() => setList([]));
-    try { setName(localStorage.getItem('cname') || ''); } catch {}
   }, [articleId, enabled]);
 
   const submit = async (e: React.FormEvent) => {
@@ -51,15 +54,15 @@ export function Comments({ articleId, enabled = true }: { articleId: string; ena
 
   return (
     <div className="comments" id="comments">
-      <h2 className="cm-h">التعليقات <span>({list ? list.length : '…'})</span></h2>
-      {list && list.length > 0 && (
+      <h2 className="cm-h">التعليقات <span>({shown ? shown.length : '…'})</span></h2>
+      {shown && shown.length > 0 && (
         <ul className="clist">
-          {list.map((c) => (
+          {shown.map((c) => (
             <li key={c.id}><i>{c.name.trim()[0] || '؟'}</i><div><b>{c.name}</b><small suppressHydrationWarning>{ago(c.createdAt)}</small><p>{c.content}</p></div></li>
           ))}
         </ul>
       )}
-      {list && list.length === 0 && enabled && <p className="cempty">لا تعليقات بعد. كن أول من يعلّق.</p>}
+      {shown && shown.length === 0 && enabled && <p className="cempty">لا تعليقات بعد. كن أول من يعلّق.</p>}
       {enabled ? (
         <>
           <h2 className="cm-h">أضف تعليقك</h2>

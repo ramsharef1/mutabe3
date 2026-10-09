@@ -93,7 +93,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
   const wi = hashIdx(a.id, WRITERS.length);
   const author = cmsAuthor || WRITERS[wi];
   const views = a.viewsCount ?? 0;
-  const Avatar = () => (cmsAuthor ? <AuthorFace name={cmsAuthor} photoUrl={a.author?.photoUrl} /> : <img src={face(wi)} alt="" />);
+  const avatar = cmsAuthor ? <AuthorFace name={cmsAuthor} photoUrl={a.author?.photoUrl} /> : <img src={face(wi)} alt="" />; // an element, not a component made per render (D-085)
   const authorSlug = cmsAuthor && a.author?.jobTitle ? a.author?.slug : null; // page exists only for opted-in profiles (D-067)
   const authorLine = (cmsAuthor && a.author?.jobTitle) || `المتابع - ${catName}`;
 
@@ -117,9 +117,9 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
                 {/* real authors link to their page (D-067); the seeded demo set keeps its illustrative byline */}
                 {cmsAuthor
                   ? authorSlug
-                    ? <a className="au" href={authorHref(authorSlug)} rel="author"><Avatar /><span><b>{author}</b><small>{authorLine}</small></span></a>
-                    : <span className="au"><Avatar /><span><b>{author}</b><small>{authorLine}</small></span></span>
-                  : <a className="au" href="/category/writers"><Avatar /><span><b>{author}</b><small>المتابع - {catName}</small></span></a>}
+                    ? <a className="au" href={authorHref(authorSlug)} rel="author">{avatar}<span><b>{author}</b><small>{authorLine}</small></span></a>
+                    : <span className="au">{avatar}<span><b>{author}</b><small>{authorLine}</small></span></span>
+                  : <a className="au" href="/category/writers">{avatar}<span><b>{author}</b><small>المتابع - {catName}</small></span></a>}
                 <span title={fmtDate(a.publishedAt)}>{Ico.clock}{a.publishedAt ? ago(a.publishedAt) : 'غير منشور'}</span>
                 <span>{Ico.eye}{views} مشاهدة</span>
                 <span className="rt">{readMins(bodyText)} دقائق قراءة</span>
@@ -181,7 +181,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
             </div>
 
             <div className="aubox">
-              <Avatar />
+              {avatar}
               <div>
                 <b>{author}</b>
                 {cmsAuthor

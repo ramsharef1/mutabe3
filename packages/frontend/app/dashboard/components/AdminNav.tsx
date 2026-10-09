@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Me, ROLE_AR, isEditorRole, logout, adminFetch } from './staff';
+import { useHtmlAttr } from '../../components/hooks';
 
 // Dashboard sidebar (D-043 Stages 3–4; sidebar since D-084): the sections the signed-in role may open,
 // grouped, on the start (right) side. Pages keep their `<div className="adm"><AdminNav/><main className="adm-main">`
@@ -25,13 +26,14 @@ export default function AdminNav({ me }: { me: Me | null }) {
   const editor = isEditorRole(me?.role);
   const admin = me?.role === 'ADMIN';
   const [pending, setPending] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  // The layout's pre-paint script already set the attribute; mirror it into state once mounted.
-  useEffect(() => { setCollapsed(document.documentElement.getAttribute('data-adm-side') === 'collapsed'); }, []);
+  // D-085: the phone menu belongs to the page it was opened on (a new path closes it without an effect), and
+  // the collapsed sidebar follows <html data-adm-side>, which the layout's pre-paint script sets.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === path;
+  const setOpen = (v: boolean | ((o: boolean) => boolean)) => setOpenOn((typeof v === 'function' ? v(open) : v) ? path : null);
+  const collapsed = useHtmlAttr('data-adm-side') === 'collapsed';
   const toggleCollapsed = () => {
     const next = !collapsed;
-    setCollapsed(next);
     if (next) document.documentElement.setAttribute('data-adm-side', 'collapsed');
     else document.documentElement.removeAttribute('data-adm-side');
     try { localStorage.setItem(SIDE_KEY, next ? 'collapsed' : 'open'); } catch { /* private mode: still works for this page */ }
@@ -40,10 +42,9 @@ export default function AdminNav({ me }: { me: Me | null }) {
     if (!editor) return;
     adminFetch('/api/admin/comments/counts').then((r) => (r.ok ? r.json() : null)).then((j) => j && setPending(j.data?.PENDING || 0)).catch(() => {});
   }, [editor, path]);
-  useEffect(() => { setOpen(false); }, [path]);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenOn(null); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);

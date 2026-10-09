@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS } from '../components/staff';
 import { uploadImage } from '../components/upload';
+import { useLoadWhen } from '../../components/hooks';
 
 // «بيانات الصفحة الرئيسية» (D-076, PLAN Q13): the desk keeps the homepage's data blocks current — weather alert,
 // market rows, crossings, roads, service notices, royal court, cabinet decisions, obituaries, jobs, fact-checks,
@@ -110,7 +111,7 @@ export default function DataPage() {
       setBlocks(j.data.blocks); setFx(j.data.fx);
     } catch { setErr('تعذّر الاتصال.'); }
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
   if (!me) return null;
   return (
     <div className="adm">

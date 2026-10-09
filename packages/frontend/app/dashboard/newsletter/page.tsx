@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS } from '../components/staff';
 import SmtpSettings from './SmtpSettings';
+import { useLoadWhen } from '../../components/hooks';
 
 interface Issue { id: string; subject: string; status: string; auto: boolean; edition: string | null; recipients: number; sent: number; failed: number; lastError: string | null; createdAt: string; sentAt: string | null; articleIds: string[] }
 interface Mail { mode: string; source: string; host: string | null; user: string | null; from: string; domain: string; spf: boolean; dmarc: boolean; error: string | null }
@@ -37,7 +38,7 @@ export default function Newsletter() {
     if (n.ok) setInfo((await n.json()).data); else setErr('تعذّر تحميل النشرة.');
     if (a.ok) setArticles(((await a.json()).data || []).filter((x: A) => x.status === 'PUBLISHED').slice(0, 40));
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   // While an issue is sending, refresh progress every 3 seconds.
   useEffect(() => {

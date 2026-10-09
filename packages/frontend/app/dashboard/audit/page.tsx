@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, useStaff, ROLE_AR } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 // Audit log (SECURITY S-08/S-16, D-064): admins read who changed content, people, ads and mail, and every
 // staff sign-in. Read-only by design — the API has no route that edits or deletes an entry; entries older
@@ -67,7 +68,7 @@ export default function Audit() {
     setLoading(false);
   }, [area, actor]);
 
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
   useEffect(() => {
     if (!me || denied) return;
     adminFetch('/api/admin/users').then(async (r) => { if (r.ok) setStaff(((await r.json()).data || []).filter((u: Staff) => u.role !== 'VIEWER')); }).catch(() => {});

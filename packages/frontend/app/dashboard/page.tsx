@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import AdminNav, { Denied } from './components/AdminNav';
-import { adminFetch, jsonInit, useStaff, isEditorRole } from './components/staff';
+import { adminFetch, jsonInit, useStaff, isEditorRole, logout } from './components/staff';
+import { useRouter } from 'next/navigation';
+import { useLoadWhen } from '../components/hooks';
 
 interface Row {
   id: string;
@@ -20,6 +22,7 @@ const fmt = (d?: string | null) => { if (!d) return ''; try { return new Date(d)
 
 export default function Dashboard() {
   const { me, denied } = useStaff();
+  const router = useRouter();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -29,7 +32,7 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const res = await adminFetch('/api/admin/articles');
-      if (res.status === 401) { window.location.href = '/auth/login'; return; }
+      if (res.status === 401) { logout(); return; }
       if (res.status === 403) { setErr('ليس لديك صلاحية الوصول إلى لوحة التحكم.'); setRows([]); return; }
       setRows((await res.json()).data || []);
       setErr('');
@@ -40,7 +43,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const editor = isEditorRole(me?.role);
   const canDelete = (a: Row) => editor || (a.author?.id === me?.id && a.status === 'DRAFT');
@@ -64,7 +67,7 @@ export default function Dashboard() {
     };
     const c = await adminFetch('/api/admin/articles', jsonInit('POST', body));
     const j = await c.json().catch(() => ({}));
-    if (c.ok && j.data?.id) window.location.href = `/dashboard/article/${j.data.id}`;
+    if (c.ok && j.data?.id) router.push(`/dashboard/article/${j.data.id}`);
     else alert(j.error || 'تعذّر إنشاء النسخة.');
   };
 

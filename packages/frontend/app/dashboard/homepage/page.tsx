@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS, refreshHomepage } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 interface A { id: string; title: string; status: string; publishedAt?: string | null; category?: { name: string } | null }
 interface Setting { heroId: string | null; pickIds: string[]; breaking: { title: string; href: string; at: string } | null; demoBlocks?: boolean }
@@ -46,7 +47,7 @@ export default function Homepage() {
     } else setErr('تعذّر تحميل إعدادات الصفحة الرئيسية.');
     setLoading(false);
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const byId = useMemo(() => new Map(articles.map((a) => [a.id, a])), [articles]);
   const title = (id: string) => byId.get(id)?.title || '(مقال غير منشور أو محذوف — سيُتجاهل)';

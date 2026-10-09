@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Article, Img, Ico, ago, Chip, WRITERS, face } from '../site';
 import { MARKET, PICKS, OBITS, SIXTY, BreakingItem } from '../feeds';
 import { usePoll, pct, votesAr, PollOpt } from '../polls';
 import { PushToggle } from '../push';
 import { type Row, type Fx } from '../../lib/data';
+import { useNow, useBrowserValue } from '../hooks';
 
 const link = (a: Article) => `/article/${a.id}`;
 
@@ -69,28 +70,27 @@ export function MarketStrip({ updated, fx, rows }: { updated: string; fx?: Fx | 
 }
 
 /* ---- C11 since your last visit (localStorage) ---- */
+// D-085: the previous visit is read once per page load (module scope), before this visit is recorded below.
+let lastVisitAtLoad: string | null | undefined;
 export function Missed({ articles }: { articles: Article[] }) {
-  const [state, setState] = useState<{ since: Date; list: Article[] } | null>(null);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('lastVisit');
-      const now = Date.now();
-      if (raw) {
-        const since = new Date(parseInt(raw, 10));
-        const list = articles.filter((a) => a.publishedAt && new Date(a.publishedAt) > since);
-        if (list.length >= 2 && now - since.getTime() > 30 * 60000) setState({ since, list });
-      }
-      localStorage.setItem('lastVisit', String(now));
-    } catch {}
-  }, [articles]);
-  if (!state) return null;
+  const raw = useBrowserValue(() => (lastVisitAtLoad === undefined ? (lastVisitAtLoad = localStorage.getItem('lastVisit')) : lastVisitAtLoad), null);
+  const now = useNow();
+  const state = useMemo(() => {
+    if (!raw || now === null) return null;
+    const since = new Date(parseInt(raw, 10));
+    const list = articles.filter((a) => a.publishedAt && new Date(a.publishedAt) > since);
+    return list.length >= 2 && now - since.getTime() > 30 * 60000 ? { since, list } : null;
+  }, [raw, now, articles]);
+  useEffect(() => { try { localStorage.setItem('lastVisit', String(Date.now())); } catch {} }, []);
+  const [dismissed, setDismissed] = useState(false);
+  if (!state || dismissed) return null;
   const when = new Intl.DateTimeFormat('ar-JO-u-nu-latn', { weekday: 'long', hour: '2-digit', minute: '2-digit' }).format(state.since);
   return (
     <div className="missed">
       <b>شو فاتك؟</b>
       <span>نشرنا <strong>{state.list.length} خبراً</strong> منذ زيارتك الأخيرة ({when})</span>
       <span className="n5">{state.list.slice(0, 3).map((a) => <a key={a.id} href={link(a)}>{a.title}</a>)}</span>
-      <button type="button" className="x" onClick={() => setState(null)} aria-label="إخفاء">×</button>
+      <button type="button" className="x" onClick={() => setDismissed(true)} aria-label="إخفاء">×</button>
     </div>
   );
 }
@@ -139,13 +139,14 @@ export function ObitsBox({ items }: { items?: Row[] }) {
 }
 
 /* ---- C3 most read with time tabs ---- */
-export function MostRead({ articles }: { articles: Article[] }) {
+export function MostRead({ articles, at }: { articles: Article[]; at: number }) {
+  const now = useNow() ?? at; // D-085: server time until hydrated, then the shared clock
   const [tab, setTab] = useState(0);
   const sorted = [...articles].sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
   // Real view counts (POST /api/articles/:id/view). Tabs narrow by publish window and
   // fall back to all-time when a window has too few items to rank.
   const WINDOWS = [24 * 3600e3, 7 * 24 * 3600e3, Infinity];
-  const inWin = sorted.filter((a) => a.publishedAt && Date.now() - new Date(a.publishedAt).getTime() < WINDOWS[tab]);
+  const inWin = sorted.filter((a) => a.publishedAt && now - new Date(a.publishedAt).getTime() < WINDOWS[tab]);
   const list = (inWin.length >= 5 ? inWin : sorted).slice(0, 5);
   return (
     <div className="mostread">

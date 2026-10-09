@@ -8,24 +8,26 @@ import { topTags } from '../components/content';
 function SearchInner() {
   const q = (useSearchParams().get('q') || '').trim();
   const { articles, loading } = useArticles();
-  const [results, setResults] = useState<Article[] | null>(null); // null = fetching
-  const [term, setTerm] = useState(q);
-  const [notice, setNotice] = useState(''); // e.g. the API's rate-limit message (D-064) — not "no results"
-  const [didYouMean, setDidYouMean] = useState(''); // «هل تقصد…» from the API when nothing matched (D-071)
+  // D-085: the answer remembers which query it belongs to; a new q reads as "searching" until its own answer
+  // arrives, and the box shows q until the reader types — no state is reset inside an effect.
+  const [answer, setAnswer] = useState<{ q: string; results: Article[]; notice: string; dym: string } | null>(null);
+  const [typed, setTyped] = useState<{ q: string; v: string } | null>(null);
+  const term = typed && typed.q === q ? typed.v : q;
+  const setTerm = (v: string) => setTyped({ q, v });
+  const mine = answer && answer.q === q ? answer : null;
+  const results: Article[] | null = !q ? [] : mine ? mine.results : null; // null = fetching
+  const notice = mine?.notice || ''; // e.g. the API's rate-limit message (D-064) — not "no results"
+  const didYouMean = mine?.dym || ''; // «هل تقصد…» from the API when nothing matched (D-071)
 
   useEffect(() => {
-    setTerm(q);
-    setNotice('');
-    setDidYouMean('');
-    if (!q) { setResults([]); return; }
-    setResults(null);
+    if (!q) return;
     fetch(`/api/articles?q=${encodeURIComponent(q)}&take=50`)
       .then(async (r) => {
-        if (r.status === 429) { setNotice((await r.json().catch(() => ({}))).error || 'عمليات بحث كثيرة — حاول بعد دقيقة'); return { data: [] }; }
+        if (r.status === 429) return { data: [], notice: (await r.json().catch(() => ({}))).error || 'عمليات بحث كثيرة — حاول بعد دقيقة' };
         return r.ok ? r.json() : Promise.reject();
       })
-      .then((d) => { setResults(d.data || []); setDidYouMean(d.suggest || ''); })
-      .catch(() => setResults([]));
+      .then((d) => setAnswer({ q, results: d.data || [], notice: d.notice || '', dym: d.suggest || '' }))
+      .catch(() => setAnswer({ q, results: [], notice: '', dym: '' }));
   }, [q]);
 
   if (loading) return <Loading />;

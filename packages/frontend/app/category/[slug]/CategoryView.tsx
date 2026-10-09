@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Article, Img, useArticles, useNav, Loading, SiteHeader, SiteFooter, Sidebar, CAT_LABELS, CAT_DESC, Crumbs, Chip, ago, Ico, AdBanner, catColor, excerpt } from '../../components/site';
 import { tagsFor, topTags } from '../../components/content';
+import { useBrowserValue } from '../../components/hooks';
 
 const PAGES = 5;
 const PER = 12;
@@ -41,35 +42,38 @@ export default function CategoryView({ initialArticles, initialList }: { initial
   const { slug } = useParams<{ slug: string }>();
   const { articles, loading } = useArticles(initialArticles); // site-wide list: header, sidebar, thin-category fallback
   // this category's own list, not capped by the homepage's 20 — server-fetched since D-070 so the page arrives with its content
-  const [catList, setCatList] = useState<Article[] | null>(initialList ?? null);
+  // D-085: a fetched list remembers its slug, so moving to another section reads as loading without a reset in an effect
+  const [fetched, setCatList] = useState<{ slug: string; list: Article[] } | null>(null);
+  const catList: Article[] | null = initialList ?? (fetched && fetched.slug === slug ? fetched.list : null);
   const navItem = useNav().find((n) => n.slug === slug); // name/description as managed in /dashboard/categories
   const [sort, setSort] = useState<'new' | 'top'>('new');
   const [sub, setSub] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [mode, setMode] = useState<'pager' | 'scroll'>('pager');
+  const storedMode = useBrowserValue(() => (localStorage.getItem('catmode') === 'scroll' ? 'scroll' : 'pager'), 'pager'); // D-085
+  const [chosenMode, setMode] = useState<'pager' | 'scroll' | null>(null);
+  const mode = chosenMode ?? storedMode;
   const [loaded, setLoaded] = useState(1);
   const [busy, setBusy] = useState(false);
   const sentinel = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { try { if (localStorage.getItem('catmode') === 'scroll') setMode('scroll'); } catch {} }, []);
 
   useEffect(() => {
     if (initialList) return;
-    setCatList(null);
     fetch(`/api/articles?category=${encodeURIComponent(slug)}&take=60`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => setCatList(d.data || []))
-      .catch(() => setCatList([]));
+      .then((d) => setCatList({ slug, list: d.data || [] }))
+      .catch(() => setCatList({ slug, list: [] }));
   }, [slug, initialList]);
 
   // Infinite mode: append the next page when the sentinel scrolls into view (with a short delay so the spinner is visible).
   useEffect(() => {
     if (mode !== 'scroll' || loaded >= PAGES || !sentinel.current) return;
-    // (upper bound PAGES; the filtered `pages` value is enforced by the button handler)
+    // Upper bound PAGES (D-085: `pages` is computed after the early return below, so the effect must not read it;
+    // a `loaded` beyond the real page count only renders empty slices).
     const io = new IntersectionObserver((es) => {
       if (es[0].isIntersecting && !busy) {
         setBusy(true);
-        setTimeout(() => { setLoaded((l) => Math.min(pages, l + 1)); setBusy(false); }, 500);
+        setTimeout(() => { setLoaded((l) => Math.min(PAGES, l + 1)); setBusy(false); }, 500);
       }
     }, { rootMargin: '300px' });
     io.observe(sentinel.current);

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, useStaff, EDITORS } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 // «الإحصاءات» (D-069): first-party numbers for the desk — reads per day (ArticleViewDaily, Amman days),
 // the most-read pieces for today / 7 days / the period, sections and writers, the desk's daily output against
@@ -113,7 +114,7 @@ export default function StatsPage() {
       setS(j.data);
     } catch { setErr('تعذّر الاتصال.'); }
   }, [days]);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   if (!me) return null;
   const d = s ? delta(s.reads.total, s.reads.prevTotal) : null;

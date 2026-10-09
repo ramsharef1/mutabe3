@@ -11,15 +11,11 @@ export default defineConfig([
     extends: [...nextCoreWebVitals],
     rules: {
       '@next/next/no-img-element': 'off',
-      // New in eslint-config-next 16 and off for parity with the Next 14 lint: no-html-link-for-pages now also
-      // reads app/ routes (26 plain <a> links, intentional full loads), and react-hooks 7 ships the React
-      // Compiler rules (42 findings in existing components). Adopting either is its own task, not part of D-084.
+      // Plain <a> for internal pages is the site's design, not an oversight (D-085): every navigation is a full
+      // load, which is what counts a GA4 page_view (D-074), a first-party read (D-069) and fresh ad slots. <Link>
+      // would make those navigations client-side and drop all three. The React Compiler rules of react-hooks 7
+      // (set-state-in-effect, static-components, immutability, purity, refs) are on since D-085.
       '@next/next/no-html-link-for-pages': 'off',
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/static-components': 'off',
-      'react-hooks/immutability': 'off',
-      'react-hooks/purity': 'off',
-      'react-hooks/refs': 'off',
     },
   },
 ]);

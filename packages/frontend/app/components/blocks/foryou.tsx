@@ -1,21 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Article, ago, readMins } from '../util';
 import { relatedByTag } from '../content';
 import { Img, Chip, SecHd } from '../site';
 import { CardShare } from './share';
+import { useBrowserValue } from '../hooks';
 
 // Client-only, no backend: reads the reader's local view history and ranks
 // related articles by how often they relate to recently-read ones. Renders
 // nothing for first-time visitors (empty history) so there's no dead section.
 export function ForYou({ articles }: { articles: Article[] }) {
-  const [recs, setRecs] = useState<Article[]>([]);
-
-  useEffect(() => {
+  // the reader's history is read in the browser only (D-085); the ranking is derived from it, not stored
+  const seenRaw = useBrowserValue(() => localStorage.getItem('seen'), null);
+  const recs = useMemo<Article[]>(() => {
     try {
-      const seen = JSON.parse(localStorage.getItem('seen') || '[]') as string[];
-      if (!seen.length) return;
+      const seen = JSON.parse(seenRaw || '[]') as string[];
+      if (!seen.length) return [];
       const seenSet = new Set(seen);
       const byId = new Map(articles.map((a) => [a.id, a] as const));
       const score = new Map<string, number>();
@@ -31,9 +32,9 @@ export function ForYou({ articles }: { articles: Article[] }) {
         .sort((p, q) => q[1] - p[1])
         .map(([rid]) => byId.get(rid))
         .filter((x): x is Article => !!x);
-      setRecs(ranked.slice(0, 4));
-    } catch {}
-  }, [articles]);
+      return ranked.slice(0, 4);
+    } catch { return []; }
+  }, [articles, seenRaw]);
 
   if (!recs.length) return null;
   return (

@@ -261,10 +261,10 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         {data.sixty || demo ? (
           <div className="two">
             <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty items={data.sixty?.items} /></div>
-            <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} /></div>
+            <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} at={now.getTime()} /></div>
           </div>
         ) : (
-          <div className="sec"><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} /></div>
+          <div className="sec"><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} at={now.getTime()} /></div>
         )}
 
         <AdBanner variant={1} className="adrow ad90" />
@@ -358,7 +358,7 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
           </div>
 
           {/* J13–J15 seasonal (in season or ?season=all) */}
-          <Seasonal season={season} />
+          <Seasonal season={season} at={now.getTime()} />
         </>)}
 
         <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>

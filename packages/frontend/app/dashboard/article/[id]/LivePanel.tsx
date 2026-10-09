@@ -5,6 +5,7 @@
 // Editors on any LIVE article; a journalist only on their own draft (the API enforces the same rule).
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch, jsonInit } from '../../components/staff';
+import { useLoadWhen } from '../../../components/hooks';
 
 interface Entry { id: string; at: string; title: string | null; text: string; key: boolean }
 
@@ -32,7 +33,7 @@ export default function LivePanel({ articleId, published }: { articleId: string;
       setEntries(j.data.entries); setOpen(j.data.open); setErr('');
     } catch { setErr('تعذّر الاتصال.'); }
   }, [articleId]);
-  useEffect(() => { load(); }, [load]);
+  useLoadWhen(true, load);
 
   const call = async (method: string, path: string, body?: unknown, ok = '') => {
     setBusy(true); setErr(''); setMsg('');

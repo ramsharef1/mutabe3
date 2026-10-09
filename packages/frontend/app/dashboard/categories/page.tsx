@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS } from '../components/staff';
+import { useLoadWhen } from '../../components/hooks';
 
 interface Cat { id: string; name: string; slug: string; description: string | null; displayOrder: number; showInNav: boolean; _count?: { articles: number } }
 
@@ -26,7 +27,7 @@ export default function Categories() {
     if (r.ok) setRows((await r.json()).data || []); else await fail(r, 'تعذّر تحميل الأقسام.');
     setLoading(false);
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const patch = async (c: Cat, body: Partial<Cat>, msg: string) => {
     setBusy(true);

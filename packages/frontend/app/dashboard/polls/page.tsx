@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AdminNav, { Denied } from '../components/AdminNav';
 import { adminFetch, jsonInit, useStaff, EDITORS, refreshHomepage } from '../components/staff';
 import { votesAr } from '../../components/polls';
+import { useLoadWhen } from '../../components/hooks';
 
 interface Opt { id: string; label: string; byline: string | null; note: string | null; votes: number }
 interface P { id: string; slot: string; question: string; active: boolean; total: number; createdAt: string; options: Opt[] }
@@ -30,7 +31,7 @@ export default function Polls() {
     if (r.ok) setRows((await r.json()).data || []); else setErr('تعذّر تحميل الاستطلاعات.');
     setLoading(false);
   }, []);
-  useEffect(() => { if (me && !denied) load(); }, [me, denied, load]);
+  useLoadWhen(!!me && !denied, load);
 
   const flash = (m: string) => { setOk(m); setErr(''); setTimeout(() => setOk(''), 3000); };
   const setActive = async (p: P, active: boolean) => {

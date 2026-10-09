@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { Prayer, Wx } from '../feeds';
 import { MET_ALERT, wxIcon } from '../feeds';
 import type { Row } from '../../lib/data';
+import { useNow } from '../hooks';
 
 /** Minutes until a decimal-hour time today (Amman), wrapping to tomorrow. */
 function untilLabel(h: number) {
@@ -17,8 +18,8 @@ function untilLabel(h: number) {
 }
 
 export function UtilityStrip({ prayers, wx, hijriText, dateText }: { prayers: Prayer[]; wx: Wx[]; hijriText: string; dateText: string }) {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => { setNow(new Date()); const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
+  const nowMs = useNow(); // D-085: shared 30 s clock, null until hydrated
+  const now = nowMs === null ? null : new Date(nowMs);
   const amman = now ? new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Amman' })) : null;
   const cur = amman ? amman.getHours() + amman.getMinutes() / 60 : 0;
   const nextIdx = prayers.findIndex((p) => p.k !== 'sunrise' && p.h > cur);
