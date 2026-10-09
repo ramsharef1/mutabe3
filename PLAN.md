@@ -11,7 +11,7 @@
 - **Revenue:** direct-sold banners with dates and first-party counts (D-057), sponsored articles labelled «إعلان» (D-056). No AdSense, no newsletter sponsorship for now. Unsold zones show the site's own «أعلن معنا» promo linking to /advertise (D-089).
 - **Design:** Ink & Signal «حبر وإشارة» is the site's look since D-088 (client sign-off 2026-10-09); Noto Kufi + Noto Naskh only; `?skin=classic` shows the old look in one browser.
 - **Stack:** Next 16.4 + React 19, Express + Prisma 7.10 + Postgres 13 on the shared Hostinger VPS, Node 22, CI deploys from `main` (D-084, D-056, D-079).
-- **Launch (D-089, 2026-10-10, Rami: "launch today, empty"):** the site carries real content only — sample articles retired, illustrative blocks off, nothing invented on any page. The homepage works from zero articles up.
+- **Launch (D-089, 2026-10-10):** the launch code is live (homepage works from zero articles up, nothing invented outside the demo switch). Rami first retired the samples, then had them **republished the same night** («مادة تجريبية», noindex) — they stay until real articles arrive. Demo blocks: on again (switched from the dashboard), waiting for Rami's answer.
 - **Alerts are GitHub Issues that mail Rami** (D-059); no outside uptime service (Q7, 2026-10-09).
 - **Security baseline** (D-051, D-054, D-063, D-064, D-065, D-073, D-079): auth guards and throttling, refresh rotation, double opt-in, audit log, local-only ad creatives, per-reader limits, enforced CSP, Postgres local-only, generic error responses, uploads decided by content, links cut from comments, pinned SSH host keys, separate deploy user and secrets.
 
@@ -40,7 +40,7 @@ Waiting on Rami: Q11 (push on the second device, postponed), Q14.
 - **Q6 · Logo** — the re-drawn logo is the official logo (2026-10-08).
 - **Q7 · Uptime** — no outside service; GitHub checks + the daily server check only (Rami, 2026-10-09).
 - **Q8 · Kernel reboots** — on request; the Sunday digest says when one is needed.
-- **Q9 · Samples** — **closed 2026-10-10:** retired at the public launch (D-089).
+- **Q9 · Samples** — retired at the launch, **republished the same night at Rami's request** (2026-10-10); they stay until real articles arrive, then «إخفاء كل المواد التجريبية».
 - **Q10 · Ink & Signal sign-off** — done (D-088).
 - **Q11 · Web push for «عاجل»** — on since 2026-10-09; an alert reached one device but not another (no iPhone involved). *Investigation postponed by Rami.*
 - **Q12 · Deploy user and separate secrets** — done (D-079).
@@ -49,6 +49,6 @@ Waiting on Rami: Q11 (push on the second device, postponed), Q14.
 
 ## Resume point
 
-Last session 2026-10-10 (Claude Code): D-089 launch code live — homepage, header/footer, article page, Ink leftovers, bcrypt 6 + nodemailer 10.0.10 with DKIM covering List-Unsubscribe-Post. D-084's duplicate renumbered (sidebar is D-090). Samples retired (150, kept as drafts) and demo blocks off — the site shows real content only. **Next:** Q14 Search Console when Rami has the TXT value; an optional `mail-test-mutabe3` run (sends one test mail to info@) if Rami agrees. Otherwise the site waits on real articles.
+Last session 2026-10-10 (Claude Code): D-089 launch code live — homepage, header/footer, article page, Ink leftovers, bcrypt 6 + nodemailer 10.0.10 with DKIM covering List-Unsubscribe-Post. D-084's duplicate renumbered (sidebar is D-090). Samples were retired, then republished at Rami's request; demo blocks are on again — ask Rami whether to switch them off. **Next:** Q14 Search Console when Rami has the TXT value; an optional `mail-test-mutabe3` run (sends one test mail to info@) if Rami agrees. Otherwise the site waits on real articles.
 
 **Last updated:** 2026-10-10 (the 2026-09-12 plan is in `archive/2026-10-07-forge-refresh/`)
