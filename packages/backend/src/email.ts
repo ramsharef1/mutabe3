@@ -180,7 +180,7 @@ export async function mailStatus() {
 }
 
 const button = (href: string, label: string) =>
-  `<a href="${href}" style="display:inline-block;padding:12px 24px;background-color:#c41e3a;color:#fff;text-decoration:none;border-radius:4px;margin:20px 0;">${label}</a>`;
+  `<a href="${href}" style="display:inline-block;padding:12px 24px;background-color:#2E6DB4;color:#fff;text-decoration:none;border-radius:4px;margin:20px 0;">${label}</a>`;
 
 export async function sendVerificationEmail(email: string, name: string, verificationLink: string): Promise<void> {
   try {

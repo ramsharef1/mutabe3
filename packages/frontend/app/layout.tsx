@@ -12,7 +12,7 @@ import './skin-ink.css';
 // yields a client-reference object (always truthy), which would emit the consent snippet unconditionally.
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || '';
 
-// Self-hosted via next/font (B11). Amiri is loaded only by the article page.
+// Self-hosted via next/font (B11). Amiri was dropped with Ink & Signal (D-089): article text is Noto Naskh in both skins.
 const kufi = Noto_Kufi_Arabic({ subsets: ['arabic'], weight: ['700'], variable: '--font-kufi', display: 'swap' });
 // Both faces are preloaded since D-088: under Ink & Signal, Naskh is the body and card-title face, so leaving it
 // to load on first use (D-070, when classic used Arial) delayed the largest text by ~4 s on mobile. display: swap

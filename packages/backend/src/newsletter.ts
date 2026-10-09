@@ -23,7 +23,7 @@ export function renderIssue(issue: { subject: string; intro: string | null }, ar
     const img = abs(a.featuredImageUrl);
     return `<tr><td style="padding:14px 0;border-bottom:1px solid #eee">
       ${img ? `<a href="${link}"><img src="${esc(img)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;border-radius:6px;display:block;margin-bottom:8px"></a>` : ''}
-      ${a.category ? `<div style="color:#990000;font-size:12px;font-weight:bold;margin-bottom:4px">${esc(a.category.name)}</div>` : ''}
+      ${a.category ? `<div style="color:#1F5496;font-size:12px;font-weight:bold;margin-bottom:4px">${esc(a.category.name)}</div>` : ''}
       <a href="${link}" style="color:#111;font-size:18px;font-weight:bold;text-decoration:none;line-height:1.5">${esc(a.title)}</a>
       <p style="color:#444;font-size:14px;line-height:1.7;margin:6px 0 0">${esc(blurb)}</p>
     </td></tr>`;
@@ -31,10 +31,10 @@ export function renderIssue(issue: { subject: string; intro: string | null }, ar
   const html = `<!doctype html><html lang="ar" dir="rtl"><body style="margin:0;background:#f4f4f4">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4"><tr><td align="center" style="padding:20px 10px">
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:8px;font-family:Tahoma,Arial,sans-serif;direction:rtl;text-align:right">
-    <tr><td style="background:#990000;color:#fff;padding:16px 20px;border-radius:8px 8px 0 0"><a href="${SITE_URL}" style="color:#fff;text-decoration:none;font-size:22px;font-weight:bold">المتابع</a><span style="font-size:13px;opacity:.85"> · ${esc(issue.subject)}</span></td></tr>
+    <tr><td style="background:#0B0B0F;color:#fff;padding:14px 20px;border-radius:8px 8px 0 0;border-bottom:3px solid #2E6DB4"><a href="${SITE_URL}" style="color:#fff;text-decoration:none"><img src="${SITE_URL}/brand/logo-white@2x.png" width="140" height="55" alt="المتابع" style="display:inline-block;border:0;vertical-align:middle;color:#fff;font-size:22px;font-weight:bold"></a><span style="font-size:13px;color:#9AA3B2"> · ${esc(issue.subject)}</span></td></tr>
     ${issue.intro ? `<tr><td style="padding:16px 20px 0;color:#333;font-size:15px;line-height:1.8">${esc(issue.intro).replace(/\n/g, '<br>')}</td></tr>` : ''}
     <tr><td style="padding:0 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${items}</table></td></tr>
-    <tr><td style="padding:18px 20px;color:#888;font-size:12px;line-height:1.7">وصلتك هذه الرسالة لأنك اشتركت في نشرة موقع المتابع الاخباري.<br><a href="${unsub}" style="color:#888">إلغاء الاشتراك بضغطة واحدة</a> · <a href="${SITE_URL}" style="color:#888">mutabe3.news</a></td></tr>
+    <tr><td style="padding:18px 20px;color:#5B6472;font-size:12px;line-height:1.7">وصلتك هذه الرسالة لأنك اشتركت في نشرة موقع المتابع الاخباري.<br><a href="${unsub}" style="color:#5B6472">إلغاء الاشتراك بضغطة واحدة</a> · <a href="${SITE_URL}" style="color:#5B6472">mutabe3.news</a></td></tr>
   </table></td></tr></table></body></html>`;
   const text = [issue.subject, issue.intro || '', ...articles.map((a) => `${a.title}\n${SITE_URL}/article/${a.id}`), `إلغاء الاشتراك: ${unsub}`].filter(Boolean).join('\n\n');
   // RFC 8058 one-click unsubscribe (Gmail / Yahoo bulk-sender requirement)

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 102.01 102.01" width="256" height="256">
+  <!-- favicon.ico source for 16/32/48 px (D-089): white plate so the mark survives dark tab strips, heavier ring and a
+       longer pin tip so both still read at 16 px. The full-size mark stays app/icon.svg. -->
+  <g transform="translate(51.005 51.005)">
+    <circle r="45.5" fill="#fff" stroke="#111" stroke-width="10"/>
+    <rect x="-13" y="-34" width="26" height="36" rx="13" fill="#111"/>
+    <rect x="-25" y="-5" width="50" height="20" fill="#2e6db4"/>
+    <path d="M-9 15 L9 15 L0 38 Z" fill="#111"/>
+  </g>
+</svg>

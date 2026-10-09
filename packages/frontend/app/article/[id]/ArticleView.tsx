@@ -1,29 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Amiri } from 'next/font/google';
-import { Article, Img, useArticles, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, WRITERS, face, AdBanner, isHtml, plain } from '../../components/site';
-import { tagsFor, relatedByTag, gallery, LIVE, liveNow } from '../../components/content';
+import { Article, Img, useArticles, SiteHeader, SiteFooter, Sidebar, SecHd, fmtDate, ago, readMins, Crumbs, ShareRow, Chip, Ico, AdBanner, isHtml, plain } from '../../components/site';
+import { tagsFor, relatedByTag, liveNow } from '../../components/content';
 import { decorateRichImages } from '../../components/img';
 import { track } from '../../lib/track';
-import { Lightbox, GalleryGrid, useLightbox } from '../../components/gallery';
-import { LiveBlog, LiveBadge, LiveFeed } from '../../components/live';
+import { Lightbox, useLightbox } from '../../components/gallery';
+import { LiveBadge, LiveFeed } from '../../components/live';
 import type { LiveData } from '../../lib/api';
 import { Comments } from '../../components/comments';
 import { AuthorFace, authorHref } from '../../components/authors';
 
-// Article body font, loaded only on this route (B11).
-const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri', display: 'swap', preload: false }); // D-070: not ahead of the lead image
-
-const FILLER = [
-  'وأكد المتحدث الرسمي أن الخطوات التنفيذية ستبدأ خلال الأسابيع المقبلة، مشيراً إلى أن الجهات المعنية أنهت الدراسات الفنية والمالية اللازمة، وأن العمل يجري بالتنسيق مع مختلف الشركاء لضمان تحقيق الأهداف المرسومة ضمن الجدول الزمني المحدد.',
-  'وفي السياق ذاته، أشار خبراء إلى أن هذه التطورات تأتي في وقت تشهد فيه المملكة حراكاً واسعاً على أكثر من صعيد، ما يستدعي متابعة دقيقة للنتائج على المدى القريب والمتوسط، ودراسة انعكاساتها على المواطن والاقتصاد الوطني بشكل عام.',
-  'ومن المتوقع أن تعلن الجهات المختصة عن مزيد من التفاصيل خلال مؤتمر صحفي يعقد الأسبوع المقبل، يتناول آليات التنفيذ ومصادر التمويل والجدول الزمني للمراحل اللاحقة، إضافة إلى الإجابة عن استفسارات وسائل الإعلام المحلية والعربية.',
-];
-const QUOTE = 'نعمل على أن تكون النتائج ملموسة للمواطن خلال الأشهر الستة المقبلة، وليس مجرد أرقام في تقرير.';
-
-// Stable writer index for the demo byline (the article may not be in the list any more).
-const hashIdx = (s: string, mod: number) => Math.abs(Array.from(s).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % mod;
 
 function Progress() {
   const [p, setP] = useState(0);
@@ -73,32 +60,29 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
   const catName = a.category?.name || 'أخبار';
   const related = relatedByTag(a, articles.filter((x) => x.id !== a.id));
   const tags = tagsFor(a);
-  const live = LIVE[a.id]; // seeded demo story only; real coverage comes from `liveData` (D-068)
   const realLive = a.kind === 'LIVE' && liveData;
   const caricature = a.kind === 'CARICATURE';
-  // CMS articles are stored as sanitized HTML and carry their real author; the
-  // seeded demo set is plain text and keeps its filler/gallery/writer dressing.
+  // CMS articles are stored as sanitized HTML; plain text is shown as its own paragraphs and nothing else —
+  // no added paragraphs, quote, photo gallery or invented byline (D-089).
   const html = isHtml(a.content);
-  const cmsAuthor = a.isSample ? 'فريق المتابع' : html && a.author?.name ? a.author.name : null; // samples carry no personal byline (D-080)
+  const author = (!a.isSample && a.author?.name) || 'فريق المتابع'; // samples carry no personal byline (D-080)
   const lead = { src: a.featuredImageUrl?.replace('/500/350', '/1200/800') || '', thumb: a.featuredImageUrl || '', cap: a.title };
-  const shots = html ? [lead] : [lead, ...gallery(a, 4)];
+  const shots = [lead];
   const relCards = related.slice(0, 3);
   const relList = related.slice(3, 8);
   const alsoRead = related.slice(0, 2);
-  const paras = html ? [] : [a.content, ...FILLER];
+  const paras = html ? [] : (a.content || '').split(/\n+/).map((p) => p.trim()).filter(Boolean);
   const bodyText = html ? plain(a.content) : paras.join(' ');
   const idx = articles.findIndex((x) => x.id === a.id);
   const prev = idx >= 0 ? articles[idx + 1] : undefined;
   const next = idx > 0 ? articles[idx - 1] : undefined;
-  const wi = hashIdx(a.id, WRITERS.length);
-  const author = cmsAuthor || WRITERS[wi];
   const views = a.viewsCount ?? 0;
-  const avatar = cmsAuthor ? <AuthorFace name={cmsAuthor} photoUrl={a.author?.photoUrl} /> : <img src={face(wi)} alt="" />; // an element, not a component made per render (D-085)
-  const authorSlug = cmsAuthor && a.author?.jobTitle ? a.author?.slug : null; // page exists only for opted-in profiles (D-067)
-  const authorLine = (cmsAuthor && a.author?.jobTitle) || `المتابع - ${catName}`;
+  const avatar = <AuthorFace name={author} photoUrl={a.isSample ? undefined : a.author?.photoUrl} />; // an element, not a component made per render (D-085)
+  const authorSlug = !a.isSample && a.author?.jobTitle ? a.author?.slug : null; // page exists only for opted-in profiles (D-067)
+  const authorLine = (!a.isSample && a.author?.jobTitle) || `المتابع - ${catName}`;
 
   return (
-    <div className={`am ${amiri.variable}`}>
+    <div className="am">
       {!preview && <Progress />}
       <SiteHeader />
       <div className="wrap">
@@ -114,12 +98,10 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
               <h1>{a.title}</h1>
               {a.summary && <p className="artsum">{a.summary}</p>}
               <div className="artmeta">
-                {/* real authors link to their page (D-067); the seeded demo set keeps its illustrative byline */}
-                {cmsAuthor
-                  ? authorSlug
-                    ? <a className="au" href={authorHref(authorSlug)} rel="author">{avatar}<span><b>{author}</b><small>{authorLine}</small></span></a>
-                    : <span className="au">{avatar}<span><b>{author}</b><small>{authorLine}</small></span></span>
-                  : <a className="au" href="/category/writers">{avatar}<span><b>{author}</b><small>المتابع - {catName}</small></span></a>}
+                {/* real authors link to their page (D-067) */}
+                {authorSlug
+                  ? <a className="au" href={authorHref(authorSlug)} rel="author">{avatar}<span><b>{author}</b><small>{authorLine}</small></span></a>
+                  : <span className="au">{avatar}<span><b>{author}</b><small>{authorLine}</small></span></span>}
                 <span title={fmtDate(a.publishedAt)}>{Ico.clock}{a.publishedAt ? ago(a.publishedAt) : 'غير منشور'}</span>
                 <span>{Ico.eye}{views} مشاهدة</span>
                 <span className="rt">{readMins(bodyText)} دقائق قراءة</span>
@@ -139,7 +121,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
               </figure>
             )}
 
-            {realLive ? <LiveFeed articleId={a.id} initial={{ open: liveData.open, entries: liveData.entries }} /> : live && <LiveBlog entries={live} />}
+            {realLive && <LiveFeed articleId={a.id} initial={{ open: liveData.open, entries: liveData.entries }} />}
 
             <div className={`artbody fs${size}`}>
               {html ? (
@@ -156,9 +138,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
               ) : paras.map((p, i) => (
                 <div key={i}>
                   <p>{p}</p>
-                  {i === 0 && <blockquote className="pull">{QUOTE}</blockquote>}
-                  {i === 2 && <GalleryGrid shots={shots} onOpen={lb.open} />}
-                  {i === 1 && alsoRead.length > 0 && (
+                  {i === Math.min(1, paras.length - 1) && alsoRead.length > 0 && (
                     <aside className="also">
                       <b>اقرأ أيضاً</b>
                       <ul>{alsoRead.map((r) => <li key={r.id}><a href={`/article/${r.id}`}>{r.title}</a></li>)}</ul>
@@ -184,9 +164,8 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
               {avatar}
               <div>
                 <b>{author}</b>
-                {cmsAuthor
-                  ? <p>من فريق تحرير موقع المتابع الاخباري — قسم {catName}.</p>
-                  : <><p>محرر في قسم {catName} بموقع المتابع الاخباري. يغطي الشأن المحلي والعربي منذ أكثر من عشر سنوات.</p><a href="/category/writers">جميع مقالات الكاتب ›</a></>}
+                <p>{authorSlug && authorLine !== `المتابع - ${catName}` ? `${authorLine} — موقع المتابع الاخباري.` : `من فريق تحرير موقع المتابع الاخباري — قسم ${catName}.`}</p>
+                {authorSlug && <a href={authorHref(authorSlug)}>جميع مقالات الكاتب ›</a>}
               </div>
             </div>
 

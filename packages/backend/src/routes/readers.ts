@@ -104,11 +104,11 @@ async function sendConfirmMail(email: string, token: string) {
   const html = `<!doctype html><html lang="ar" dir="rtl"><body style="margin:0;background:#f6f6f6;font-family:Tahoma,Arial,sans-serif">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="560" style="max-width:560px;background:#fff;border-radius:8px;overflow:hidden">
-<tr><td style="background:#101033;color:#fff;padding:14px 20px;font-weight:bold;font-size:18px">موقع المتابع الاخباري</td></tr>
+<tr><td style="background:#0B0B0F;color:#fff;padding:14px 20px;font-weight:bold;font-size:18px;border-bottom:3px solid #2E6DB4">موقع المتابع الاخباري</td></tr>
 <tr><td style="padding:22px 20px;color:#222;font-size:15px;line-height:1.8">
 <p style="margin:0 0 12px">طلبت الاشتراك في نشرة المتابع البريدية باستخدام هذا العنوان: <b dir="ltr">${esc(email)}</b>.</p>
 <p style="margin:0 0 18px">اضغط الزر لتأكيد الاشتراك. إن لم تكن أنت من طلب ذلك فتجاهل هذه الرسالة ولن تصلك أي رسائل.</p>
-<p style="margin:0 0 18px;text-align:center"><a href="${link}" style="display:inline-block;background:#990000;color:#fff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold">تأكيد الاشتراك</a></p>
+<p style="margin:0 0 18px;text-align:center"><a href="${link}" style="display:inline-block;background:#2E6DB4;color:#fff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:bold">تأكيد الاشتراك</a></p>
 <p style="margin:0;color:#666;font-size:12.5px">أو انسخ الرابط: <span dir="ltr">${esc(link)}</span><br>الرابط صالح لمدة 48 ساعة.</p>
 </td></tr></table></td></tr></table></body></html>`;
   const text = `طلبت الاشتراك في نشرة المتابع البريدية (${email}).\nلتأكيد الاشتراك افتح الرابط التالي خلال 48 ساعة:\n${link}\n\nإن لم تكن أنت من طلب ذلك فتجاهل هذه الرسالة.`;

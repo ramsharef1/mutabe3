@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- Site-wide share image, 1200×630 (DESIGN-SYSTEM «Assets to produce», D-089). Rendered by render.sh with headless
+     Chrome — Satori has no full Arabic bidi/shaping. Ink background, white logo, 8px accent rule, the official name. -->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@700&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; background: #0B0B0F; overflow: hidden; }
+  .rule { position: absolute; top: 0; left: 0; right: 0; height: 8px; background: #2E6DB4; }
+  .wrap { position: absolute; inset: 8px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
+  .logo { width: 620px; height: auto; display: block; }
+  .name { font: 700 44px/1.35 'Noto Kufi Arabic', sans-serif; color: #9AA3B2; }
+</style>
+</head>
+<body>
+  <div class="rule"></div>
+  <div class="wrap">
+    <img class="logo" src="../../public/logo-white.svg" alt="">
+    <div class="name">موقع المتابع الاخباري</div>
+  </div>
+</body>
+</html>
