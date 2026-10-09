@@ -14,9 +14,10 @@ const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || '';
 
 // Self-hosted via next/font (B11). Amiri is loaded only by the article page.
 const kufi = Noto_Kufi_Arabic({ subsets: ['arabic'], weight: ['700'], variable: '--font-kufi', display: 'swap' });
-// Only Kufi (headlines, the usual LCP text) is preloaded; Naskh loads when first used — preloading all faces
-// put ~340 KB of fonts ahead of the lead image on mobile (Lighthouse, D-070). display: swap keeps text visible.
-const naskh = Noto_Naskh_Arabic({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-naskh', display: 'swap', preload: false });
+// Both faces are preloaded since D-088: under Ink & Signal, Naskh is the body and card-title face, so leaving it
+// to load on first use (D-070, when classic used Arial) delayed the largest text by ~4 s on mobile. display: swap
+// keeps text visible while they load.
+const naskh = Noto_Naskh_Arabic({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-naskh', display: 'swap' });
 
 export async function generateMetadata(): Promise<Metadata> {
   const ads = await fetchAds();

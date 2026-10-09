@@ -969,7 +969,7 @@ img{color:transparent}
 .ugc .ph img{width:100%;height:100%;object-fit:cover}
 .ugc .ph span{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.65);color:#fff;font:10.5px var(--k-sys,Arial);padding:2px 8px;border-radius:2px}
 .ugc p{margin:8px 0 0;font-size:12.5px;color:var(--fg2);line-height:1.55}
-.ugc .send{display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#fff;font:bold 11.5px/28px var(--k-sys,Arial);padding:0 12px;border-radius:14px;margin-top:8px}
+.ugc .send{display:inline-flex;align-items:center;gap:6px;background:#0b7a4b;color:#fff;font:bold 11.5px/28px var(--k-sys,Arial);padding:0 12px;border-radius:14px;margin-top:8px}
 .ugc .send svg{width:15px;height:15px}
 .ugc .send:hover{color:#fff;filter:brightness(1.08)}
 .greet li{padding:7px 0;border-bottom:1px dotted var(--line2);font-size:12.5px;color:var(--fg2);display:flex;gap:8px;align-items:flex-start;line-height:1.45}
