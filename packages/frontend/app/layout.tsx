@@ -44,17 +44,18 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#990000',
+  themeColor: '#0B0B0F', // Ink & Signal is the site's look since D-088
 };
 
 // Before first paint: apply the saved theme (no white flash in dark mode) and skin, and keep
 // the browser's install prompt for the footer «تطبيق المتابع» button (components/pwa.tsx).
-// Skin preview: ?skin=ink switches this browser to Ink & Signal and remembers it, ?skin=classic switches
-// back; nobody else sees a change until the skin is made the default after client sign-off.
+// Ink & Signal is the default (D-088, client sign-off): <html data-skin="ink"> is rendered on the server, so
+// there is no flash. ?skin=classic switches this browser back to the old red look and remembers it (for side-by-
+// side checks); ?skin=ink returns to the default.
 const BOOT = "try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}"
-  + "try{var q=/[?&]skin=(ink|classic)(&|$)/.exec(location.search);if(q){if(q[1]==='ink')localStorage.setItem('skin','ink');else localStorage.removeItem('skin')}"
-  + "if(localStorage.getItem('skin')==='ink'){document.documentElement.dataset.skin='ink';"
-  + "addEventListener('DOMContentLoaded',function(){var m=document.querySelector('meta[name=theme-color]');if(m)m.content='#0B0B0F'})}}catch(e){}"
+  + "try{var q=/[?&]skin=(ink|classic)(&|$)/.exec(location.search);if(q){if(q[1]==='classic')localStorage.setItem('skin','classic');else localStorage.removeItem('skin')}"
+  + "if(localStorage.getItem('skin')==='classic'){delete document.documentElement.dataset.skin;"
+  + "addEventListener('DOMContentLoaded',function(){var m=document.querySelector('meta[name=theme-color]');if(m)m.content='#990000'})}}catch(e){}"
   + "addEventListener('beforeinstallprompt',function(e){window.__bip=e;dispatchEvent(new Event('mutabe3:bip'))});"
   + "addEventListener('appinstalled',function(){window.__bip=null;dispatchEvent(new Event('mutabe3:bip'))});";
 // Consent Mode v2 defaults must run before the GTM container (D-055): every storage type denied until the bar grants analytics.
@@ -71,7 +72,7 @@ const CONSENT_DEFAULT = GTM_ID || GA_ID
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const ads = await fetchAds();
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning className={`${kufi.variable} ${naskh.variable}`}>
+    <html lang="ar" dir="rtl" data-skin="ink" suppressHydrationWarning className={`${kufi.variable} ${naskh.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULT + BOOT }} />
       </head>

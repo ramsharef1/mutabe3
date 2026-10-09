@@ -2363,3 +2363,10 @@ a.au:hover b{color:var(--k-text,var(--red))}
 .adm-pager{display:flex;gap:12px;align-items:center;justify-content:center;margin:14px 0 4px;font-size:13px;color:#555}
 .adm-pager button{border:1px solid #ddd;background:#fff;border-radius:6px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:13px;line-height:1.4;color:#333}
 .adm-pager button:disabled{opacity:.45;cursor:default}
+/* dark mode (D-088, both skins): panels that hard-coded white, and the consent bar, which used the light --fg as
+   its background under white text — unreadable in dark mode */
+.topics,.trend,.community .cm-cta{background:var(--bg)}
+:root[data-theme=dark] .consent{background:var(--bg3);color:var(--fg);box-shadow:0 -4px 16px rgba(0,0,0,.6)}
+:root[data-theme=dark] .consent a{color:var(--fg)}
+:root[data-theme=dark] .consent button{border-color:var(--fg);color:var(--fg)}
+:root[data-theme=dark] .consent .ok{background:var(--fg);color:var(--bg)}

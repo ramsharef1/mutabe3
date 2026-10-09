@@ -1,7 +1,7 @@
 /* ───────────────────────── Direction A «حبر وإشارة» (Ink & Signal) ─────────────────────────
-   Values: brain/tokens.json · rules: brain/DESIGN-SYSTEM.md (D-050). Active only under
-   <html data-skin="ink"> (set before first paint from ?skin=ink, remembered per browser); without
-   it nothing here applies and the classic red skin renders exactly as before — globals.css reads
+   Values: brain/tokens.json · rules: brain/DESIGN-SYSTEM.md (D-050). The site's look since D-088 (client
+   sign-off): <html data-skin="ink"> is rendered by the server; ?skin=classic removes it in one browser, and
+   then nothing here applies and the classic red skin renders exactly as before — globals.css reads
    every brand colour as var(--k-<role>, <classic value>) and the --k-* roles exist only here.
    Roles: bar = ink tabs/bars/chips · btn = filled buttons/active states · text = links and hover ·
    edge = rules, rails and outlines · live = عاجل/live only · neg/err = negative values and errors. */
@@ -47,7 +47,8 @@
 
 /* ---- chrome ---- */
 /* the category colour is an inline style (util.ts catColor) — ink-only chips, live chips keep red */
-:root[data-skin=ink] .chip:not(.islive){background:var(--k-bar)!important}
+:root[data-skin=ink] .chip:not(.islive):not(.sample):not(.sponsored){background:var(--k-bar)!important}
+/* labels that carry meaning keep their own colour (D-088): «مادة تجريبية» amber, «إعلان» grey (Press Law art. 30(b)) */
 :root[data-skin=ink] .cathead{border-color:var(--k-edge)!important}
 /* hover is a colour change of only 2.6:1 against ink text, so links underline on hover */
 :root[data-skin=ink] .nav li a:hover,:root[data-skin=ink] .sticky li a:hover{text-decoration:underline;text-underline-offset:6px}

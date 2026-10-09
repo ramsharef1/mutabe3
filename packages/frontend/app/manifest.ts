@@ -15,7 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     dir: 'rtl',
     lang: 'ar',
     background_color: '#ffffff',
-    theme_color: '#990000',
+    theme_color: '#0B0B0F', // Ink & Signal (D-088)
     categories: ['news'],
     icons: [
       { src: '/brand/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
