@@ -2,6 +2,16 @@
 
 ## 2026-10-09
 
+**D-088: Ink & Signal is the site's look (client sign-off)**
+- **Asked by:** Rami 2026-10-09 (client approved the review page → "switch it on").
+- **Done:** D-066's skin commit brought onto current main (2 CSS conflicts — the dashboard sidebar that replaced the old top nav — resolved onto `--k-adm`), then: CSS added after the branch wired to the roles (sidebar header; pink washes of pull-quote mark, poll bars, tab/market hovers → accent wash); «مادة تجريبية» and «إعلان» chips keep their own colours under ink (the skin painted every chip black); `<html data-skin="ink">` rendered by the server (no flash), theme colour #0B0B0F (meta + manifest), `?skin=classic` switches one browser back. Shipped preview-first (62f44d0, classic verified unchanged), then default (0ad5e03).
+- **Fixes found on the way (both skins):** dark mode — «الأكثر تداولاً», trend box and community cards no longer white, consent bar readable (it used the light `--fg` as background under white text); WhatsApp «أرسل خبراً» button darker green (contrast 1.98 → 5.3); Noto Naskh preloaded (Ink's body/title face — loading it on first use held the largest text ~4 s); the consent bar is rendered with the page and hidden before paint for readers who already chose (`<html data-consent>`) — as a first visit's largest element it waited for hydration (mobile LCP ~5 s in both skins since D-082 doubled the homepage HTML).
+- **Verified (production):** default is ink, `?skin=classic` restores classic; sample chip amber; dark-mode white-panel scan clean; GA consent test 10/10 (no Google request before «موافق» or after «رفض»); Lighthouse mobile warm: homepage 87–91 (LCP 2.2 s, was 9.6), section page 94, a11y 97–100 (the remaining item is the ticker pause button under bottom overlays, D-075), best-practices/SEO 100; CLS ≤0.06; browser matrix (9 page types, phone/light + desktop/dark, hydration errors included) 20/20 clean.
+- **Side note:** a deploy attempt failed on an SSH timeout from GitHub (nothing reached the server); the re-run succeeded. This Mac ran out of disk mid-session (145 MB free) — session temp files deleted with Rami's approval; space recovered later.
+- **Status:** ✅ LIVE · 2026-10-09
+
+---
+
 **D-087: Dashboard articles table — paging, real/sample filter, search**
 - **Asked by:** Rami 2026-10-09 (screenshot of «المقالات (150)» → "go ahead").
 - **Found:** the table loaded every article on one page and the API capped it at the newest 200 by update time, so at 10+ articles a day older ones would silently drop off; sample rows looked like real ones.

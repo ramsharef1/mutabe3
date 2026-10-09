@@ -13,6 +13,12 @@
 
 ---
 
+## 2026-10-09 · Claude Code · Ink & Signal live (D-088)
+
+- **Live (0ad5e03 → 9a40b49):** Ink & Signal default; sample/ad chips keep colours; dark-mode panels and consent bar fixed; Naskh preloaded; consent bar server-rendered. Homepage mobile perf 87–91 (LCP 2.2 s); GA consent 10/10.
+
+---
+
 ## 2026-10-09 · Claude Code · answers (Q1 city, Q7, Q9, Q11)
 
 - **Live:** /about address «عمّان — الأردن». Recorded: no outside uptime service (Q7), samples kept until the client approves and launches (Q9), GA4 settings done, push works on one device but not another (no iPhone) — investigation postponed (Q11).
