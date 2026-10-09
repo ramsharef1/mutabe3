@@ -35,7 +35,7 @@ function SearchInner() {
 
   return (
     <div className="am">
-      <SiteHeader articles={articles} />
+      <SiteHeader />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">

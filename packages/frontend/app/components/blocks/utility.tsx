@@ -33,10 +33,9 @@ export function UtilityStrip({ prayers, wx, hijriText, dateText }: { prayers: Pr
           <li key={p.k} className={i === next && now ? 'next' : ''}><b>{p.t}</b>{p.n}{i === next && now && <small>{untilLabel(p.h)}</small>}</li>
         ))}
       </ul>
-      <div className="wx">
+      {wx.length > 0 && <div className="wx">
         {wx.slice(0, 4).map((w) => <span key={w.n} title={w.n}>{w.n} <b>{w.t}°</b><i aria-hidden>{wxIcon(w.code)}</i></span>)}
-        <a href="#weather" className="more-wx">+{wx.length - 4}</a>
-      </div>
+      </div>}
     </div>
   );
 }

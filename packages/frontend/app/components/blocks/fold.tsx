@@ -108,6 +108,7 @@ export function LatestBox({ items }: { items: Article[] }) {
 export function PicksBox({ articles, picks, rail = false }: { articles: Article[]; picks?: Article[]; rail?: boolean }) {
   // Curated list from /dashboard/homepage when set; otherwise the built-in defaults.
   const list = picks && picks.length ? picks : (PICKS.map((id) => articles.find((a) => a.id === id)).filter(Boolean) as Article[]);
+  if (!list.length) return null;
   if (rail) {
     return <div className="picks-rail">{list.map((a, i) => <a key={a.id} href={link(a)}><i>{i + 1}</i>{a.title}</a>)}</div>;
   }

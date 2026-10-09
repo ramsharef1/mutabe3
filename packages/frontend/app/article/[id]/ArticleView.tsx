@@ -100,7 +100,7 @@ export default function ArticleView({ article: a, preview = false, live: liveDat
   return (
     <div className={`am ${amiri.variable}`}>
       {!preview && <Progress />}
-      <SiteHeader articles={articles} />
+      <SiteHeader />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">

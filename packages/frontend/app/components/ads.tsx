@@ -7,8 +7,8 @@ import { AdsConfig, AdZone, DEFAULT_ADS, HouseBanner, needsAdsense } from './ads
 // Ad slots driven by /dashboard/ads (D-043 Stage 5). The root layout reads the
 // settings on the server and hands them down here, so the first HTML already
 // carries the right banner or AdSense <ins> (no flash, no layout shift).
-// Each zone renders: nothing (off), the built-in demo creative, one of the
-// owner's banners (rotated by `variant`, like the demo set), or an AdSense unit.
+// Each zone renders: nothing (off), the site's own «أعلن معنا» promo (mode
+// `demo`, D-089), one of the owner's banners (rotated by `variant`), or an AdSense unit.
 
 const Ctx = createContext<{ config: AdsConfig; live: boolean }>({ config: DEFAULT_ADS, live: false });
 
@@ -44,13 +44,16 @@ function AdsenseUnit({ client, unit, fixed }: { client: string; unit: string; fi
   );
 }
 
-/* ---------- demo creatives (the original placeholders, composed to look like real placements) ---------- */
-const DEMO = [
-  { bg: 'linear-gradient(100deg,#3b0d63,#8e44ad)', mark: '5G', markBg: '#fff', markFg: '#5e2a9a', t: 'شبكة الجيل الخامس وصلت', s: 'اشترك الآن واحصل على 100GB إضافية مجاناً', cta: 'اشترك' },
-  { bg: 'linear-gradient(100deg,#8e0e0e,#e53935)', mark: 'GO', markBg: '#fff', markFg: '#b71c1c', t: 'تأجير سيارات', s: 'ابتداءً من 15 دينار / يوم — تأمين شامل', cta: 'احجز الآن' },
-  { bg: 'linear-gradient(100deg,#0f4d18,#43a047)', mark: 'ب', markBg: '#fff', markFg: '#1b5e20', t: 'بنك المستقبل', s: 'حساب توفير بفائدة 5.25% سنوياً', cta: 'افتح حسابك' },
-  { bg: 'linear-gradient(100deg,#c84b00,#ffb300)', mark: '%', markBg: '#fff', markFg: '#e65100', t: 'عروض الموسم', s: 'خصومات تصل إلى 50% على كل شيء', cta: 'تسوّق' },
-  { bg: 'linear-gradient(100deg,#0a3d91,#1e88e5)', mark: 'ج', markBg: '#fff', markFg: '#0d47a1', t: 'الجامعة الأهلية', s: 'التسجيل مفتوح للفصل الأول 2026/2027', cta: 'سجّل الآن' },
+/* ---------- «أعلن معنا»: the site's own promo for an unsold zone (D-089) ----------
+ * Replaces the invented advertisers (one of them a real university) the demo mode used to show. Every line is
+ * true of the product (D-053, D-056, D-057) and links to the media kit; it is not an ad, so it carries
+ * «مساحة إعلانية», never «إعلان», and sends no delivery counts. */
+const PROMO_BG = 'linear-gradient(100deg,#0B0B0F,#1d3f68)';
+const PROMO = [
+  { t: 'أعلن مع المتابع', s: 'بانرات بتواريخ بدء وانتهاء، وتقرير ظهور ونقرات لكل حملة', cta: 'تفاصيل الإعلان' },
+  { t: 'هذه المساحة متاحة لإعلانك', s: 'راسلنا على ads@mutabe3.news', cta: 'اعرف أكثر' },
+  { t: 'محتوى مدفوع بوسم «إعلان» واضح', s: 'للشركات والمؤسسات في الأردن', cta: 'التفاصيل' },
+  { t: 'وصول إلى قرّاء الأردن', s: 'على الموبايل والكمبيوتر — بلا نوافذ منبثقة', cta: 'أعلن معنا' },
 ];
 
 /* ---------- delivery beacons (D-057 / ANALYTICS-PLAN §5) ----------
@@ -122,14 +125,14 @@ function ZoneAd({ zone, variant, className, fixed }: { zone: AdZone; variant: nu
 export function AdBanner({ variant, className = '', style, zone = 'inline' }: { variant: number; className?: string; style?: React.CSSProperties; zone?: AdZone }) {
   const { config } = useContext(Ctx);
   if (config.zones[zone].mode !== 'demo') return <ZoneAd zone={zone} variant={variant} className={className} fixed={zone === 'header' ? [728, 90] : undefined} />;
-  const a = DEMO[variant % DEMO.length];
+  const a = PROMO[variant % PROMO.length];
   return (
-    <div className={`adb ${className}`} style={{ background: a.bg, ...style }}>
-      <span className="tag">إعلان</span>
-      <span className="mark" style={{ background: a.markBg, color: a.markFg }}>{a.mark}</span>
+    <a href="/advertise" className={`adb promo ${className}`} style={{ background: PROMO_BG, ...style }}>
+      <span className="tag">مساحة إعلانية</span>
+      <span className="mark">م</span>
       <span className="txt"><b>{a.t}</b><small>{a.s}</small></span>
       <span className="cta">{a.cta}</span>
-    </div>
+    </a>
   );
 }
 
@@ -137,14 +140,14 @@ export function AdBanner({ variant, className = '', style, zone = 'inline' }: { 
 export function AdBox({ variant, zone = 'sidebar' }: { variant: number; zone?: AdZone }) {
   const { config } = useContext(Ctx);
   if (config.zones[zone].mode !== 'demo') return <ZoneAd zone={zone} variant={variant} className="adslot-box" fixed={[300, 250]} />;
-  const a = DEMO[variant % DEMO.length];
+  const a = PROMO[variant % PROMO.length];
   return (
-    <div className="adbox" style={{ background: a.bg }}>
-      <span className="tag">إعلان</span>
-      <span className="mark" style={{ background: a.markBg, color: a.markFg }}>{a.mark}</span>
+    <a href="/advertise" className="adbox promo" style={{ background: PROMO_BG }}>
+      <span className="tag">مساحة إعلانية</span>
+      <span className="mark">م</span>
       <b>{a.t}</b>
       <small>{a.s}</small>
       <span className="cta">{a.cta}</span>
-    </div>
+    </a>
   );
 }

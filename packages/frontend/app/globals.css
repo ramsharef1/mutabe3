@@ -82,6 +82,14 @@ img{color:transparent}
 .adbox b{font-size:20px;line-height:1.25;z-index:1}
 .adbox small{font-size:12px;opacity:.9;font-family:Arial;z-index:1}
 .adbox .cta{margin-top:6px}
+/* «أعلن معنا» promo in unsold zones (D-089): ink + accent, links to /advertise */
+.adb.promo,.adbox.promo{color:#fff;text-decoration:none}
+.adb.promo .mark,.adbox.promo .mark{background:#fff;color:#2E6DB4;font-family:var(--kufi)}
+.adb.promo .cta,.adbox.promo .cta{background:#fff;color:#0B0B0F;font-family:var(--kufi)}
+.adb.promo .txt small,.adbox.promo small{font-family:var(--kufi)}
+/* homepage before the first article (D-089) */
+.home-empty{margin-top:12px}
+.home-empty p{font-size:15px;line-height:1.9;margin:10px 0;color:var(--fg2)}
 
 /* ---- columnists strip ---- */
 .writers{border-top:1px solid var(--k-rule,var(--rule));border-bottom:1px solid var(--k-rule,var(--rule));display:grid;grid-template-columns:repeat(4,1fr);padding:2px 0}

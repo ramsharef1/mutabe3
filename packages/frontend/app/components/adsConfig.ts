@@ -26,7 +26,7 @@ export const ZONE_INFO: Record<AdZone, { label: string; where: string; size: str
 
 export const MODE_LABEL: Record<AdMode, string> = {
   off: 'إيقاف — بدون إعلان',
-  demo: 'تجريبي — الإعلانات الوهمية الحالية',
+  demo: '«أعلن معنا» — مساحة متاحة (رابط لصفحة الإعلان)',
   house: 'بانر خاص — إعلان مباع مباشرة',
   adsense: 'Google AdSense',
 };

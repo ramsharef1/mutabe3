@@ -8,7 +8,7 @@ export default function TagView() {
   const params = useParams<{ tag: string }>();
   const tag = decodeURIComponent(params.tag || '');
   const { articles, loading } = useArticles();
-  if (loading || articles.length === 0) return <Loading />;
+  if (loading) return <Loading />; // an empty site is an answer, not a reason to keep loading (D-089)
 
   const list = articles.filter((a) => tagsFor(a).includes(tag));
   // Tags that co-occur with this one, for the "related tags" row.
@@ -18,7 +18,7 @@ export default function TagView() {
 
   return (
     <div className="am">
-      <SiteHeader articles={articles} />
+      <SiteHeader />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">

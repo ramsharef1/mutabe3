@@ -237,7 +237,7 @@ export function Ugc() {
     <div className="ugc">
       <div className="ph"><Img src={u.img} /><span>{u.loc} — {u.ago}</span></div>
       <p>{u.t}</p>
-      <a className="send" href="https://wa.me/962790000000?text=%D8%AE%D8%A8%D8%B1%20%D9%84%D9%84%D9%85%D8%AA%D8%A7%D8%A8%D8%B9" target="_blank" rel="noopener">{Ico.wa}أرسل صورتك أو خبرك</a>
+      <a className="send" href="/contact#tip">{Ico.wa}أرسل صورتك أو خبرك</a>
     </div>
   );
 }
@@ -283,9 +283,9 @@ export function Capture() {
   };
   return (
     <div className="cap-card">
-      <b>تابع المتابع أينما كنت</b>
-      <p>الأخبار العاجلة على هاتفك لحظة وقوعها — بلا إعلانات وبلا خوارزميات.</p>
-      <div className="btns"><a className="wa" href="https://whatsapp.com/channel/mutabe3" target="_blank" rel="noopener">{Ico.wa}قناة واتساب</a><a className="tg" href="https://t.me/mutabe3" target="_blank" rel="noopener">{Ico.tg}تيليغرام</a></div>
+      <b>النشرة البريدية</b>
+      {/* WhatsApp/Telegram buttons return once the channels exist and are confirmed (D-089) */}
+      <p>أهم أخبار الأردن في بريدك — نرسل لك رسالة تأكيد أولاً.</p>
       {state === 'done' ? <div className="ok" role="status">{CONFIRM_MSG}</div> : (
         <form className="em" onSubmit={submit}>
           <input type="email" required placeholder="بريدك الإلكتروني للنشرة" aria-label="البريد الإلكتروني" value={email} onChange={(e) => setEmail(e.target.value)} disabled={state === 'busy'} />
@@ -322,38 +322,3 @@ export function Timeline({ id = 'art-006', title = 'الاجتماع العرب�
     </div>
   );
 }
-
-/* ---------- C9 audio bulletin (Web Speech API; server TTS later) ---------- */
-export function AudioPill({ articles, mini = false }: { articles: Article[]; mini?: boolean }) {
-  const [state, setState] = useState<'idle' | 'playing'>('idle');
-  const supported = useBrowserValue(() => 'speechSynthesis' in window, true); // D-085: feature detection without an effect
-  const [idx, setIdx] = useState(0);
-  const heads = useMemo(() => articles.slice(0, 5).map((a) => a.title), [articles]);
-  const stop = () => { window.speechSynthesis?.cancel(); setState('idle'); setIdx(0); };
-  const play = () => {
-    if (state === 'playing') return stop();
-    const ss = window.speechSynthesis; if (!ss) return;
-    ss.cancel();
-    const voice = ss.getVoices().find((v) => v.lang.startsWith('ar'));
-    const intro = new SpeechSynthesisUtterance('نشرة المتابع الصوتية. أبرز خمسة أخبار.'); intro.lang = 'ar-JO'; if (voice) intro.voice = voice;
-    ss.speak(intro);
-    heads.forEach((h, i) => { const u = new SpeechSynthesisUtterance(`الخبر ${['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'][i]}. ${h}`); u.lang = 'ar-JO'; if (voice) u.voice = voice; u.onstart = () => setIdx(i); if (i === heads.length - 1) u.onend = () => setState('idle'); ss.speak(u); });
-    setState('playing');
-  };
-  if (!supported) return null;
-  if (mini) {
-    return (
-      <div className={`mini ${state === 'playing' ? 'on' : ''}`}>
-        <button type="button" className="pb" onClick={play} aria-label={state === 'playing' ? 'إيقاف' : 'تشغيل النشرة'}>{state === 'playing' ? '❚❚' : Ico.play}</button>
-        <span><b>نشرة المتابع الصوتية</b><small>{state === 'playing' ? `الخبر ${idx + 1} من ${heads.length}` : `أبرز ${heads.length} أخبار · ~3 دقائق`}</small></span>
-        <span className="prog"><i style={{ width: state === 'playing' ? `${((idx + 1) / heads.length) * 100}%` : 0 }} /></span>
-      </div>
-    );
-  }
-  return (
-    <button type="button" className={`pill audio ${state === 'playing' ? 'on' : ''}`} onClick={play} title="نشرة صوتية بأبرز الأخبار">
-      {state === 'playing' ? '❚❚' : Ico.play}<span>{state === 'playing' ? `يُقرأ الخبر ${idx + 1}/${heads.length}` : 'استمع للنشرة'}</span>{state !== 'playing' && <small>3:10</small>}
-    </button>
-  );
-}
-

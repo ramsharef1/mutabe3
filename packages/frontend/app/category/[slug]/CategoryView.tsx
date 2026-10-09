@@ -80,7 +80,7 @@ export default function CategoryView({ initialArticles, initialList }: { initial
     return () => io.disconnect();
   }, [mode, loaded, busy]);
 
-  if (loading || articles.length === 0 || catList === null) return <Loading />;
+  if (loading || catList === null) return <Loading />; // an empty site is an answer, not a reason to keep loading (D-089)
 
   const label = navItem?.label || catList[0]?.category?.name || CAT_LABELS[slug] || articles.find((a) => a.category?.slug === slug)?.category?.name || slug;
   const desc = navItem?.description || CAT_DESC[slug] || `آخر أخبار ${label} على موقع المتابع الاخباري`;
@@ -104,7 +104,7 @@ export default function CategoryView({ initialArticles, initialList }: { initial
 
   return (
     <div className="am">
-      <SiteHeader articles={articles} />
+      <SiteHeader />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">

@@ -69,7 +69,7 @@
 :root[data-skin=ink] .prem .card:hover{transform:translateY(-2px)}
 
 /* advertiser creatives are not the site's chrome: their button keeps the colour it was sold with */
-:root[data-skin=ink] .adb .cta{background:#990000}
+:root[data-skin=ink] .adb:not(.promo) .cta{background:#990000}
 
 /* ---- auth pages (styled-jsx) and admin read the same --k-adm roles ---- */
 :root[data-skin=ink] .adm-nav a.on{color:#fff}

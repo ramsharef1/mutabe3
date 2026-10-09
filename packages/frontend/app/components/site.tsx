@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { liveNow } from './content';
-import { AudioPill } from './blocks/jordan';
 import { AdBanner, AdBox } from './ads';
 import { InstallApp } from './pwa';
 import { PushToggle } from './push';
@@ -178,21 +177,19 @@ function StickyBar() {
   );
 }
 
-export function SiteHeader({ articles = [], temp, wxLabel }: { articles?: Article[]; temp?: number; wxLabel?: string }) {
+export function SiteHeader({ temp, wxLabel }: { temp?: number; wxLabel?: string }) {
   return (
     <>
       <StickyBar />
       <div className="topmenu">
         <div className="wrap">
           <div className="links">
-            <a href="/">الرئيسية</a><a href="/category/politics">أخبار اليوم</a><a href="https://wa.me/962790000000" target="_blank" rel="noopener">ارسل خبراً</a><a href="#footer">اتصل بنا</a><a href="#footer">حول الموقع</a>
+            <a href="/">الرئيسية</a><a href="/category/politics">أخبار اليوم</a><a href="/contact#tip">ارسل خبراً</a><a href="/contact">اتصل بنا</a><a href="/about">حول الموقع</a>
           </div>
           <div className="weather">
-            {articles.length > 0 && <AudioPill articles={articles} />}
             <form className="tsq" action="/search" role="search"><input name="q" placeholder="ابحث في المتابع…" aria-label="بحث" /><button type="submit" aria-label="بحث">{Ico.search}</button></form>
-            <span className="city">عمّان<br />{wxLabel || 'الآن'}</span>
-            <span className="deg">{temp ?? 24}°</span>
-            <span className="en">ENGLISH</span>
+            {/* only a real reading (D-089): no weather, no temperature */}
+            {temp != null && <><span className="city">عمّان<br />{wxLabel || 'الآن'}</span><span className="deg">{temp}°</span></>}
             <ThemeToggle />
           </div>
         </div>
@@ -232,12 +229,9 @@ export function SiteFooter() {
         <div className="fbrands">
           <a className="flogo" href="/"><img src="/logo-white.svg" alt="المتابع" /></a>
           <div className="ficons">
-            {['المتابع الرياضي', 'المتابع الصحي', 'المتابع الصورة', 'المتابع العلمي'].map((t) => (
-              <a href="#" className="ficon" key={t}><i /><span>{t}</span></a>
-            ))}
+            {/* sub-brand and English-edition links come back when those exist (D-089: no link to "#") */}
             <InstallApp />
             <PushToggle />
-            <a href="#" className="ficon"><i /><span>Almutabe3 English</span></a>
           </div>
         </div>
         <div className="fcols">
@@ -264,14 +258,7 @@ export function SiteFooter() {
               <li><a href="/corrections">التصحيح وحق الرد</a></li><li><a href="/editorial-policy">السياسة التحريرية</a></li>
               <PrivacySettingsLink />
             </ul>
-            <div className="social">
-              <a href="#" title="فيسبوك" className="fb">{Ico.fb}</a>
-              <a href="#" title="X" className="x">{Ico.x}</a>
-              <a href="#" title="انستغرام" className="ig">{Ico.ig}</a>
-              <a href="#" title="يوتيوب" className="yt">{Ico.yt}</a>
-              <a href="#" title="تيليغرام" className="tg">{Ico.tg}</a>
-              <a href="#" title="واتساب" className="wa">{Ico.wa}</a>
-            </div>
+            {/* social icons return once the accounts exist and are confirmed (D-089) */}
           </div>
         </div>
         <div className="copy">جميع الحقوق محفوظة © موقع المتابع الاخباري {new Date().getFullYear()} — المقالات والتعليقات المنشورة تعبر عن رأي أصحابها فقط</div>
@@ -281,10 +268,9 @@ export function SiteFooter() {
   );
 }
 
-export const SecHd = ({ t, slug, meta, tabs, cls = '' }: { t: string; slug?: string; meta?: string; tabs?: string[]; cls?: string }) => (
+export const SecHd = ({ t, slug, meta, cls = '' }: { t: string; slug?: string; meta?: string; cls?: string }) => (
   <div className={`hd ${cls}`}>
     <b>{slug ? <a href={`/category/${slug}`}>{t}</a> : t}</b><i aria-hidden />
-    {tabs && <span className="tabs2" role="tablist">{tabs.map((x, i) => <button type="button" role="tab" aria-selected={i === 0} key={x} className={i === 0 ? 'on' : ''}>{x}</button>)}</span>}
     {meta && <span className="meta">{meta}</span>}
   </div>
 );
@@ -321,7 +307,7 @@ export function Sidebar({ articles }: { articles: Article[] }) {
     : [...articles].sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0)).slice(0, 10);
   return (
     <div className="sidec">
-      <div className="tabs">
+      {list.length > 0 && <><div className="tabs">
         <span className={tab === 0 ? 'on' : ''} onClick={() => setTab(0)}>اخر التحديثات</span>
         <span className={tab === 1 ? 'on' : ''} onClick={() => setTab(1)}>الأكثر مشاهدة</span>
       </div>
@@ -335,12 +321,13 @@ export function Sidebar({ articles }: { articles: Article[] }) {
             </div>
           </a>
         ))}
-      </div>
+      </div></>}
       <AdBox variant={2} />
-      <div className="sidebox trending">
-        <div className="hd"><b>الأكثر تداولاً</b><i /></div>
+      {/* the next six newest — named for what they are (D-089), not «الأكثر تداولاً» */}
+      {articles.length > 10 && <div className="sidebox trending">
+        <div className="hd"><b>المزيد من الأخبار</b><i /></div>
         <ul className="arr">{articles.slice(10, 16).map((a) => <li key={a.id}><a href={`/article/${a.id}`}>{a.title}</a></li>)}</ul>
-      </div>
+      </div>}
       <AdBox variant={4} />
     </div>
   );

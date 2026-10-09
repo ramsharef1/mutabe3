@@ -53,7 +53,7 @@ export default async function AuthorPageView(props: Props) {
   return (
     <div className="am">
       <JsonLd data={[profileLd(a), breadcrumbLd([{ name: 'الرئيسية', url: SITE_URL }, { name: 'كتاب المتابع', url: `${SITE_URL}/category/writers` }, { name: a.name }])]} />
-      <SiteHeader articles={side} />
+      <SiteHeader />
       <div className="wrap">
         <div className="inner">
           <div className="mainc">

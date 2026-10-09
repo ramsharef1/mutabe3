@@ -113,7 +113,7 @@ export default function Ads() {
           {loading ? <div className="adm-loading">جاري التحميل…</div> : (<>
             {demoZones.length > 0 && (
               <p className="adm-note">
-                {demoZones.length === AD_ZONES.length ? 'كل المناطق' : demoZones.map((z) => `«${ZONE_INFO[z].label}»`).join('، ')} تعرض الإعلانات التجريبية (بنك المستقبل، تأجير سيارات…). هذه إعلانات وهمية — أوقفها أو استبدلها ببانر حقيقي أو AdSense قبل الإطلاق.
+                {demoZones.length === AD_ZONES.length ? 'كل المناطق' : demoZones.map((z) => `«${ZONE_INFO[z].label}»`).join('، ')} تعرض «أعلن معنا» — مساحة متاحة برابط إلى صفحة الإعلان. اختر «بانر خاص» حين تبيع المساحة.
               </p>
             )}
 

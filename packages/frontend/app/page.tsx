@@ -4,12 +4,9 @@ import { Article, WRITERS, face, ago, readMins, excerpt, youTubeId } from './com
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
 import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Carousel, Debate, WritersRail } from './components/blocks/fold';
-import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline, AudioPill } from './components/blocks/jordan';
-import { PremiumSpotlight } from './components/blocks/premium';
-import { TrendingNow } from './components/blocks/trending';
+import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline } from './components/blocks/jordan';
 import { TrendingTopics } from './components/blocks/topics';
 import { CardShare } from './components/blocks/share';
-import { ForYou } from './components/blocks/foryou';
 import { LiveStrip } from './components/blocks/livestrip';
 import { CommunityBand } from './components/blocks/community';
 import { NewsletterCTA } from './components/blocks/newsletter';
@@ -26,16 +23,18 @@ export const revalidate = 60;
 
 const API = process.env.VPS_API || 'http://127.0.0.1:9080';
 // Sections with their own homepage box (D-082) — fetched one list each so a box never shows another section.
-const SECTION_SLUGS = ['politics', 'economy', 'palestine', 'world', 'east-west', 'education', 'parliament', 'nights', 'video', 'caricature', 'health', 'panorama', 'writers'];
+// Video and caricature have their own bands at the bottom (D-068), fed by article kind.
+const SECTION_SLUGS = ['politics', 'economy', 'palestine', 'world', 'east-west', 'education', 'parliament', 'nights', 'health', 'panorama', 'writers'];
 
-async function getArticles(): Promise<Article[]> {
+/** Newest articles; null when the backend could not be reached (an empty list is a real answer: nothing published yet). */
+async function getArticles(): Promise<Article[] | null> {
   try {
     const r = await fetch(`${API}/api/articles`, { next: { revalidate: 60 } });
-    if (!r.ok) return [];
+    if (!r.ok) return null;
     const j = await r.json();
     return j.data || [];
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -118,16 +117,42 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
   // too: during a deploy the old API ignored ?kind= and its answer stayed in the 60 s cache (seen 2026-10-08).
   const videos = videoArts.filter((a) => a.kind === 'VIDEO').flatMap((a) => { const id = youTubeId(a.content); return id ? [{ id, title: a.title, href: `/article/${encodeURIComponent(a.slug || a.id)}` }] : []; });
   const caricatures = caricatureArts.filter((a) => a.kind === 'CARICATURE');
-  // A curated lead story goes first (and is removed from its newest-first slot) so the pool hands it to the hero.
-  const articles = curated.hero ? [curated.hero, ...latestArticles.filter((a) => a.id !== curated.hero!.id)] : latestArticles;
-  if (!articles.length) {
+  if (!latestArticles) {
     return <div className="am"><SiteHeader /><div className="wrap loading">لا تتوفر أخبار حالياً — حاول بعد قليل.</div><SiteFooter /></div>;
   }
+  // A curated lead story goes first (and is removed from its newest-first slot) so the pool hands it to the hero.
+  const articles = curated.hero ? [curated.hero, ...latestArticles.filter((a) => a.id !== curated.hero!.id)] : latestArticles;
   const now = new Date();
   const prayers = prayerTimes(now);
   const season = searchParams?.season === 'all' ? 'all' : currentSeason(now);
   const amman = wx[0];
   const demo = curated.demoBlocks; // illustrative data blocks — off from /dashboard/homepage once real content exists (F-02)
+  const market = (data.fx || data.market || demo) && <MarketStrip updated={data.fx || data.market ? fxDay || (upd(data.market) ?? '') : ammanTime(now)} fx={data.fx} rows={data.market?.items} />;
+
+  // Nothing published yet (launch day, D-089): the live strips, a short welcome and the newsletter box.
+  if (!articles.length) {
+    return (
+      <div className="am home">
+        <JsonLd data={websiteLd()} />
+        <SiteHeader temp={amman?.t} wxLabel={amman ? wxText(amman.code) : undefined} />
+        <h1 className="sr-only">موقع المتابع الاخباري — آخر أخبار الأردن وفلسطين والعالم</h1>
+        <div className="wrap">
+          <UtilityStrip prayers={prayers} wx={wx} hijriText={hijri(now)} dateText={ammanDate(now)} />
+          <BreakingBar item={curated.breaking} />
+          {market}
+          <div className="two home-empty">
+            <div className="sec">
+              <SecHd t="أهلاً بكم في المتابع" />
+              <p>موقع إخباري أردني من عمّان: أخبار الأردن وفلسطين والعالم، الاقتصاد والبرلمان والتعليم. تُنشر أولى أخبارنا قريباً.</p>
+              <p><a href="/about">من نحن</a> · <a href="/corrections">سياسة التصحيح</a> · <a href="/contact">اتصل بنا</a></p>
+            </div>
+            <div className="sec" id="newsletter" style={{ flex: '0 0 330px', scrollMarginTop: 80 }}><SecHd t="نشرة المتابع" /><Capture /></div>
+          </div>
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   // B1: every block draws from an exclusive pool so the fold never repeats a story.
   // Paid material (kind SPONSORED) stays out of the hero, lead list and ticker; it appears lower down, labelled «إعلان» (D-057).
@@ -137,19 +162,16 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
   const leadMore = pool.take(3);
   const mid = pool.take(11);
   const latest = pool.take(6);
-  const premium = pool.take(3);
-  const trending = pool.take(5);
-  pool.take(6); // formerly "discussed"; still consumed so the sections below keep their picks
   // D-082: section boxes take from their own section — first pieces the fold above does not show, then its own
   // pieces the fold does show (a box repeating its section beats an empty box), news before labelled paid pieces;
-  // no box repeats another box, and only a section with too few pieces is topped up from the shared pool.
-  const fold = new Set([hero, ...leadMore, ...mid, ...latest, ...premium, ...trending].filter(Boolean).map((a) => a.id));
+  // no box repeats another box. D-089: a box shows only its own section (no top-up from other sections) and
+  // disappears while its section has nothing published.
+  const fold = new Set([hero, ...leadMore, ...mid, ...latest].filter(Boolean).map((a) => a.id));
   const inBox = new Set<string>();
   const sec = (slug: string, n: number): Article[] => {
     const own = (bySection.get(slug) || []).filter((a) => !inBox.has(a.id));
     const rank = (a: Article) => (fold.has(a.id) ? 2 : 0) + (a.kind === 'SPONSORED' ? 1 : 0);
     const out = own.map((a, i) => ({ a, i })).sort((x, y) => rank(x.a) - rank(y.a) || x.i - y.i).map((x) => x.a).slice(0, n);
-    for (let tries = 0; out.length < n && tries < articles.length; tries++) { const x = pool.take(1)[0]; if (x && !inBox.has(x.id) && !out.includes(x)) out.push(x); }
     out.forEach((a) => inBox.add(a.id));
     return out;
   };
@@ -159,15 +181,22 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
   const eastAll = sec('east-west', 8), east = eastAll.slice(0, 4), eastS = eastAll.slice(4);
   const edu = sec('education', 4), parl = sec('parliament', 3);
   const nights = sec('nights', 7);
-  const vids = sec('video', 4), cartoons = sec('caricature', 4), health = sec('health', 4);
+  const health = sec('health', 4);
   const pano = sec('panorama', 7);
   const writerPieces = sec('writers', 4);
   const ticker = [hero, ...mid.slice(0, 5)];
+  const updated = (list: Article[]) => (list[0] ? `تحديث ${ago(list[0].publishedAt)}` : undefined);
+
+  // Lower boxes, paired so a row never holds a lone empty half: the newsletter box sits next to the fact-check
+  // when the desk keeps one, otherwise next to health.
+  const healthSec = health.length > 0 && <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>;
+  const jobsSec = (data.jobs || demo) && <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta={upd(data.jobs) ?? 'ديوان الخدمة المدنية · دائرة العطاءات'} /><Jobs items={data.jobs?.items} />{!data.jobs && <More slug="jobs" />}</div>;
+  const factsSec = (data.facts || demo) && <div className="sec"><SecHd t="تحقق المتابع" meta={upd(data.facts) ?? 'نتحقق من الشائعات المنتشرة على فيسبوك وواتساب'} /><FactCheck items={data.facts?.items} /></div>;
 
   return (
     <div className="am home">
       <JsonLd data={websiteLd()} />
-      <SiteHeader articles={articles} temp={amman?.t} wxLabel={amman ? wxText(amman.code) : undefined} />
+      <SiteHeader temp={amman?.t} wxLabel={amman ? wxText(amman.code) : undefined} />
       {/* the page's one heading for screen readers and search engines; the masthead logo is the visual title */}
       <h1 className="sr-only">موقع المتابع الاخباري — آخر أخبار الأردن وفلسطين والعالم</h1>
 
@@ -179,11 +208,8 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         <Ticker items={ticker} hot={!!curated.breaking} />
         {/* running coverage (D-068) wins; the seeded demo story only while the demo switch is on */}
         {liveNowItem ? <LiveStrip current={liveNowItem} /> : demo && <LiveStrip />}
-        {(data.fx || data.market || demo) && <MarketStrip updated={data.fx || data.market ? fxDay || (upd(data.market) ?? '') : ammanTime(now)} fx={data.fx} rows={data.market?.items} />}
+        {market}
         <Missed articles={articles} />
-
-        {/* Premium Spotlight */}
-        <PremiumSpotlight items={premium} />
 
         {/* Trending Topics — curated subject discovery from real tags */}
         <TrendingTopics articles={articles} />
@@ -212,31 +238,28 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
           <div className="side">
             <div className="desk sidead"><AdBox variant={5} /></div>
             <div className="desk"><NewsletterCTA /></div>
-            <LatestBox items={latest} />
+            {latest.length > 0 && <LatestBox items={latest} />}
           </div>
         </div>
 
-        {/* Picks + Obituaries below the fold (desktop) so the sidebar height matches the main column */}
-        <div className="desk">
+        {/* Picks + Obituaries below the fold (desktop) so the sidebar height matches the main column;
+            picks only once an editor has chosen them in /dashboard/homepage (or the demo defaults while demo is on) */}
+        {(curated.picks.length > 0 || demo || data.obits) && <div className="desk">
           <div className="two" style={{ marginTop: 12 }}>
-            <div className="sec"><PicksBox articles={articles} picks={curated.picks} /></div>
+            {(curated.picks.length > 0 || demo) && <div className="sec"><PicksBox articles={articles} picks={curated.picks} /></div>}
             {(data.obits || demo) && <div className="sec"><ObitsBox items={data.obits?.items} /></div>}
           </div>
-        </div>
+        </div>}
 
-        <div className="mob"><PicksBox articles={articles} picks={curated.picks} rail /></div>
+        {(curated.picks.length > 0 || demo) && <div className="mob"><PicksBox articles={articles} picks={curated.picks} rail /></div>}
 
         <AdBanner variant={4} className="adrow ad90" />
 
-        {/* For You — client-only recommendations from local read history */}
-        <ForYou articles={articles} />
-
         {/* Flagship national news — brought up as the first section after the fold */}
-        <div className="sec">
-          <SecHd t="أخبار الأردن" slug="politics" tabs={['الكل', 'حوادث', 'محافظات']} meta={`تحديث ${ago(jordan[0]?.publishedAt)} · ${articles.length} خبراً`} />
-          <div className="gov"><small>أخبار محافظتك:</small>{['عمّان', 'إربد', 'الزرقاء', 'العقبة', 'الكرك', 'معان', 'البلقاء'].map((g, i) => <a key={g} href={`/tag/${encodeURIComponent(g)}`} className={i === 0 ? 'on' : ''}>{g}</a>)}<a href="/category/politics">+5</a></div>
+        {jordanAll.length > 0 && <div className="sec">
+          <SecHd t="أخبار الأردن" slug="politics" meta={updated(jordanAll)} />
           <Cards items={jordan} /><Smalls items={jordanS} /><More slug="politics" />
-        </div>
+        </div>}
 
         {/* real columnists (newest opinion piece each) replace the illustrative band as soon as one exists (D-067) */}
         {writers.length ? <WritersBand authors={writers} className="writers mob" /> : demo && (
@@ -250,12 +273,10 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         {/* ────────── ZONE 4 · CORE NEWS (contiguous, native ads woven in) ────────── */}
         {(data.royal || demo) && <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta={upd(data.royal) ?? 'أنشطة اليوم'} /><Royal items={data.royal?.items} /></div>}
 
-        <TrendingNow items={trending} />
-
-        <div className="sec eco">
-          <SecHd t="اقتصاد وأسواق" slug="economy" tabs={['الأخبار', 'أسواق', 'بنوك', 'طاقة', 'تحليل']} meta="القسم الرئيسي" />
+        {econAll.length > 0 && <div className="sec eco">
+          <SecHd t="اقتصاد وأسواق" slug="economy" meta={updated(econAll)} />
           <Cards items={econ} five /><Smalls items={econS} /><More slug="economy" />
-        </div>
+        </div>}
 
         {/* today's digest */}
         {data.sixty || demo ? (
@@ -263,16 +284,16 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
             <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty items={data.sixty?.items} /></div>
             <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} at={now.getTime()} /></div>
           </div>
-        ) : (
+        ) : newsOnly.length >= 3 && (
           <div className="sec"><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} at={now.getTime()} /></div>
         )}
 
         <AdBanner variant={1} className="adrow ad90" />
 
-        <div className="two">
-          <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} />{demo && <div style={{ marginTop: 10 }}><Timeline /></div>}</div>
-          <div className="sec"><SecHd t="العالم" slug="world" /><BigText a={world[0]} more={world.slice(1)} /><More slug="world" /></div>
-        </div>
+        {(pal.length > 0 || world.length > 0) && <div className="two">
+          {pal.length > 0 && <div className="sec"><SecHd t="فلسطين" slug="palestine" /><BigText a={pal[0]} more={pal.slice(1)} />{demo && <div style={{ marginTop: 10 }}><Timeline /></div>}</div>}
+          {world.length > 0 && <div className="sec"><SecHd t="العالم" slug="world" /><BigText a={world[0]} more={world.slice(1)} /><More slug="world" /></div>}
+        </div>}
 
         {demo ? (<>
           <div className="two">
@@ -307,17 +328,12 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
           </div>
           <WritersRail articles={writerPieces} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>}
 
-        <div className="two">
-          <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>
-          {parl[0] && <div className="sec"><SecHd t="البرلمان" slug="parliament" /><BigText a={parl[0]} more={parl.slice(1)} /><More slug="parliament" /></div>}
-        </div>
+        {(edu.length > 0 || parl.length > 0) && <div className="two">
+          {edu.length > 0 && <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>}
+          {parl.length > 0 && <div className="sec"><SecHd t="البرلمان" slug="parliament" /><BigText a={parl[0]} more={parl.slice(1)} /><More slug="parliament" /></div>}
+        </div>}
 
-        <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards items={east} /><Smalls items={eastS} /><More slug="east-west" /></div>
-
-        <div className="two">
-          <div className="sec rnd"><SecHd t="فيديو المتابع" slug="video" /><Smalls items={vids} cols={1} /><More slug="video" /></div>
-          <div className="sec rnd"><SecHd t="كاريكاتير" slug="caricature" /><Smalls items={cartoons} cols={1} /><More slug="caricature" /></div>
-        </div>
+        {eastAll.length > 0 && <div className="sec"><SecHd t="شرق وغرب" slug="east-west" /><Cards items={east} /><Smalls items={eastS} /><More slug="east-west" /></div>}
 
         <AdBanner variant={6} className="adrow ad90 adbillboard" />
 
@@ -331,18 +347,11 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         )}
         {demo && <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>}
 
-        {data.jobs || demo ? (
-          <div className="two">
-            <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta={upd(data.jobs) ?? 'ديوان الخدمة المدنية · دائرة العطاءات'} /><Jobs items={data.jobs?.items} />{!data.jobs && <More slug="jobs" />}</div>
-            <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
-          </div>
-        ) : (
-          <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>
-        )}
+        {(jobsSec || (factsSec && healthSec)) && <div className="two">{jobsSec}{factsSec && healthSec}</div>}
 
         <div className="two capfact">
-          <div className="sec" id="newsletter" style={{ flex: '0 0 330px', scrollMarginTop: 80 }}><SecHd t="قناة المتابع" /><Capture /></div>
-          {(data.facts || demo) && <div className="sec"><SecHd t="تحقق المتابع" meta={upd(data.facts) ?? 'نتحقق من الشائعات المنتشرة على فيسبوك وواتساب'} /><FactCheck items={data.facts?.items} /></div>}
+          <div className="sec" id="newsletter" style={{ flex: '0 0 330px', scrollMarginTop: 80 }}><SecHd t="نشرة المتابع" /><Capture /></div>
+          {factsSec || healthSec}
         </div>
 
         <AdBanner variant={0} className="adrow ad90" />
@@ -361,16 +370,16 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
           <Seasonal season={season} at={now.getTime()} />
         </>)}
 
-        <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>
+        {nights.length > 0 && <div className="sec"><SecHd t="ليالي المتابع" slug="nights" /><Carousel items={nights} /><More slug="nights" /></div>}
 
-        <div className="sec">
+        {pano.length > 0 && <div className="sec">
           <SecHd t="بانوراما" slug="panorama" />
           <div className="pano">
             <div className="grid">{pano.slice(1).map((a) => <a key={a.id} className="th" href={link(a)} aria-label={a.title}><Img src={a.featuredImageUrl} /></a>)}</div>
             <div className="big"><a className="im" href={link(pano[0])} style={{ display: 'block' }} aria-label={pano[0].title}><Img src={pano[0].featuredImageUrl} /></a><a className="t" href={link(pano[0])}>{pano[0].title}</a><p>{excerpt(pano[0], 220)}</p></div>
           </div>
           <More slug="panorama" />
-        </div>
+        </div>}
 
         <AdBanner variant={2} className="adrow ad90" />
 
@@ -385,7 +394,6 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
 
       <SiteFooter />
       <a className="totop mob" href="#top" aria-label="العودة إلى الأعلى">▲</a>
-      <div className="mob"><AudioPill articles={articles} mini /></div>
     </div>
   );
 }

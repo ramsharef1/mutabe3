@@ -58,9 +58,13 @@ export async function fetchWeather(): Promise<Wx[]> {
     if (!r.ok) throw new Error(String(r.status));
     const j = await r.json();
     const arr = Array.isArray(j) ? j : [j];
-    return GOVS.map((g, i) => ({ n: g.n, t: Math.round(arr[i]?.current?.temperature_2m ?? 24), code: arr[i]?.current?.weather_code ?? 0 }));
+    // A governorate without a reading is left out — never a made-up temperature (D-089).
+    return GOVS.flatMap((g, i) => {
+      const t = arr[i]?.current?.temperature_2m;
+      return typeof t === 'number' ? [{ n: g.n, t: Math.round(t), code: arr[i]?.current?.weather_code ?? 0 }] : [];
+    });
   } catch {
-    return GOVS.map((g, i) => ({ n: g.n, t: [27, 25, 28, 36, 29, 26, 27, 30, 24, 23, 28, 25][i], code: 0 }));
+    return [];
   }
 }
 export const wxIcon = (c: number) => (c === 0 ? '☀' : c <= 3 ? '⛅' : c <= 48 ? '🌫' : c <= 67 ? '🌧' : c <= 77 ? '❄' : c <= 82 ? '🌦' : '⛈');
@@ -191,9 +195,10 @@ export const DEBATE = {
 export class Pool {
   private i = 0;
   constructor(private list: Article[]) {}
+  /** The next n articles; fewer (or none) once the list is used up — never a story twice (D-089: it used to wrap around). */
   take(n: number): Article[] {
-    const out: Article[] = [];
-    for (let k = 0; k < n && this.list.length; k++) out.push(this.list[(this.i++) % this.list.length]);
+    const out = this.list.slice(this.i, this.i + n);
+    this.i += out.length;
     return out;
   }
   /** Articles not yet handed out (used for “آخر الأنباء” so the fold never repeats). */
