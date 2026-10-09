@@ -23,7 +23,7 @@ jobs:
     environment: production
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run ops/vps/${{ inputs.action }}.sh on the VPS
         env:
