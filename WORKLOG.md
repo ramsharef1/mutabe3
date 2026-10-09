@@ -13,6 +13,12 @@
 
 ---
 
+## 2026-10-09 · Claude Code · answers (Q1 city, Q7, Q9, Q11)
+
+- **Live:** /about address «عمّان — الأردن». Recorded: no outside uptime service (Q7), samples kept until the client approves and launches (Q9), GA4 settings done, push works on one device but not another (no iPhone) — investigation postponed (Q11).
+
+---
+
 ## 2026-10-09 · Claude Code · dashboard articles table (D-087)
 
 - **Live (f3de395):** server-side paging (25/page, no more 200 cap), real/sample and status filters with counts, title search, «تجريبي» tag.
