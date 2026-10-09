@@ -5,7 +5,7 @@ import { subscribe, CONFIRM_MSG } from '../newsletter';
 import { track } from '../../lib/track';
 import { useBrowserValue } from '../hooks';
 
-const EDITIONS = ['سياسة', 'اقتصاد', 'رياضة', 'فلسطين'];
+const EDITIONS = ['سياسة', 'اقتصاد', 'فلسطين']; // no «رياضة»: the sports section is hidden (D-089)
 
 // Homepage newsletter box: the picked editions are stored with the subscription
 // (D-043 Stage 4); an empty pick means "everything".

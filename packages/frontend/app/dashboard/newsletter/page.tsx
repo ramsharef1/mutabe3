@@ -14,7 +14,7 @@ interface Info { stats: Record<string, number>; issues: Issue[]; mail: Mail; aut
 interface A { id: string; title: string; status: string; publishedAt?: string | null }
 interface Sub { email: string; status: string; categories: string[]; source: string | null; subscribedAt: string }
 
-const EDITIONS = ['سياسة', 'اقتصاد', 'رياضة', 'فلسطين'];
+const EDITIONS = ['سياسة', 'اقتصاد', 'فلسطين']; // no «رياضة»: the sports section is hidden (D-089)
 const ST_AR: Record<string, string> = { draft: 'مسودة', sending: 'قيد الإرسال', sent: 'أُرسل', failed: 'فشل' };
 const fmt = (d?: string | null) => { if (!d) return ''; try { return new Date(d).toLocaleString('ar-JO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
 
