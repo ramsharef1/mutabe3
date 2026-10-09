@@ -1055,3 +1055,6 @@
 - 2026-10-08T20:11Z · edit · /private/tmp/claude-501/-Users-ramialsharef-Projects-forge-projects-mutabe3/2c7aa10e-f73b-4426-983b-53a0c74c9c27/scratchpad/boxes.js
 - 2026-10-08T20:11Z · edit · /private/tmp/claude-501/-Users-ramialsharef-Projects-forge-projects-mutabe3/2c7aa10e-f73b-4426-983b-53a0c74c9c27/scratchpad/reval.sh
 - 2026-10-08T20:16Z · edit · .claude/worktrees/agent-aa1a546b3485fef03/packages/backend/src/db.ts
+- 2026-10-09T06:38Z · edit · /Users/ramialsharef/.claude/projects/-Users-ramialsharef-Projects-forge-projects-mutabe3/memory/project_local_dev_stack.md
+- 2026-10-09T06:45Z · edit · packages/frontend/app/components/hooks.ts
+- 2026-10-09T07:15Z · edit · .claude/launch.json

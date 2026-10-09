@@ -13,6 +13,12 @@
 
 ---
 
+## 2026-10-09 · Claude Code · Next 16 lint rules (D-085)
+
+- **Live (e6c1c65):** all new React Compiler rules on, 73 findings fixed via shared useSyncExternalStore hooks (one latent section-page crash among them); plain `<a>` kept on purpose (full loads count page views). Lint 0 problems; local + production checks clean.
+
+---
+
 ## 2026-10-08 · Claude Code · Next 16 + Prisma 7 (D-084)
 
 - **Live (5389ccf):** Next 16.4 / React 19 / Prisma 7.10 with the pg adapter (pool 3 per client); deploy uses prisma.config.ts. Production verified (crawl, feeds, dashboard routes, DB connections 15 → 4). Rami logs in to the dashboard again (old session rotated out).

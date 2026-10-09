@@ -1,5 +1,17 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-10-09
+
+**D-085: Next 16 lint rules switched on and their findings fixed**
+- **Asked by:** Rami 2026-10-09 ("go with 12").
+- **Found:** with every rule of eslint-config-next 16 on, 73 findings: 31 setState-in-effect, 26 plain `<a>` to app routes, 4 components created during render, 3 Date.now() in render, 3 refs written during render, 2 variable-before-declaration (one a latent crash: the section page's infinite-scroll effect read `pages`, declared after an early return), 3 `location.href =` redirects, 1 missing dependency.
+- **Done:** new `app/components/hooks.ts` — `useNow` (one shared 30 s clock, null until hydrated), `useHydrated`, `useBrowserValue` (localStorage/matchMedia/feature detection), `useHtmlAttr` (theme, dashboard sidebar), `useEventValue` (install prompt), `useLoadWhen` (dashboard fetch-on-mount), all on `useSyncExternalStore` so server and hydration render the same markup. Applied in the homepage blocks (utility strip, Diaspora, Seasonal and MostRead get the server time as a prop until hydrated, Missed reads the previous visit once per page load, ForYou/newsletter/live strip/comments derive from stored values with a local override after a click), the nav list (external store), theme toggle, PWA install, search (answer keyed by its query), section page (list keyed by slug, mode from storage, infinite scroll bounded by PAGES), article avatar (an element), editor shortcuts (refs updated in an effect), 13 dashboard pages + live panel (`useLoadWhen`), AdminNav (menu open only for the path it was opened on; sidebar from the html attribute). Redirects: «تكرار» opens the copy with `router.push`; sign-out stays a full load (documented exception).
+- **Kept on purpose:** `no-html-link-for-pages` off — the site has no `next/link`; every navigation is a full load, which is what counts a GA4 page_view (D-074), a first-party read (D-069) and fresh ad slots. The consent bar's effect (D-074, verified) is an inline-documented exception.
+- **Verified:** `eslint .` 0 problems, tsc clean, production build; locally on the production build: browser matrix 40/40 clean including hydration errors; theme toggle, edition picks, live follow, «منذ …», stored preferences after reload (editions, follow, dark theme, «شو فاتك؟» + re-stamped visit), section mode stored and restored, search box/answers, comment name prefill, author initial, dashboard list (139), sidebar collapse persisted, «البيانات» 11 cards, samples card, stats, comments. Deployed e6c1c65; production: 20/20 page × mode checks clean incl. hydration errors, interactions (theme, editions, follow, «منذ …») confirmed.
+- **Status:** ✅ LIVE · 2026-10-09
+
+---
+
 ## 2026-10-08
 
 **D-084: Next 16.4 + React 19 and Prisma 7.10 (stack upgrade)**
