@@ -73,6 +73,11 @@
 /* ---- auth pages (styled-jsx) and admin read the same --k-adm roles ---- */
 :root[data-skin=ink] .adm-nav a.on{color:#fff}
 
+/* classic tints added before or after the skin branch (D-088): pink washes become the accent wash */
+:root[data-skin=ink] .pull:before{color:rgba(46,109,180,.18)}
+:root[data-skin=ink] .poll .opt .bar{background:var(--k-accent-soft)}
+:root[data-skin=ink] :is(.tabs span:hover,.tabs2 button:hover,.mostread .tabs button:hover,.market-item:hover){background:var(--k-accent-soft)}
+
 @media (prefers-reduced-motion:reduce){
   :root[data-skin=ink] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
