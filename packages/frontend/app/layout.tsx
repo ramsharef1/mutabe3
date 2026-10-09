@@ -53,7 +53,10 @@ export const viewport: Viewport = {
 // Ink & Signal is the default (D-088, client sign-off): <html data-skin="ink"> is rendered on the server, so
 // there is no flash. ?skin=classic switches this browser back to the old red look and remembers it (for side-by-
 // side checks); ?skin=ink returns to the default.
+// Consent (D-088): the bar is rendered with the page; a reader who already chose (consent.v1, 12 months) gets
+// <html data-consent> before paint and CSS hides the bar, so it never flashes.
 const BOOT = "try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}"
+  + "try{var cs=JSON.parse(localStorage.getItem('consent.v1')||'null');if(cs&&typeof cs.analytics==='boolean'&&Date.now()-cs.at<31536e6)document.documentElement.dataset.consent='1'}catch(e){}"
   + "try{var q=/[?&]skin=(ink|classic)(&|$)/.exec(location.search);if(q){if(q[1]==='classic')localStorage.setItem('skin','classic');else localStorage.removeItem('skin')}"
   + "if(localStorage.getItem('skin')==='classic'){delete document.documentElement.dataset.skin;"
   + "addEventListener('DOMContentLoaded',function(){var m=document.querySelector('meta[name=theme-color]');if(m)m.content='#990000'})}}catch(e){}"

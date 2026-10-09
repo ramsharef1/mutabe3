@@ -2370,3 +2370,4 @@ a.au:hover b{color:var(--k-text,var(--red))}
 :root[data-theme=dark] .consent a{color:var(--fg)}
 :root[data-theme=dark] .consent button{border-color:var(--fg);color:var(--fg)}
 :root[data-theme=dark] .consent .ok{background:var(--fg);color:var(--bg)}
+:root[data-consent] .consent{display:none} /* a choice is already stored (D-088) */

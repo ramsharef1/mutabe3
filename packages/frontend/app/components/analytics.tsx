@@ -44,8 +44,11 @@ function configureGa() {
 
 export function Analytics() {
   const path = usePathname() || '/';
-  const [open, setOpen] = useState(false);
-  const [host, setHost] = useState(false); // GA4 only on mutabe3.news itself (never localhost or a preview)
+  // D-088: the bar is in the server HTML so it paints with the page (it is a first visit's largest element — waiting
+  // for hydration put LCP at ~5 s on mobile). Readers who already chose never see it: the layout's pre-paint script
+  // sets <html data-consent> and CSS hides the bar; the effect below then closes it for good.
+  const [open, setOpen] = useState(true);
+  const [host, setHost] = useState(true); // GA4 only on mutabe3.news itself (never localhost or a preview)
   const [loadGa, setLoadGa] = useState(false);
   const staff = STAFF.test(path);
 
@@ -58,9 +61,9 @@ export function Analytics() {
     setHost(onHost);
     if (!onHost) return;
     const s = read();
-    if (s) { applyConsent(s.analytics); if (s.analytics && GA_ID && !GTM_ID) { configureGa(); setLoadGa(true); } }
-    else setOpen(true);
-    const reopen = () => setOpen(true);
+    if (s) { setOpen(false); applyConsent(s.analytics); if (s.analytics && GA_ID && !GTM_ID) { configureGa(); setLoadGa(true); } }
+    else delete document.documentElement.dataset.consent; // stored choice expired: show the bar again
+    const reopen = () => { delete document.documentElement.dataset.consent; setOpen(true); };
     addEventListener('mutabe3:consent', reopen);
     return () => removeEventListener('mutabe3:consent', reopen);
   }, [staff]);
