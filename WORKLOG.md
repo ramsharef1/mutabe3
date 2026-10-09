@@ -13,6 +13,12 @@
 
 ---
 
+## 2026-10-09 · Claude Code · root-mail loop stopped (D-086)
+
+- **Live:** root's mail delivered to /var/log/root-mail (rotated) instead of bouncing; 0 bounces since. No site files touched.
+
+---
+
 ## 2026-10-09 · Claude Code · Next 16 lint rules (D-085)
 
 - **Live (e6c1c65):** all new React Compiler rules on, 73 findings fixed via shared useSyncExternalStore hooks (one latent section-page crash among them); plain `<a>` kept on purpose (full loads count page views). Lint 0 problems; local + production checks clean.

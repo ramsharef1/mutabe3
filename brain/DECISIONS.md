@@ -2,6 +2,15 @@
 
 ## 2026-10-09
 
+**D-086: Root-mail bounce loop on the shared server stopped (server-level, no site files)**
+- **Asked by:** Rami 2026-10-09 ("go with 12" → server-level option). Origin (D-077 finding): another site's once-a-minute root cron job; its output went to root@hstgr.cloud (no MX) and bounced twice — ~124 bounce lines an hour, local only.
+- **Done (`root-mail-to-file`):** `/etc/postfix/virtual` `root@hstgr.cloud → root@localhost` (a local domain) and `/etc/aliases` `root → /var/log/root-mail` (owner `nobody`, 0600; `/etc/logrotate.d/root-mail` weekly, 4 kept, compressed). Both files backed up under /root/mail-dns-backup, restore on any failed check. No other site's files were read or changed; nothing about other sites printed (the repo's logs are public).
+- **Verified:** test message written to the file; 0 bounces in the minute after and none since (hourly: 124 → 14, all before the change); cron output now delivered locally.
+- **Note for the other site's owner:** the job still runs every minute and writes output; silencing it (output to /dev/null or `MAILTO=""`) belongs to that project.
+- **Status:** ✅ LIVE · 2026-10-09
+
+---
+
 **D-085: Next 16 lint rules switched on and their findings fixed**
 - **Asked by:** Rami 2026-10-09 ("go with 12").
 - **Found:** with every rule of eslint-config-next 16 on, 73 findings: 31 setState-in-effect, 26 plain `<a>` to app routes, 4 components created during render, 3 Date.now() in render, 3 refs written during render, 2 variable-before-declaration (one a latent crash: the section page's infinite-scroll effect read `pages`, declared after an early return), 3 `location.href =` redirects, 1 missing dependency.
