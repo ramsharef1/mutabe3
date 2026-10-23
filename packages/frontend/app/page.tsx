@@ -1,9 +1,9 @@
 // Server component (B9): articles + weather are fetched on the server and revalidated; interactive blocks are client islands.
 import { Img, SiteHeader, SiteFooter, SecHd, More, AdBanner, AdBox, Chip } from './components/site';
-import { Article, WRITERS, face, ago, readMins, excerpt, youTubeId } from './components/util';
+import { Article, ago, readMins, excerpt, youTubeId } from './components/util';
 import { VideoSection } from './components/video';
 import { UtilityStrip, MetAlert } from './components/blocks/utility';
-import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Carousel, Debate, WritersRail } from './components/blocks/fold';
+import { BreakingBar, Ticker, MarketStrip, Missed, LatestBox, PicksBox, ObitsBox, MostRead, Sixty, Carousel } from './components/blocks/fold';
 import { Crossings, Roads, Services, Royal, Decisions, VoteTracker, TaxCalc, CustomsCalc, ElecCalc, AdmissionCalc, Seasonal, Sports, Diaspora, Ugc, Greetings, Memory, Capture, FactCheck, Jobs, Timeline } from './components/blocks/jordan';
 import { TrendingTopics } from './components/blocks/topics';
 import { CardShare } from './components/blocks/share';
@@ -170,7 +170,8 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
   const inBox = new Set<string>();
   const sec = (slug: string, n: number): Article[] => {
     const own = (bySection.get(slug) || []).filter((a) => !inBox.has(a.id));
-    const rank = (a: Article) => (fold.has(a.id) ? 2 : 0) + (a.kind === 'SPONSORED' ? 1 : 0);
+    // D-091: real pieces always before labelled samples, so a section's samples give way as the desk publishes
+    const rank = (a: Article) => (a.isSample ? 4 : 0) + (fold.has(a.id) ? 2 : 0) + (a.kind === 'SPONSORED' ? 1 : 0);
     const out = own.map((a, i) => ({ a, i })).sort((x, y) => rank(x.a) - rank(y.a) || x.i - y.i).map((x) => x.a).slice(0, n);
     out.forEach((a) => inBox.add(a.id));
     return out;
@@ -184,14 +185,17 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
   const health = sec('health', 4);
   const pano = sec('panorama', 7);
   const writerPieces = sec('writers', 4);
+  // Editor's picks: the desk's list from /dashboard/homepage, else (demo on) five labelled samples (D-091).
+  const samplePicks = demo && !curated.picks.length ? [...new Map([...bySection.values()].flat().filter((a) => a.isSample).map((a) => [a.id, a])).values()].slice(0, 5) : [];
+  const picks = curated.picks.length ? curated.picks : samplePicks;
   const ticker = [hero, ...mid.slice(0, 5)];
   const updated = (list: Article[]) => (list[0] ? `تحديث ${ago(list[0].publishedAt)}` : undefined);
 
   // Lower boxes, paired so a row never holds a lone empty half: the newsletter box sits next to the fact-check
   // when the desk keeps one, otherwise next to health.
   const healthSec = health.length > 0 && <div className="sec"><SecHd t="صحة وبيئة" slug="health" /><Smalls items={health} cols={1} /><More slug="health" /></div>;
-  const jobsSec = (data.jobs || demo) && <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta={upd(data.jobs) ?? 'ديوان الخدمة المدنية · دائرة العطاءات'} /><Jobs items={data.jobs?.items} />{!data.jobs && <More slug="jobs" />}</div>;
-  const factsSec = (data.facts || demo) && <div className="sec"><SecHd t="تحقق المتابع" meta={upd(data.facts) ?? 'نتحقق من الشائعات المنتشرة على فيسبوك وواتساب'} /><FactCheck items={data.facts?.items} /></div>;
+  const jobsSec = (data.jobs || demo) && <div className="sec"><SecHd t="وظائف وعطاءات" slug="jobs" meta={upd(data.jobs)} sample={!data.jobs} /><Jobs items={data.jobs?.items} />{!data.jobs && <More slug="jobs" />}</div>;
+  const factsSec = (data.facts || demo) && <div className="sec"><SecHd t="تحقق المتابع" meta={upd(data.facts)} sample={!data.facts} /><FactCheck items={data.facts?.items} /></div>;
 
   return (
     <div className="am home">
@@ -243,15 +247,15 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         </div>
 
         {/* Picks + Obituaries below the fold (desktop) so the sidebar height matches the main column;
-            picks only once an editor has chosen them in /dashboard/homepage (or the demo defaults while demo is on) */}
-        {(curated.picks.length > 0 || demo || data.obits) && <div className="desk">
+            picks once an editor has chosen them in /dashboard/homepage (labelled samples while demo is on) */}
+        {(picks.length > 0 || demo || data.obits) && <div className="desk">
           <div className="two" style={{ marginTop: 12 }}>
-            {(curated.picks.length > 0 || demo) && <div className="sec"><PicksBox articles={articles} picks={curated.picks} /></div>}
+            {picks.length > 0 && <div className="sec"><PicksBox articles={articles} picks={picks} sample={!curated.picks.length} /></div>}
             {(data.obits || demo) && <div className="sec"><ObitsBox items={data.obits?.items} /></div>}
           </div>
         </div>}
 
-        {(curated.picks.length > 0 || demo) && <div className="mob"><PicksBox articles={articles} picks={curated.picks} rail /></div>}
+        {picks.length > 0 && <div className="mob"><PicksBox articles={articles} picks={picks} rail /></div>}
 
         <AdBanner variant={4} className="adrow ad90" />
 
@@ -262,16 +266,10 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         </div>}
 
         {/* real columnists (newest opinion piece each) replace the illustrative band as soon as one exists (D-067) */}
-        {writers.length ? <WritersBand authors={writers} className="writers mob" /> : demo && (
-          <div className="writers mob">
-            {WRITERS.slice(0, 8).map((w, k) => (
-              <a key={w} className="writer" href="/category/writers"><div className="ph"><Img src={face(k)} /></div><div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات', 'المناخ ليس ترفاً', 'الإعلام الرقمي', 'كرة القدم كقوة ناعمة'][k]}</div></a>
-            ))}
-          </div>
-        )}
+        {writers.length > 0 && <WritersBand authors={writers} className="writers mob" />}
 
         {/* ────────── ZONE 4 · CORE NEWS (contiguous, native ads woven in) ────────── */}
-        {(data.royal || demo) && <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta={upd(data.royal) ?? 'أنشطة اليوم'} /><Royal items={data.royal?.items} /></div>}
+        {(data.royal || demo) && <div className="sec roy"><SecHd t="الديوان الملكي العامر" slug="politics" cls="gold" meta={upd(data.royal)} sample={!data.royal} /><Royal items={data.royal?.items} /></div>}
 
         {econAll.length > 0 && <div className="sec eco">
           <SecHd t="اقتصاد وأسواق" slug="economy" meta={updated(econAll)} />
@@ -281,7 +279,7 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         {/* today's digest */}
         {data.sixty || demo ? (
           <div className="two">
-            <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" /><Sixty items={data.sixty?.items} /></div>
+            <div className="sec" style={{ flex: 2 }}><SecHd t="في 60 ثانية" meta="قصة اليوم مختصرة" sample={!data.sixty} /><Sixty items={data.sixty?.items} /></div>
             <div className="sec" style={{ flex: 1 }}><SecHd t="الأكثر قراءة" /><MostRead articles={newsOnly} at={now.getTime()} /></div>
           </div>
         ) : newsOnly.length >= 3 && (
@@ -297,13 +295,13 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
 
         {demo ? (<>
           <div className="two">
-            <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta={upd(data.decisions) ?? 'جلسة الثلاثاء · 14 قراراً'} /><Decisions items={data.decisions?.items} /><More slug="parliament" /></div>
-            <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" meta="من محاضر مجلس النواب" /><VoteTracker /></div>
+            <div className="sec"><SecHd t="قرارات مجلس الوزراء وتعيينات" slug="parliament" meta={upd(data.decisions)} sample={!data.decisions} /><Decisions items={data.decisions?.items} /><More slug="parliament" /></div>
+            <div className="sec"><SecHd t="كيف صوّت نائبك؟" slug="parliament" sample /><VoteTracker /></div>
           </div>
 
           <div className="two">
-            <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" meta="حيّ · من الاتحاد الأردني" /><Sports /></div>
-            <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" /><Diaspora fx={data.fx} /></div>
+            <div className="sec"><SecHd t="النشامى ودوري المحترفين" slug="sports" sample /><Sports /></div>
+            <div className="sec"><SecHd t="الأردنيون في الخارج" meta="يظهر مميزاً للزائر من الخليج" sample={!data.fx} /><Diaspora fx={data.fx} /></div>
           </div>
         </>) : (data.decisions || data.fx) && (
           <div className="two">
@@ -317,16 +315,8 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         {/* opinion — real columnists when the desk has published opinion pieces (D-067); otherwise the
             illustrative portraits and columns while the demo switch is on (F-02) */}
         {writers.length > 0 && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · مقالات مختارة" /><WritersBand authors={writers} /><More slug="writers" /></div>}
-        {!writers.length && demo && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · ديوان · مقالات مختارة" />
-          <div className="writers desk">
-            {WRITERS.slice(0, 8).map((w, k) => (
-              <a key={w} className="writer" href="/category/writers">
-                <div className="ph"><Img src={face(k)} /></div>
-                <div className="t"><span className="name">{w}</span>{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار: قراءة في قرار المركزي', 'ماذا بعد اجتماع عمّان؟', 'الجامعات بين التصنيف والتمويل', 'شباب المحافظات وفرص العمل', 'المناخ ليس ترفاً', 'الإعلام الرقمي ومسؤولية الكلمة', 'كرة القدم كقوة ناعمة'][k]}</div>
-              </a>
-            ))}
-          </div>
-          <WritersRail articles={writerPieces} /><div id="debate" style={{ marginTop: 12, scrollMarginTop: 80 }}><Debate /></div><More slug="writers" /></div>}
+        {/* no columnist profile yet: the section's own pieces, labelled samples first to go (D-091) — never invented names or faces */}
+        {!writers.length && demo && writerPieces.length > 0 && <div className="sec"><SecHd t="كتاب المتابع" slug="writers" meta="آراء · وجهة نظر · مقالات مختارة" sample={writerPieces.every((a) => a.isSample)} /><Cards items={writerPieces} /><More slug="writers" /></div>}
 
         {(edu.length > 0 || parl.length > 0) && <div className="two">
           {edu.length > 0 && <div className="sec"><SecHd t="تعليم وجامعات" slug="education" /><Cards items={edu} /><More slug="education" /></div>}
@@ -340,12 +330,12 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
         {/* ────────── ZONE 5 · SERVICES & TOOLS — desk-managed rows when fresh (D-076), illustrative only in demo mode ────────── */}
         {(data.crossings || data.roads || data.services || demo) && (
           <div className="three">
-            {(data.crossings || demo) && <div className="sec"><SecHd t="المعابر والمطار الآن" meta={upd(data.crossings) ?? 'كل 15 دقيقة'} /><Crossings items={data.crossings?.items} /></div>}
-            {(data.roads || demo) && <div className="sec"><SecHd t="الطرق الآن" meta={upd(data.roads) ?? 'مباشر'} /><Roads items={data.roads?.items} updatedAt={data.roads?.updatedAt} /></div>}
-            {(data.services || demo) && <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta={upd(data.services) ?? 'من الجهات الرسمية'} /><Services items={data.services?.items} /></div>}
+            {(data.crossings || demo) && <div className="sec"><SecHd t="المعابر والمطار الآن" meta={upd(data.crossings)} sample={!data.crossings} /><Crossings items={data.crossings?.items} /></div>}
+            {(data.roads || demo) && <div className="sec"><SecHd t="الطرق الآن" meta={upd(data.roads)} sample={!data.roads} /><Roads items={data.roads?.items} updatedAt={data.roads?.updatedAt} /></div>}
+            {(data.services || demo) && <div className="sec"><SecHd t="خدمات وتواريخ تهمّك" meta={upd(data.services)} sample={!data.services} /><Services items={data.services?.items} /></div>}
           </div>
         )}
-        {demo && <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية · تُحدَّث مع كل قرار رسمي" /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>}
+        {demo && <div className="sec"><SecHd t="أدوات المتابع" meta="حسابات تقديرية" sample /><div className="tools"><TaxCalc /><CustomsCalc /><ElecCalc /><AdmissionCalc /></div></div>}
 
         {(jobsSec || (factsSec && healthSec)) && <div className="two">{jobsSec}{factsSec && healthSec}</div>}
 
@@ -361,9 +351,9 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
           <CommunityBand />
 
           <div className="three">
-            <div className="sec"><SecHd t="عين المواطن" meta="محتوى القراء · مُراجَع" /><Ugc /></div>
-            <div className="sec"><SecHd t="تهاني ومبروك" meta="إعلانات مبوبة" /><Greetings /></div>
-            <div className="sec"><SecHd t="ذاكرة الأردن" meta="يومياً" /><Memory /></div>
+            <div className="sec"><SecHd t="عين المواطن" meta="محتوى القراء · مُراجَع" sample /><Ugc /></div>
+            <div className="sec"><SecHd t="تهاني ومبروك" meta="إعلانات مبوبة" sample /><Greetings /></div>
+            <div className="sec"><SecHd t="ذاكرة الأردن" sample /><Memory /></div>
           </div>
 
           {/* J13–J15 seasonal (in season or ?season=all) */}
@@ -387,9 +377,9 @@ export default async function Home(props: { searchParams?: Promise<{ season?: st
 
         {/* video: the desk's VIDEO articles (D-068); the placeholder playlist only while none exists and the demo switch is on */}
         {videos.length > 0
-          ? <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection items={videos} /></div>
-          : demo && <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" /><VideoSection /></div>}
-        {caricatures.some((a) => a.featuredImageUrl) && <div className="sec"><SecHd t="كاريكاتير المتابع" slug="caricature" /><CaricatureBand items={caricatures} /></div>}
+          ? <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" sample={videoArts.filter((a) => a.kind === 'VIDEO').every((a) => a.isSample)} /><VideoSection items={videos} /></div>
+          : demo && <div className="sec"><SecHd t="فيديو المتابع" slug="video" meta="يُحمَّل المشغّل عند الضغط" sample /><VideoSection /></div>}
+        {caricatures.some((a) => a.featuredImageUrl) && <div className="sec"><SecHd t="كاريكاتير المتابع" slug="caricature" sample={caricatures.every((a) => a.isSample)} /><CaricatureBand items={caricatures} /></div>}
       </div>
 
       <SiteFooter />

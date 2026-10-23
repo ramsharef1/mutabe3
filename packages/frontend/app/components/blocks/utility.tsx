@@ -53,7 +53,7 @@ export function MetAlert({ item }: { item?: Row }) {
   return (
     <div className="alert" role="status">
       <span className="ic" aria-hidden>!</span>
-      <div className="txt"><b>{a.title}</b><p>{a.text}</p></div>
+      <div className="txt"><b>{!a.real && <span className="chip sample">مادة تجريبية</span>} {a.title}</b><p>{a.text}</p></div>
       {a.closures.length > 0 && (
         <div className="sch">
           <small>الدوام حسب المحافظة{a.real ? ' — المعطّلة بالأحمر' : ''}</small>

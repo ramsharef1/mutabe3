@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Article, Img, Ico, ago, Chip, WRITERS, face } from '../site';
-import { MARKET, PICKS, OBITS, SIXTY, BreakingItem } from '../feeds';
+import { Article, Img, Ico, ago, Chip } from '../site';
+import { MARKET, OBITS, SIXTY, BreakingItem } from '../feeds';
 import { usePoll, pct, votesAr, PollOpt } from '../polls';
 import { PushToggle } from '../push';
 import { type Row, type Fx } from '../../lib/data';
@@ -105,16 +105,16 @@ export function LatestBox({ items }: { items: Article[] }) {
   );
 }
 
-export function PicksBox({ articles, picks, rail = false }: { articles: Article[]; picks?: Article[]; rail?: boolean }) {
+export function PicksBox({ articles, picks, rail = false, sample = false }: { articles: Article[]; picks?: Article[]; rail?: boolean; sample?: boolean }) {
   // Curated list from /dashboard/homepage when set; otherwise the built-in defaults.
-  const list = picks && picks.length ? picks : (PICKS.map((id) => articles.find((a) => a.id === id)).filter(Boolean) as Article[]);
+  const list = picks || [];
   if (!list.length) return null;
   if (rail) {
     return <div className="picks-rail">{list.map((a, i) => <a key={a.id} href={link(a)}><i>{i + 1}</i>{a.title}</a>)}</div>;
   }
   return (
     <div className="box">
-      <div className="hd"><span>مختارات المحرر</span><i /></div>
+      <div className="hd"><span>مختارات المحرر</span>{sample && <span className="chip sample">مادة تجريبية</span>}<i /></div>
       <ol className="picks">{list.map((a) => <li key={a.id}><a href={link(a)}>{a.title}</a></li>)}</ol>
     </div>
   );
@@ -126,7 +126,7 @@ export function ObitsBox({ items }: { items?: Row[] }) {
   const list = src.filter((o) => !q || o.n.includes(q) || o.a.includes(q) || o.gov.includes(q)).slice(0, 4);
   return (
     <div className="box obits">
-      <div className="hd"><a href="/category/obituaries">وفيات</a><i /></div>
+      <div className="hd"><a href="/category/obituaries">وفيات</a>{!items && <span className="chip sample">مادة تجريبية</span>}<i /></div>
       <form className="obsearch" onSubmit={(e) => e.preventDefault()}>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث باسم المتوفى أو العائلة أو المنطقة…" aria-label="بحث في الوفيات" />
         <button type="submit">بحث</button>
@@ -241,18 +241,3 @@ export function Debate() {
     </div>
   );
 }
-
-/* ---- merged opinion rail (A1+A2) ---- */
-export function WritersRail({ articles }: { articles: Article[] }) {
-  return (
-    <div className="rail">
-      {[0, 1, 3, 5].map((k, i) => (
-        <a className="w" key={k} href={articles[i] ? link(articles[i]) : '/category/writers'}>
-          <img src={face(k)} alt="" />
-          <span><span className="name">{WRITERS[k]}</span><span className="t">{['لماذا تأخر قانون الضمان الجديد؟', 'الدينار والدولار: قراءة في قرار المركزي', 'الجامعات بين التصنيف والتمويل', 'المناخ ليس ترفاً'][i]}</span><small>{articles[i]?.summary || 'قراءة في القرار الأخير وأثره على المواطن والسوق…'}</small></span>
-        </a>
-      ))}
-    </div>
-  );
-}
-

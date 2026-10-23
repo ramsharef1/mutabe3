@@ -13,7 +13,7 @@ import { useNow, useBrowserValue } from '../hooks';
 // Real coverage (D-068) passes `current` from GET /api/live/current; without it the seeded demo story is used.
 export function LiveStrip({ current }: { current?: CurrentLive | null }) {
   const id = current?.id || 'art-006';
-  const title = current?.title || 'الاجتماع العربي في عمّان';
+  const title = current?.title || 'مثال على تغطية مباشرة'; // the sample story (D-091)
   const href = current ? `/article/${encodeURIComponent(current.slug || current.id)}` : `/article/${id}`;
   const entries: LiveEntry[] | undefined = current ? [{ ...current.latest }] : LIVE[id];
   const count = current ? current.count : entries?.length || 0;
@@ -46,7 +46,7 @@ export function LiveStrip({ current }: { current?: CurrentLive | null }) {
   return (
     <div className="livestrip">
       <a className="body" href={href}>
-        <span className="badge"><i />مباشر</span>
+        {current ? <span className="badge"><i />مباشر</span> : <span className="chip sample">مادة تجريبية</span>}
         <span className="txt">
           <span className="ttl">{current ? title : `تطور القصة: ${title}`}</span>
           <span className="upd"><time suppressHydrationWarning>{fmtTime(latest.at)}</time>{latest.title || latest.text}</span>

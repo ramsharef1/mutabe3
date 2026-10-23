@@ -268,9 +268,10 @@ export function SiteFooter() {
   );
 }
 
-export const SecHd = ({ t, slug, meta, cls = '' }: { t: string; slug?: string; meta?: string; cls?: string }) => (
+// `sample` marks a block that shows labelled sample material until the desk fills it (D-091).
+export const SecHd = ({ t, slug, meta, sample = false, cls = '' }: { t: string; slug?: string; meta?: string; sample?: boolean; cls?: string }) => (
   <div className={`hd ${cls}`}>
-    <b>{slug ? <a href={`/category/${slug}`}>{t}</a> : t}</b><i aria-hidden />
+    <b>{slug ? <a href={`/category/${slug}`}>{t}</a> : t}</b>{sample && <span className="chip sample">مادة تجريبية</span>}<i aria-hidden />
     {meta && <span className="meta">{meta}</span>}
   </div>
 );

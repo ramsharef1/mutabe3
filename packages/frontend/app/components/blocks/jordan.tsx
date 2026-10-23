@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Article, Ico, ago, face, Img } from '../site';
+import { Article, Ico, ago, Img } from '../site';
 import { CROSSINGS, ROADS, SERVICES, ROYAL, DECISIONS, VOTE, TAWJIHI, ELECTIONS, MATCH, LEAGUE, FX, CLOCKS, GULF_TZ, UGC, GREETINGS, MEMORY, JOBS, FACTS, prayerTimes, Season } from '../feeds';
 import { LIVE, fmtTime } from '../content';
 import { subscribe, CONFIRM_MSG } from '../newsletter';
@@ -26,7 +26,7 @@ export function Roads({ items, updatedAt }: { items?: Row[]; updatedAt?: string 
   return (
     <>
       <ul className="st">{list.map((r) => <li key={r.n}><span className={`dot ${r.st}`} aria-hidden /><b>{r.n}</b><small>{r.s}</small></li>)}</ul>
-      <small className="src" suppressHydrationWarning>{items ? `آخر تحديث ${agoText(updatedAt)}` : 'المصدر: إدارة السير · آخر تحديث منذ 4 دقائق'}</small>
+      <small className="src" suppressHydrationWarning>{items ? `آخر تحديث ${agoText(updatedAt)}` : 'مادة تجريبية — يحدّثها التحرير'}</small>
     </>
   );
 }
@@ -66,7 +66,7 @@ export function VoteTracker() {
       <div className="leg"><span className="y">■ مع {VOTE.yes}</span><span className="n">■ ضد {VOTE.no}</span><span className="a">■ غياب/امتناع {VOTE.abs}</span><span className="d">{VOTE.date}</span></div>
       <form className="srch" onSubmit={(e) => e.preventDefault()}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث عن نائب دائرتك بالاسم أو المنطقة أو الحزب…" aria-label="بحث عن نائب" /><button type="submit">بحث</button></form>
       <ul className="mps">
-        {mps.slice(0, 3).map((m) => <li key={m.n} className="mp"><img src={face(m.face)} alt="" /><div><b>{m.n}</b><small>{m.d} · {m.p}</small></div><span className={`v ${m.v === 'مع' ? 'y' : m.v === 'ضد' ? 'n' : 'a'}`}>صوّت: {m.v}</span></li>)}
+        {mps.slice(0, 3).map((m) => <li key={m.n} className="mp"><span className="au-init" aria-hidden>ن</span><div><b>{m.n}</b><small>{m.d} · {m.p}</small></div><span className={`v ${m.v === 'مع' ? 'y' : m.v === 'ضد' ? 'n' : 'a'}`}>صوّت: {m.v}</span></li>)}
         {!mps.length && <li className="none">لا نتائج — جرّب اسم الدائرة</li>}
       </ul>
     </div>
@@ -224,7 +224,7 @@ export function Diaspora({ fx }: { fx?: Fx | null }) {
           </>
         : <>
             <ul className="fx">{FX.map(([a, b]) => <li key={a}><span>{a}</span><b>{b}</b></li>)}</ul>
-            <p className="note"><b>يهم المغترب:</b> إعفاء جمركي للعائدين · مواعيد السفارة في الرياض · رحلات عمّان–الدمام من 120 د</p>
+            <p className="note">مادة تجريبية — الأسعار المرجعية تظهر هنا يومياً.</p>
           </>}
     </div>
   );
@@ -242,19 +242,11 @@ export function Ugc() {
   );
 }
 export function Greetings() {
-  const [list, setList] = useState(GREETINGS);
-  const [open, setOpen] = useState(false); const [txt, setTxt] = useState(''); const [kind, setKind] = useState('نجاح');
-  const add = () => { if (!txt.trim()) return; setList([{ k: kind, c: GREETINGS.find((g) => g.k === kind)?.c || '#1b5e20', t: txt.trim() }, ...list]); setTxt(''); setOpen(false); };
+  // The old «نشر (5 د)» form only added the text in the reader's own browser — no payment, nothing published (D-091).
   return (
     <div className="greet">
-      <ul>{list.slice(0, 4).map((g, i) => <li key={i}><span className="k" style={{ background: g.c }}>{g.k}</span>{g.t}</li>)}</ul>
-      {open ? (
-        <form className="addf" onSubmit={(e) => { e.preventDefault(); add(); }}>
-          <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="نوع التهنئة">{['نجاح', 'زفاف', 'تخرج', 'مولود'].map((k) => <option key={k}>{k}</option>)}</select>
-          <input value={txt} onChange={(e) => setTxt(e.target.value)} placeholder="نص التهنئة…" aria-label="نص التهنئة" />
-          <button type="submit">نشر (5 د)</button>
-        </form>
-      ) : <button type="button" className="add" onClick={() => setOpen(true)}>أضف تهنئتك — 5 دنانير · تظهر خلال ساعة</button>}
+      <ul>{GREETINGS.slice(0, 4).map((g, i) => <li key={i}><span className="k" style={{ background: g.c }}>{g.k}</span>{g.t}</li>)}</ul>
+      <a className="add" href="/advertise">لنشر تهنئتك تواصل مع قسم الإعلان</a>
     </div>
   );
 }
@@ -302,7 +294,7 @@ export function Capture() {
 /* ---------- C14 fact-check ---------- */
 export function FactCheck({ items }: { items?: Row[] }) {
   const list = items ? items.map((r) => ({ c: String(r.c), v: String(r.v), col: VERDICT_COLORS[String(r.v)] || '#455a64', url: String(r.url || '') })) : FACTS.map((f) => ({ ...f, url: '' }));
-  return <div className="fact">{list.map((f) => <a className="c" key={f.c} href={f.url || '/tag/%D8%A7%D9%84%D8%AD%D9%83%D9%88%D9%85%D8%A9'}><small>الادعاء</small><b>{f.c}</b><span className="v" style={{ background: f.col }}>{f.v}</span></a>)}</div>;
+  return <div className="fact">{list.map((f) => <a className="c" key={f.c} href={f.url || '/editorial-policy'}><small>الادعاء</small><b>{f.c}</b><span className="v" style={{ background: f.col }}>{f.v}</span></a>)}</div>;
 }
 
 /* ---------- C10 jobs ---------- */
@@ -312,7 +304,7 @@ export function Jobs({ items }: { items?: Row[] }) {
 }
 
 /* ---------- C8 story timeline (from LIVE data) ---------- */
-export function Timeline({ id = 'art-006', title = 'الاجتماع العربي في عمّان' }: { id?: string; title?: string }) {
+export function Timeline({ id = 'art-006', title = 'مثال على قصة متطورة' }: { id?: string; title?: string }) {
   const e = LIVE[id];
   if (!e) return null;
   return (

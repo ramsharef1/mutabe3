@@ -11,7 +11,7 @@ export function CommunityBand() {
       <div className="cm-wrap">
         <div className="cm-poll"><Poll /></div>
         <div className="cm-invite">
-          <a className="cm-cta" href="#debate">
+          <a className="cm-cta" href="/category/writers">
             <span className="cm-ic vs">وجهان</span>
             <span className="cm-tx"><b>اقرأ الرأي والرأي الآخر</b><small>صوّت لوجهة النظر التي تؤيدها</small></span>
             <span className="cm-arw" aria-hidden>‹</span>

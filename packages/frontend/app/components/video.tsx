@@ -5,14 +5,15 @@ import { useState } from 'react';
 export interface VideoItem { id: string; title: string; href?: string }
 
 // Placeholder playlist, shown only while the demo switch is on and the desk has no VIDEO articles (D-068).
+// Titles say «مثال» (D-091): these clips are not the site's own reports.
 export const DEMO_VIDEOS: VideoItem[] = [
-  { id: 'LXb3EKWsInQ', title: 'جولة مصورة: معالم الأردن السياحية بتقنية 4K' },
-  { id: 'aqz-KE-bpKQ', title: 'المتابع يرافق فرق الإنقاذ في تدريب ميداني' },
-  { id: 'eRsGyueVLvQ', title: 'حوار خاص: مستقبل الإعلام الرقمي في المملكة' },
-  { id: '1La4QzGeaaQ', title: 'تقرير: مشاريع الطاقة المتجددة في الجنوب' },
-  { id: 'YE7VzlLtp-4', title: 'لقطات من افتتاح معرض عمّان الدولي للكتاب' },
-  { id: 'M7lc1UVf-VE', title: 'ورشة تدريبية لصحفيي المتابع حول التحقق من الأخبار' },
-  { id: 'ScMzIvxBSi4', title: 'المتابع في الميدان: يوم مع مزارعي الأغوار' },
+  { id: 'LXb3EKWsInQ', title: 'مثال على مقطع فيديو — 1' },
+  { id: 'aqz-KE-bpKQ', title: 'مثال على مقطع فيديو — 2' },
+  { id: 'eRsGyueVLvQ', title: 'مثال على مقطع فيديو — 3' },
+  { id: '1La4QzGeaaQ', title: 'مثال على مقطع فيديو — 4' },
+  { id: 'YE7VzlLtp-4', title: 'مثال على مقطع فيديو — 5' },
+  { id: 'M7lc1UVf-VE', title: 'مثال على مقطع فيديو — 6' },
+  { id: 'ScMzIvxBSi4', title: 'مثال على مقطع فيديو — 7' },
 ];
 
 const thumb = (id: string) => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;

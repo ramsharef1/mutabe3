@@ -67,23 +67,28 @@ export async function parseProfile(prisma: PrismaClient, body: any, selfId: stri
 const PUBLISHED = { status: 'PUBLISHED' as const };
 /** Opt-in: staff, with a page address and a job title. */
 const PUBLIC_PROFILE = { role: { in: [...STAFF] }, slug: { not: null }, jobTitle: { not: null } } satisfies Prisma.UserWhereInput;
-const LIST_ARTICLE = { id: true, slug: true, title: true, summary: true, featuredImageUrl: true, publishedAt: true, kind: true, category: { select: { name: true, slug: true } } } as const;
+const LIST_ARTICLE = { id: true, slug: true, title: true, summary: true, featuredImageUrl: true, publishedAt: true, kind: true, isSample: true, category: { select: { name: true, slug: true } } } as const;
 
 export function authorRoutes(prisma: PrismaClient) {
   const router = Router();
 
   // GET /api/authors?kind=OPINION&take=12 — public authors, the one with the newest piece first,
   // each with that newest piece (of `kind` when given). Sponsored pieces never count.
+  // OPINION means a column: the «رأي» kind or anything filed in the columnists' section «كتاب المتابع»
+  // (the desk files columns there as «خبر» too), real pieces before labelled samples (D-091).
   router.get('/authors', async (req: Request, res: Response) => {
     try {
-      const kind = req.query.kind === 'OPINION' ? 'OPINION' as const : undefined;
+      const opinion = req.query.kind === 'OPINION';
       const take = Math.min(Math.max(Number(req.query.take) || 12, 1), 30);
-      const where: Prisma.ArticleWhereInput = { ...PUBLISHED, kind: kind ?? { not: 'SPONSORED' } };
+      const where: Prisma.ArticleWhereInput = {
+        ...PUBLISHED, kind: { not: 'SPONSORED' },
+        ...(opinion ? { OR: [{ kind: 'OPINION' }, { category: { slug: 'writers' } }] } : {}),
+      };
       const users = await prisma.user.findMany({
         where: { ...PUBLIC_PROFILE, articles: { some: where } },
         select: {
           ...AUTHOR_PUBLIC, bio: true,
-          articles: { where, orderBy: { publishedAt: 'desc' }, take: 1, select: LIST_ARTICLE },
+          articles: { where, orderBy: [{ isSample: 'asc' }, { publishedAt: 'desc' }], take: 1, select: LIST_ARTICLE },
           _count: { select: { articles: { where: { ...PUBLISHED, kind: { not: 'SPONSORED' } } } } },
         },
       });

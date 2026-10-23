@@ -54,12 +54,12 @@ export interface LiveEntry { id?: string; at: string; title?: string | null; tex
 // genuinely recent (real entries will carry real times from the CMS).
 const agoISO = (min: number) => new Date(Date.now() - min * 60000).toISOString();
 export const LIVE: Record<string, LiveEntry[]> = {
+  // Sample entries (D-091): what a running story looks like — no event, quote or official presented as real.
   'art-006': [
-    { at: agoISO(14), title: 'انتهاء الجلسة الافتتاحية', text: 'اختتمت الجلسة الافتتاحية للاجتماع العربي في عمّان بالتأكيد على وحدة الأراضي السورية، ومن المقرر أن تبدأ الجلسات المغلقة بعد قليل.', key: true },
-    { at: agoISO(49), text: 'وزير الخارجية: «الأردن سيواصل دوره في تقريب وجهات النظر بين الأطراف كافة».' },
-    { at: agoISO(94), title: 'وصول الوفود', text: 'وصلت وفود ثماني دول عربية إلى مقر الاجتماع، وسط إجراءات أمنية مشددة في محيط المنطقة.' },
-    { at: agoISO(124), text: 'بدأ التسجيل الإعلامي لتغطية الاجتماع، بحضور أكثر من 60 وسيلة إعلام محلية وعربية.' },
-    { at: agoISO(169), title: 'بدء التغطية المباشرة', text: 'يتابع موقع المتابع الاخباري تطورات الاجتماع العربي في عمّان لحظة بلحظة.' },
+    { at: agoISO(14), title: 'مثال: تحديث بعنوان', text: 'مثال على تحديث في تغطية مباشرة — يظهر الأحدث أولاً مع وقته، ويُبرَز المهم منها.', key: true },
+    { at: agoISO(49), text: 'مثال: تصريح منسوب إلى صاحبه مع رابط مصدره.' },
+    { at: agoISO(94), title: 'مثال: تطور جديد', text: 'مثال على تحديث يضيف معلومة أو صورة إلى القصة.' },
+    { at: agoISO(169), title: 'بدء التغطية', text: 'مثال: هكذا تبدأ التغطية المباشرة — مادة تجريبية تُستبدل بتغطية حقيقية عند أول قصة مباشرة.' },
   ],
 };
 export const isLive = (id?: string) => !!(id && LIVE[id]);
