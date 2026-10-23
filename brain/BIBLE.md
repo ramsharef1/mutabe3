@@ -38,7 +38,7 @@ Findings S-01…S-19 (2 critical, 8 high) — launch-critical subset fixed in we
 | ID | Finding | Severity | Status |
 |---|---|---|---|
 | F-01 | Footer links to about/contact/advertise/privacy/terms are dead (`#`); no imprint, corrections or privacy page | High | **in-progress (D-053)** — seven pages live as counsel drafts with a visible banner; footer wired; needs names, mailboxes and counsel sign-off |
-| F-02 | ~20 homepage blocks, live strip, video, columnists and 19 articles are demo/invented data | High | **in-progress (D-089)** — code done («أعلن معنا», filler/dead links removed, article page without invented dressing, empty-safe homepage); samples republished at Rami's request and the demo blocks are on again |
+| F-02 | ~20 homepage blocks, live strip, video, columnists and 19 articles are demo/invented data | High | **in-progress (D-089)** — code done («أعلن معنا», filler/dead links removed, article page without invented dressing, empty-safe homepage); samples republished at Rami's request; every block filled with labelled sample material, examples naming no real person or office (D-091) |
 | F-03 | No photo credit field; every cover captioned «تصوير: المتابع» | High | **done (D-054)** — credit/caption fields, credit shown only when set, JSON-LD ImageObject |
 | F-04 | `dateModified` = `updatedAt`, bumped by every view → fake freshness signal | Medium | **done (D-052)** — raw increment, `updatedAt` moves only on edits |
 | F-05 | Category pages repeat articles and inflate counts; unknown slugs show other categories | Medium | **done (D-054, D-058)** — honest counts; server-side title/description/canonical + CollectionPage JSON-LD for category, tag and search pages; unknown category = 404; thin tags and search results `noindex` |

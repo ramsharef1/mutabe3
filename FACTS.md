@@ -56,7 +56,7 @@
 
 | Fact | Value | Date |
 |---|---|---|
-| Articles | 0 real · 150 labelled samples published again at Rami's request (retired and restored 2026-10-10, D-089); demo blocks on | 2026-10-10 ✅ |
+| Articles | 23 real since 2026-10-11 (اخبار الاردن 11, اقتصاد 10, كتاب المتابع 2) + 150 labelled samples; every homepage block filled, samples labelled (D-091) | 2026-10-23 ✅ |
 | Ads | all four zones show the site's «أعلن معنا» promo (mode `demo`, D-089); house banners with dates, first-party counts, CSV report ready (D-057) | 2026-10-10 ✅ |
 | Analytics | GA4 measurement id G-YH1LGW1B1D (web stream 16067707038, Rami's Google account) behind the consent bar, basic consent; first-party stats at /dashboard/stats (D-069, D-074) | 2026-10-08 ✅ |
 

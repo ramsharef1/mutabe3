@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-10-23 · Claude Code · every homepage block filled, labelled (D-091)
+
+- **Live (56a100f):** all 31 homepage blocks filled — section boxes real-first, data blocks with labelled examples («مادة تجريبية», «مثال: …») naming no real person or office; editor's picks five labelled samples until the desk picks; «كتاب المتابع» shows the real column. Verified on production (desktop, 375 px, no console errors).
+- **Status found:** 23 real articles since 2026-10-11; server outage 2026-10-21 22:07–00:39 UTC (host level); disk 83 %; reboot required (kernel); 6 Dependabot PRs.
+
+---
+
 ## 2026-10-10 · Claude Code · public launch, real content only (D-089)
 
 - **Live (cb68730, f777c50, fb54255…bd3d3bb):** homepage works from zero articles up (own-section boxes that hide while empty, no repeats, welcome + newsletter before the first article); «أعلن معنا» in unsold ad zones; filler, dead tabs/links and invented content removed from homepage, header, footer and article page; Ink leftovers (share image, favicon set, iPhone icon, mail templates, Amiri dropped); bcrypt 6 + nodemailer 10.0.10, DKIM now signs List-Unsubscribe-Post. Sidebar decision renumbered D-090; PLAN/FACTS/BIBLE refreshed.

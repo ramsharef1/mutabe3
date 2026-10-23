@@ -1,5 +1,17 @@
 # mutabe3 Operational Decisions (2026)
 
+## 2026-10-23
+
+**D-091: Every homepage block filled with labelled sample material until the desk fills it**
+- **Asked by:** Rami 2026-10-23 ("homepage is not showing all news blocks" → "what are the non-removed ones with no news" → "i want every block filled with sample news untill edititors start filling these").
+- **Found:** 23 real articles in three sections (اخبار الاردن 11, اقتصاد 10, كتاب المتابع 2); every other block showed samples or the demo switch's illustrative items — several of those invented items about real people and offices (named MPs' votes, named obituaries, royal court activities, cabinet appointments, a foreign-minister quote in the seeded live story, a fake paid greetings form). «كتاب المتابع» showed a sample although two real columns exist: the band only read the «رأي» kind and the desk files columns as «خبر».
+- **Done (56a100f):** every block stays, filled with sample material labelled «مادة تجريبية» on the block itself (SecHd `sample`, weather alert, live strip, obituaries, picks). The demo constants are rewritten as examples («مثال: …») naming no real person and attributing nothing to a real office: royal court, cabinet decisions, MP votes (initials, no stock faces), obituaries, jobs, fact-check, «في 60 ثانية», crossings/roads (real place names, status «تظهر هنا عند تحديثها»), services, sports (sample fixture, no real clubs), reader report, greetings (the fake «نشر (5 د)» form → link to /advertise), «ذاكرة الأردن» (its 1970 «colour TV» line was false), seeded live story (the foreign-minister quote is gone), placeholder video titles. Market/FX fallbacks show labels, never invented numbers. Section boxes rank real pieces before samples. Editor's picks: the desk's list, else five labelled samples (the old fallback was five fixed demo ids). Columnists band: `/api/authors?kind=OPINION` counts the «كتاب المتابع» section as well as the «رأي» kind, real before sample; without a profile the box shows the section's own pieces — the invented columnist names/faces are gone. The desk replaces each data block from «البيانات» as before.
+- **Verified:** locally (real-first order in اخبار الاردن/اقتصاد, columnists band with a real «خبر» column over 10 sample opinions, every data block labelled, no hydration errors after rounding the sample kickoff to the day, 375 px without overflow after shortening sample team names; tsc + eslint clean both packages). Production: `/api/authors?kind=OPINION` → «كي نحتمي بالأوطان لا بالملاجئ» (real); homepage HTML has none of the invented names/quotes (MPs, obituaries, appointment, foreign minister, Japanese PM, columnists, «5 دنانير», «إدارة السير», party names); all 31 blocks present, 16 data blocks labelled, picks 5 labelled, alert and live strip labelled; phone 375 px no overflow; no console errors.
+- **For the desk:** the two real columns are filed as «خبر» under the admin account «مسؤول» — columnists need their own accounts (byline) and the «رأي» kind.
+- **Status:** ✅ LIVE · 2026-10-23
+
+---
+
 ## 2026-10-10
 
 **D-089: Public launch with real content only — homepage, header/footer, article page, Ink leftovers, library majors**
